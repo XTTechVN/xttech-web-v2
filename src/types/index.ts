@@ -86,7 +86,6 @@ export * from './brand';
 export * from './door-series';
 export * from './profile';
 export * from './glass';
-export * from './gasket';
 export * from './accessory-combo';
 // Document & Category
 export * from './document';
@@ -98,3 +97,15 @@ export * from './warehouse';
 export * from './me';
 export * from './access';
 export * from './platform';
+export * from './supplier-door';
+
+// News
+export * from './news';
+
+// Staff Tasks
+export * from './task';
+
+// Public Lead Registrations
+export * from './lead';
+
+

@@ -1,10 +1,10 @@
 'use client';
 
 import React from 'react';
+import Gate from '../_components/gate';
 import { useQuery } from '@tanstack/react-query';
 import { getDashboardSummary } from '@/actions';
 import StatCard from '../_components/stats-card';
-import SystemHistory from '../_components/system-history';
 import MobileHeader from '../_components/mobile-header';
 import QuickAttendanceCard from '../_components/quick-attendance-card';
 import QuickActionsGrid from '../_components/quick-actions-grid';
@@ -13,6 +13,8 @@ import WeeklyAttendanceChart from '../_components/weekly-attendance-chart';
 import LiveStaffWidget from '../_components/live-staff-widget';
 import { Users, CheckCircle2, CalendarOff, ClockAlert } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { MyTasksReminderWidget } from '../_components/my-tasks-reminder-widget';
+import { LatestRulesWidget } from '../_components/latest-rules-widget';
 
 export const HRDashboard = () => {
   const router = useRouter();
@@ -34,24 +36,28 @@ export const HRDashboard = () => {
       value: totalEmployees,
       icon: <Users size={18} />,
       onClick: () => router.push('/app/employees'),
+      requires: 'user:read',
     },
     {
       title: 'Chuyên cần hôm nay',
       value: todayAttendances,
       icon: <CheckCircle2 size={18} />,
       onClick: () => router.push('/app/attendances'),
+      requires: 'attendance_report:read',
     },
     {
       title: 'Đơn nghỉ phép chờ duyệt',
       value: pendingLeaves,
       icon: <CalendarOff size={18} />,
       onClick: () => router.push('/app/leave-requests'),
+      requires: 'leave_request:read',
     },
     {
       title: 'Giải trình công chờ duyệt',
       value: pendingAdjustments,
       icon: <ClockAlert size={18} />,
       onClick: () => router.push('/app/attendances/adjustments'),
+      requires: 'attendance_request:read',
     },
   ];
 
@@ -65,14 +71,20 @@ export const HRDashboard = () => {
           pendingLeavesCount={data?.pendingLeavesCount}
           pendingAdjustmentsCount={data?.pendingAdjustmentsCount}
         />
-        <PendingApprovalsCard
-          pendingLeavesCount={data?.pendingLeavesCount ?? 0}
-          pendingAdjustmentsCount={data?.pendingAdjustmentsCount ?? 0}
-          recentLeaves={data?.recentPendingLeaves}
-          recentAdjustments={data?.recentPendingAdjustments}
-          isAdminOrHr={true}
-        />
-        <SystemHistory />
+        <Gate any={['staff_task:read']}>
+          <MyTasksReminderWidget />
+        </Gate>
+        <Gate any={['rule:read']}>
+          <LatestRulesWidget />
+        </Gate>
+        <Gate any={['leave_request:review']}>
+          <PendingApprovalsCard
+            pendingLeavesCount={data?.pendingLeavesCount ?? 0}
+            pendingAdjustmentsCount={data?.pendingAdjustmentsCount ?? 0}
+            recentLeaves={data?.recentPendingLeaves}
+            recentAdjustments={data?.recentPendingAdjustments}
+          />
+        </Gate>
       </div>
 
       {/* 2. Desktop Command Center */}
@@ -86,6 +98,7 @@ export const HRDashboard = () => {
               icon={stat.icon}
               trend={0}
               onClick={stat.onClick}
+              requires={stat.requires}
             />
           ))}
         </div>
@@ -93,23 +106,31 @@ export const HRDashboard = () => {
         <div className="grid grid-cols-12 gap-4 min-w-0">
           {/* Cột trái (8 cols): Biểu đồ thật & Bảng duyệt đơn khẩn cấp */}
           <div className="col-span-8 flex flex-col gap-4 min-w-0">
+            <Gate any={['staff_task:read']}>
+              <MyTasksReminderWidget />
+            </Gate>
+            <Gate any={['rule:read']}>
+              <LatestRulesWidget />
+            </Gate>
             <WeeklyAttendanceChart
               data={data?.weeklyStats}
               todayCount={data?.todayAttendancesCount}
             />
-            <PendingApprovalsCard
-              pendingLeavesCount={data?.pendingLeavesCount ?? 0}
-              pendingAdjustmentsCount={data?.pendingAdjustmentsCount ?? 0}
-              recentLeaves={data?.recentPendingLeaves}
-              recentAdjustments={data?.recentPendingAdjustments}
-              isAdminOrHr={true}
-            />
+            <Gate any={['leave_request:review']}>
+              <PendingApprovalsCard
+                pendingLeavesCount={data?.pendingLeavesCount ?? 0}
+                pendingAdjustmentsCount={data?.pendingAdjustmentsCount ?? 0}
+                recentLeaves={data?.recentPendingLeaves}
+                recentAdjustments={data?.recentPendingAdjustments}
+              />
+            </Gate>
           </div>
 
-          {/* Cột phải (4 cols): Giám sát nhân viên ngoài thực địa & Lịch sử thao tác */}
+          {/* Cột phải (4 cols): Giám sát nhân viên ngoài thực địa */}
           <div className="col-span-4 flex flex-col gap-4 min-w-0">
-            <LiveStaffWidget />
-            <SystemHistory />
+            <Gate any={['live_map:read']}>
+              <LiveStaffWidget />
+            </Gate>
           </div>
         </div>
       </div>

@@ -114,6 +114,8 @@ function WarrantyVisitForm({
       void queryClient.invalidateQueries({ queryKey: ['project_overview', projectId] });
       void queryClient.invalidateQueries({ queryKey: ['global_warranty_queue'] });
       void queryClient.invalidateQueries({ queryKey: ['global_warranty_badge'] });
+      void queryClient.invalidateQueries({ queryKey: ['staff-tasks'] });
+      void queryClient.invalidateQueries({ queryKey: ['staff-tasks-summary'] });
       toast.success(visit ? 'Đã cập nhật đợt bảo hành' : 'Đã tạo yêu cầu bảo hành');
       onClose();
     },
@@ -147,6 +149,9 @@ function WarrantyVisitForm({
           fullWidth
         />
       </div>
+      <p className="text-[11px] text-slate-500">
+        💡 Khi chọn người phụ trách, hệ thống tự động giao vào danh sách công việc của nhân sự đó.
+      </p>
 
       <div className="grid grid-cols-2 gap-3">
         <Input

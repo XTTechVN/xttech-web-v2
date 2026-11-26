@@ -1,6 +1,10 @@
 import React from 'react';
 import { SceneCellNode, SashConfig } from '../../studio-types';
-import { LeafCell, MullionBar, VerticalSlice } from '../cad-types';
+import { CadMetrics, LeafCell, MullionBar, VerticalSlice } from '../cad-types';
+import { hasDefaultLeafHandle, resolveHandleHeightMm, resolveHandleY, resolveLeafGeometry } from '../cad-leaf-geometry';
+import { getColumnRowChains, getMultiRowChains, isRowChainsAligned } from '../cad-row-chains';
+import { CadRowDimensions } from './cad-row-dimensions';
+import { CadLockRulers } from './cad-lock-rulers';
 
 interface CadDimensionOverlayProps {
   w: number;
@@ -9,16 +13,19 @@ interface CadDimensionOverlayProps {
   oy: number;
   fw: number;
   fh: number;
-  frameD: number;
-  sashD: number;
-  isOpenBottom: boolean;
+  metrics: CadMetrics;
+  rootCell?: SceneCellNode;
   vertSlices: VerticalSlice[];
   horizSlices: SceneCellNode[];
   leaves: LeafCell[];
   mullions?: MullionBar[];
   sashConfig?: SashConfig;
   selectedCellId?: string | null;
-  onEditDimension?: (target: 'w' | 'h' | 'cell' | 'cell-w' | 'cell-h' | 'handleHeight', cellId?: string) => void;
+  onEditDimension?: (
+    target: 'w' | 'h' | 'cell' | 'cell-w' | 'cell-h' | 'handleHeight',
+    cellId?: string,
+    displayedVal?: number
+  ) => void;
 }
 
 /**
@@ -34,9 +41,8 @@ export const CadDimensionOverlay: React.FC<CadDimensionOverlayProps> = ({
   oy,
   fw,
   fh,
-  frameD,
-  sashD,
-  isOpenBottom,
+  metrics,
+  rootCell,
   vertSlices,
   horizSlices,
   leaves,
@@ -61,27 +67,22 @@ export const CadDimensionOverlay: React.FC<CadDimensionOverlayProps> = ({
     .filter((m) => m.info.direction === 'horizontal')
     .sort((a, b) => a.y - b.y);
 
+  // Chuỗi hàng đo thật theo từng cột: cửa lệch hàng dùng cột ngoài cùng bên phải làm thước + chip số đo ở các cột còn lại
+  const rowViewport = { ox, oy, fw, fh, h };
+  const columnChains = getColumnRowChains(mullions || [], vertSlices, rowViewport, rootCell);
+  const multiRowChains = getMultiRowChains(columnChains);
+  const isRowMisaligned = !isRowChainsAligned(columnChains, rowViewport);
+  // Cửa thẳng hàng giữ nguyên cách vẽ cũ, trừ khi danh sách đố trộn nhiều cột không khớp số hàng
+  const useChainRuler =
+    multiRowChains.length > 1 && (isRowMisaligned || horizMullions.length !== horizSlices.length - 1);
+  const rulerChain = useChainRuler ? multiRowChains[multiRowChains.length - 1] : undefined;
+  const chipChains = useChainRuler && isRowMisaligned ? multiRowChains.slice(0, -1) : [];
+
   const vertMullions = (mullions || [])
     .filter((m) => m.info.direction === 'vertical')
     .sort((a, b) => a.x - b.x);
 
   // Tìm tất cả các ô cánh có lắp khóa bên hông để vẽ đường gióng cao độ tay nắm (hỗ trợ nhiều khóa lệch nhau)
-  const SIDE_HANDLE_SASH_TYPES = [
-    'swing_left',
-    'swing_right',
-    'swing_double',
-    'tilt_turn',
-    'le-trai-mo-ra',
-    'le-trai-mo-vao',
-    'le-phai-mo-ra',
-    'le-phai-mo-vao',
-    'gap-xep-le-trai',
-    'gap-xep-le-phai',
-    'lua-trai',
-    'lua-phai',
-    'canh-truot',
-    'sliding',
-  ];
 
   const isVoCucMode =
     sashConfig?.sashStyle === 'slim' &&
@@ -111,7 +112,7 @@ export const CadDimensionOverlay: React.FC<CadDimensionOverlayProps> = ({
       );
     if (isSecondaryOfPair) return false;
 
-    const defaultHasHandle = SIDE_HANDLE_SASH_TYPES.includes(l.node.sashType || '');
+    const defaultHasHandle = hasDefaultLeafHandle(l.node.sashType);
     return (l.node.hasLock ?? defaultHasHandle) && l.node.hasLock !== false;
   });
 
@@ -119,12 +120,9 @@ export const CadDimensionOverlay: React.FC<CadDimensionOverlayProps> = ({
   const lockRulerItems = (() => {
     const map = new Map<number, { handleHVal: number; lockY: number; leaf: LeafCell }>();
     for (const l of lockLeaves) {
-      const isHyd = Boolean(isGlobalHydraulic || l.node.isHydraulic);
-      const handleHVal = l.node.handleHeight || (isHyd ? 1050 : Math.round(l.node.h / 2));
-      const lockYCalc = oy + fh - Math.round((handleHVal / h) * fh);
-      const bottomBound = l.y + l.h - sashD - 10;
-      const topBound = l.y + sashD + 20;
-      const lockY = Math.max(topBound, Math.min(bottomBound, lockYCalc));
+      const handleHVal = resolveHandleHeightMm(l.node, isGlobalHydraulic);
+      const geometry = resolveLeafGeometry(l, leaves, metrics, sashConfig);
+      const lockY = resolveHandleY(geometry, handleHVal, { doorHeightMm: h, originY: oy, frameHeightPx: fh });
 
       const existing = map.get(handleHVal);
       if (!existing || l.node.id === selectedCellId) {
@@ -208,7 +206,7 @@ export const CadDimensionOverlay: React.FC<CadDimensionOverlayProps> = ({
                       }
                       onClick={() => {
                         if (isEditable) {
-                          onEditDimension?.('cell-w', child.editableCellId || child.id);
+                          onEditDimension?.('cell-w', child.editableCellId || child.id, child.w);
                         }
                       }}
                     >
@@ -228,62 +226,20 @@ export const CadDimensionOverlay: React.FC<CadDimensionOverlayProps> = ({
       )}
 
       {/* 2. Sub-Dimension Lines (Right: khi có từ 2 hàng ngang trở lên) */}
-      {hasHorizSubDims && (
-        <g stroke="#2563eb" strokeWidth="0.8">
-          {(() => {
-            let accumH = 0;
-            const count = horizSlices.length;
-            return horizSlices.map((child, idx) => {
-              const childHScale = Math.round((child.h / h) * fh);
-              const fallbackCurY = oy + accumH;
-              accumH += childHScale;
-
-              // Gióng chuẩn vào tim đố ngang (Center of Horizontal Mullion)
-              const topY =
-                idx === 0
-                  ? oy
-                  : horizMullions[idx - 1]
-                    ? Math.round(horizMullions[idx - 1].y + horizMullions[idx - 1].h / 2)
-                    : fallbackCurY;
-
-              const botY =
-                idx === count - 1
-                  ? oy + fh
-                  : horizMullions[idx]
-                    ? Math.round(horizMullions[idx].y + horizMullions[idx].h / 2)
-                    : fallbackCurY + childHScale;
-
-              return (
-                <g key={idx}>
-                  <line x1={ox + fw} y1={topY} x2={dimSubRightX} y2={topY} strokeDasharray="2,2" />
-                  <line x1={ox + fw} y1={botY} x2={dimSubRightX} y2={botY} strokeDasharray="2,2" />
-                  <line x1={dimSubRightX} y1={topY} x2={dimSubRightX} y2={botY} strokeWidth="0.9" />
-                  <circle cx={dimSubRightX} cy={topY} r={2} fill="#2563eb" />
-                  <circle cx={dimSubRightX} cy={botY} r={2} fill="#2563eb" />
-                  <text
-                    x={dimSubRightX - 3}
-                    y={(topY + botY) / 2}
-                    fontSize="9.5"
-                    fill="#1e40af"
-                    fontFamily="system-ui, sans-serif"
-                    fontWeight="700"
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                    paintOrder="stroke"
-                    stroke="#ffffff"
-                    strokeWidth="3.5"
-                    strokeLinejoin="round"
-                    transform={`rotate(-90, ${dimSubRightX - 3}, ${(topY + botY) / 2})`}
-                    className="cursor-pointer hover:fill-red-600 hover:font-bold"
-                    onClick={() => onEditDimension?.('cell-h', child.id)}
-                  >
-                    {child.h}
-                  </text>
-                </g>
-              );
-            });
-          })()}
-        </g>
+      {(hasHorizSubDims || useChainRuler) && (
+        <CadRowDimensions
+          ox={ox}
+          oy={oy}
+          fw={fw}
+          fh={fh}
+          h={h}
+          dimSubRightX={dimSubRightX}
+          horizSlices={horizSlices}
+          horizMullions={horizMullions}
+          rightChain={rulerChain?.rows}
+          chipChains={chipChains}
+          onEditDimension={onEditDimension}
+        />
       )}
 
       {/* 3. Kích thước tổng thể Chiều rộng (Bottom: W) */}
@@ -341,40 +297,7 @@ export const CadDimensionOverlay: React.FC<CadDimensionOverlayProps> = ({
       </g>
 
       {/* 5. Cao độ tay nắm khóa (Lock Height: Left - Hỗ trợ hiển thị nhiều khóa lệch nhau) */}
-      {lockRulerItems.map((item, idx) => {
-        const dimLeftX = ox - (lockRulerItems.length > 1 ? 20 + idx * 22 : 26);
-        const isTargetSelected = selectedCellId === item.leaf.node.id;
-
-        return (
-          <g key={`lock-ruler-${item.leaf.node.id}-${item.handleHVal}`} stroke="#2563eb" strokeWidth="0.8">
-            <line x1={ox} y1={oy + fh} x2={dimLeftX} y2={oy + fh} strokeDasharray="2,2" />
-            <line x1={ox} y1={item.lockY} x2={dimLeftX} y2={item.lockY} strokeDasharray="2,2" />
-            <line x1={dimLeftX} y1={oy + fh} x2={dimLeftX} y2={item.lockY} strokeWidth={isTargetSelected ? '1.1' : '1'} />
-            <circle cx={dimLeftX} cy={oy + fh} r={2} fill="#2563eb" />
-            <circle cx={dimLeftX} cy={item.lockY} r={2} fill="#2563eb" />
-            <text
-              x={dimLeftX - 4}
-              y={(oy + fh + item.lockY) / 2}
-              fontSize="9.5"
-              fill={isTargetSelected ? '#dc2626' : '#1e40af'}
-              fontFamily="system-ui, sans-serif"
-              fontWeight="700"
-              textAnchor="middle"
-              dominantBaseline="middle"
-              paintOrder="stroke"
-              stroke="#ffffff"
-              strokeWidth="3.5"
-              strokeLinejoin="round"
-              transform={`rotate(-90, ${dimLeftX - 4}, ${(oy + fh + item.lockY) / 2})`}
-              className="cursor-pointer hover:fill-red-600 hover:font-bold"
-              onClick={() => onEditDimension?.('handleHeight', item.leaf.node.id)}
-            >
-              <title>{`Cao độ tay nắm khóa: ${item.handleHVal} mm (Nhấp để sửa)`}</title>
-              {item.handleHVal}
-            </text>
-          </g>
-        );
-      })}
+      <CadLockRulers items={lockRulerItems} ox={ox} oy={oy} fh={fh} selectedCellId={selectedCellId} onEditDimension={onEditDimension} />
     </>
   );
 };

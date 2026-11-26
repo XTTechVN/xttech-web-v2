@@ -1,3 +1,5 @@
+export type ProfileIdRef = number | string;
+
 export type FrameShapeCategory = 'all' | 'basic' | 'arch' | 'corner' | 'special_arch';
 
 export type FrameShape =
@@ -37,10 +39,10 @@ export type BeadType = 'square' | 'bevel' | 'round';
 export type BeadJointType = '90' | '45';
 
 export interface CustomEdgeBeads {
-  bottom?: number | null;
-  top?: number | null;
-  left?: number | null;
-  right?: number | null;
+  bottom?: ProfileIdRef | null;
+  top?: ProfileIdRef | null;
+  left?: ProfileIdRef | null;
+  right?: ProfileIdRef | null;
 }
 
 export interface GlassGrilleMotif {
@@ -58,6 +60,13 @@ export interface GlassGrilleMotif {
   gridCol?: number; // Chỉ số cột nan liên kết (0, 1...)
   gridRow?: number; // Chỉ số hàng nan liên kết (0, 1...)
 }
+
+export const MOTIF_ROTATION_OPTIONS = [
+  { value: 0, label: '0° (Đứng)', shortLabel: '0°' },
+  { value: 90, label: '90° (Ngang)', shortLabel: '90°' },
+  { value: 180, label: '180° (Ngược)', shortLabel: '180°' },
+  { value: 270, label: '270° (Ngang trái)', shortLabel: '270°' },
+] as const;
 
 export interface GlassGrilleConfig {
   enabled: boolean;
@@ -98,6 +107,13 @@ export interface SashMullionConfig {
   positions?: number[];
 }
 
+export interface ExtraGlassItem {
+  glassId: number;
+  glassCode?: string | null;
+  glassName: string;
+  glassThickness?: number | null;
+}
+
 export interface SceneCellNode {
   id: string;
   name?: string;
@@ -117,7 +133,7 @@ export interface SceneCellNode {
   hasLock?: boolean;
   handleHeight?: number;
   handleType?: 'lever' | 'pull' | 'crescent' | 'multipoint' | 'khoa-sap' | 'd-trai' | 'd-phai' | (string & {});
-  mullionProfileId?: number;
+  mullionProfileId?: ProfileIdRef;
   mullionCutType?: MullionCutType;
   grilleConfig?: GlassGrilleConfig;
   sashMullions?: SashMullionConfig;
@@ -132,6 +148,59 @@ export interface SceneCellNode {
   ngamNgangMm?: number;
   ngamDocMm?: number;
   slidingOverlapMm?: number;
+  /** Ghi đè Đảo vách / Đảo cánh riêng cho ô (mặc định 'inherit' = theo FrameConfig toàn cục) */
+  reversalOverride?: CellReversalOverride;
+  hasFrameReversalOverride?: boolean;
+  /** Ghi đè mã thanh REVERSAL riêng cho ô */
+  reversalProfileIdOverride?: ProfileIdRef | null;
+  /** Ghi đè khoảng hở/ngậm đảo riêng cho ô (mm) */
+  reversalOffsetMmOverride?: number | null;
+  /** Ghi đè Hở/Kín cạnh đáy riêng cho ô chạm sàn (mặc định 'inherit') */
+  openBottomOverride?: CellOpenBottomOverride;
+  hasBottomFrameOverride?: boolean;
+  /** Mã kính đã chọn cho ô (null/undefined = dùng kính mặc định) */
+  glassId?: number | null;
+  /** Các lớp kính / tấm / lưới bổ sung trên cùng ô */
+  extraGlasses?: ExtraGlassItem[];
+  /** Hiệu ứng thị giác của kính (chỉ để hiển thị 2D/3D) */
+  glassVisualEffect?: GlassVisualEffect;
+  /** true: người dùng tự chọn hiệu ứng, không theo vật liệu kính */
+  glassVisualEffectOverride?: boolean;
+  /** Màu kính (hex) cho hiệu ứng 'tinted' */
+  glassVisualColor?: string;
+  /** Đánh dấu node con là một Khối khung bao độc lập (tạo bởi Ghép Khung Bao) */
+  isFrameUnit?: boolean;
+  /** Ghi đè Hệ nhôm (cùng Brand) cho Khối khung hoặc Ô lá */
+  seriesIdOverride?: number | null;
+  /** Ghi đè cấp Khối khung (Frame Unit) */
+  frameProfileIdOverride?: ProfileIdRef | null;
+  frameLeftProfileIdOverride?: ProfileIdRef | null;
+  frameTopProfileIdOverride?: ProfileIdRef | null;
+  frameRightProfileIdOverride?: ProfileIdRef | null;
+  frameBottomProfileIdOverride?: ProfileIdRef | null;
+  mullionProfileIdOverride?: ProfileIdRef | null;
+  frameCornerJointOverride?: FrameCornerJoint | null;
+  /** Ghi đè cấp Ô lá / Cánh (Leaf Cell) */
+  sashProfileIdOverride?: ProfileIdRef | null;
+  sashLeftProfileIdOverride?: ProfileIdRef | null;
+  sashTopProfileIdOverride?: ProfileIdRef | null;
+  sashRightProfileIdOverride?: ProfileIdRef | null;
+  sashBottomProfileIdOverride?: ProfileIdRef | null;
+  sashCornerJointOverride?: SashCornerJoint | null;
+  beadProfileIdOverride?: ProfileIdRef | null;
+}
+
+export type GlassVisualEffect = 'clear' | 'tinted' | 'frosted' | 'striped' | 'rain' | 'pattern';
+
+export type CellReversalOverride = 'inherit' | 'none' | 'wall' | 'sash';
+export type CellOpenBottomOverride = 'inherit' | 'open' | 'closed';
+
+/** Khoảng ngang (px/mm theo hệ tọa độ layout) của ô chạm sàn đang Hở cạnh đáy */
+export interface BottomOpenRange {
+  x0: number;
+  x1: number;
+  floorGapMm: number;
+  cellId: string;
 }
 
 
@@ -315,11 +384,30 @@ export interface SashOffsetValues {
 }
 
 export interface SashVariantProfiles {
-  leftProfileId?: number;
-  topProfileId?: number;
-  rightProfileId?: number;
-  bottomProfileId?: number;
+  leftProfileId?: ProfileIdRef;
+  topProfileId?: ProfileIdRef;
+  rightProfileId?: ProfileIdRef;
+  bottomProfileId?: ProfileIdRef;
 }
+
+export type CasementOpenTypeKey = 'outward' | 'inward';
+
+export interface CasementVariants {
+  outward?: SashVariantProfiles;
+  inward?: SashVariantProfiles;
+}
+
+export const OPEN_DIRECTION_LABELS: Record<string, string> = {
+  outward: 'Mở ra',
+  inward: 'Mở vào',
+  sliding: 'Trượt lùa',
+  fixed: 'Cố định',
+};
+
+export const OPEN_DIRECTION_BADGES: Record<string, { label: string; className: string }> = {
+  outward: { label: 'Mở ra', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  inward: { label: 'Mở vào', className: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+};
 
 export interface SlidingSashJoints {
   leftSliding: SashCornerJoint;
@@ -328,9 +416,9 @@ export interface SlidingSashJoints {
 }
 
 export interface FrameEdgeProfile {
-  profileId?: number;
+  profileId?: ProfileIdRef;
   profileCode?: string;
-  coverProfileId?: number;
+  coverProfileId?: ProfileIdRef;
   coverProfileCode?: string;
   offsetMm: number;
 }
@@ -341,11 +429,11 @@ export type SafetyBarsCornerJoint = '45' | '90_vert';
 export interface SafetyBarsConfig {
   isEnabled: boolean;
   preset: SafetyBarsPreset;
-  profileId?: number;
+  profileId?: ProfileIdRef;
   cornerJoint: SafetyBarsCornerJoint;
   insetGapMm: number;
-  mullionVertProfileId?: number;
-  mullionHorizProfileId?: number;
+  mullionVertProfileId?: ProfileIdRef;
+  mullionHorizProfileId?: ProfileIdRef;
 }
 
 export const DEFAULT_SAFETY_BARS_CONFIG: SafetyBarsConfig = {
@@ -380,7 +468,7 @@ export interface DoorGasketConfigItem {
 
 export interface DoorCustomExtraItem {
   id: string;
-  profileId?: number;
+  profileId?: ProfileIdRef;
   profileCode?: string;
   profileName?: string;
   note?: string;
@@ -400,16 +488,16 @@ export interface FrameConfig {
   rightEdge: FrameEdgeProfile;
   bottomEdge: FrameEdgeProfile;
   mullionMode: 'none' | 'single' | 'separate';
-  mullionProfileId?: number;
-  mullionVertProfileId?: number;
-  mullionHorizProfileId?: number;
+  mullionProfileId?: ProfileIdRef;
+  mullionVertProfileId?: ProfileIdRef;
+  mullionHorizProfileId?: ProfileIdRef;
   hasSafetyBars: boolean;
   safetyBarsConfig?: SafetyBarsConfig;
-  beadProfileId?: number;
+  beadProfileId?: ProfileIdRef;
   beadCornerJoint: BeadCornerJoint;
-  couplingProfileId?: number;
+  couplingProfileId?: ProfileIdRef;
   reversalMode?: 'none' | 'wall' | 'sash';
-  reversalProfileId?: number;
+  reversalProfileId?: ProfileIdRef;
   reversalProfileCode?: string;
   reversalOffsetMm?: number;
   isReversedWall: boolean;
@@ -455,7 +543,7 @@ export interface SashConfig {
   hasScreenSash: boolean;
   family: DoorSystemFamily;
   sashStyle: 'standard' | 'slim';
-  voCucProfileId?: number;
+  voCucProfileId?: ProfileIdRef;
   isHydraulic?: boolean;
   hoNenMm: number;
   hoLeMm?: number;
@@ -470,25 +558,26 @@ export interface SashConfig {
   beadCornerJoint: BeadCornerJoint;
   isNhomCo: boolean;
   slidingOverlapMm?: number;
-  profileId?: number;
-  leftProfileId?: number;
-  topProfileId?: number;
-  rightProfileId?: number;
-  bottomProfileId?: number;
-  bottomRailProfileId?: number;
+  profileId?: ProfileIdRef;
+  leftProfileId?: ProfileIdRef;
+  topProfileId?: ProfileIdRef;
+  rightProfileId?: ProfileIdRef;
+  bottomProfileId?: ProfileIdRef;
+  bottomRailProfileId?: ProfileIdRef;
   edges?: {
     bottom?: {
-      profileId?: number;
+      profileId?: ProfileIdRef;
       enabled?: boolean;
     };
     [key: string]: unknown;
   };
   slidingVariants?: Partial<Record<SlidingSashRole, SashVariantProfiles>>;
-  mullionProfileId?: number;
-  beadProfileId?: number;
-  dynamicMullionProfileId?: number;
-  opNoiProfileId?: number;
-  interlockProfileId?: number;
+  casementVariants?: CasementVariants;
+  mullionProfileId?: ProfileIdRef;
+  beadProfileId?: ProfileIdRef;
+  dynamicMullionProfileId?: ProfileIdRef;
+  opNoiProfileId?: ProfileIdRef;
+  interlockProfileId?: ProfileIdRef;
   rawDodong?: string;
   rawVariants?: Record<string, unknown>;
   gaskets?: DoorGasketConfigItem[];
@@ -554,7 +643,41 @@ export interface DoorStudioState {
   zoomLevel: number;
 }
 
-export type MullionCutType = 'inside_frame' | 'overlap' | 'miter' | 'square';
+/** Kiểu cắt đố khung chuẩn Windova: lọt khung, cắt cả 2 đầu khung, cắt đầu trái/trên, cắt đầu phải/dưới */
+export type MullionCutType = 'inside_frame' | 'cut_both' | 'cut_left' | 'cut_right';
+
+export const MULLION_CUT_ORDER: readonly MullionCutType[] = [
+  'inside_frame',
+  'cut_both',
+  'cut_left',
+  'cut_right',
+] as const;
+
+export const MULLION_CUT_LABELS: Record<MullionCutType, string> = {
+  inside_frame: 'Lọt khung →',
+  cut_both: 'Cắt cả 2 →',
+  cut_left: 'Cắt trái →',
+  cut_right: 'Cắt phải →',
+};
+
+export function normalizeMullionCutType(raw?: string | null): MullionCutType {
+  if (raw === 'cut_both' || raw === 'cut_left' || raw === 'cut_right') {
+    return raw;
+  }
+  return 'inside_frame';
+}
+
+export function resolveMullionCutEnds(
+  cutType?: string | null,
+  touchesStartFrame = true,
+  touchesEndFrame = true
+): { cutStart: boolean; cutEnd: boolean } {
+  const norm = normalizeMullionCutType(cutType);
+  return {
+    cutStart: (norm === 'cut_left' || norm === 'cut_both') && touchesStartFrame,
+    cutEnd: (norm === 'cut_right' || norm === 'cut_both') && touchesEndFrame,
+  };
+}
 
 export interface MullionInfo {
   id: string;
@@ -563,8 +686,10 @@ export interface MullionInfo {
   direction: 'vertical' | 'horizontal';
   dimension: number;
   totalDimension: number;
-  profileId?: number;
+  profileId?: ProfileIdRef;
   cutType?: MullionCutType;
+  cutStart?: boolean;
+  cutEnd?: boolean;
   childId: string;
   nextChildId?: string;
 }

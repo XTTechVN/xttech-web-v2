@@ -174,45 +174,51 @@ export const GrilleCanvas: React.FC<GrilleCanvasProps> = ({
               {motifs.map((m) => {
                 const mw = m.width || 100;
                 const mh = m.height || 100;
+                const rot = m.rotation || 0;
 
+                let maskShape: React.ReactNode;
                 if (m.motifType === 'rhombus' || m.motifType === 'kim_cuong_vuong' || m.motifType === '3') {
                   const pTop = `${m.x},${m.y - mh / 2 + 2}`;
                   const pRight = `${m.x + mw / 2 - 2},${m.y}`;
                   const pBottom = `${m.x},${m.y + mh / 2 - 2}`;
                   const pLeft = `${m.x - mw / 2 + 2},${m.y}`;
-                  return (
+                  maskShape = (
                     <polygon
                       key={`mask-rhombus-${m.id}`}
                       points={`${pTop} ${pRight} ${pBottom} ${pLeft}`}
                       fill="black"
                     />
                   );
-                }
-
-                if (m.motifType === 'lotus' || m.motifType === 'tram_kim_cuong' || m.motifType === '4') {
+                } else if (m.motifType === 'lotus' || m.motifType === 'tram_kim_cuong' || m.motifType === '4') {
                   const pTop = `${m.x},${m.y - mh / 2 + 3}`;
                   const pRight = `${m.x + mw / 2 - 3},${m.y}`;
                   const pBottom = `${m.x},${m.y + mh / 2 - 3}`;
                   const pLeft = `${m.x - mw / 2 + 3},${m.y}`;
-                  return (
+                  maskShape = (
                     <polygon
                       key={`mask-lotus-${m.id}`}
                       points={`${pTop} ${pRight} ${pBottom} ${pLeft}`}
                       fill="black"
                     />
                   );
+                } else {
+                  maskShape = (
+                    <rect
+                      key={`mask-rect-${m.id}`}
+                      x={m.x - mw / 2 + 2}
+                      y={m.y - mh / 2 + 2}
+                      width={mw - 4}
+                      height={mh - 4}
+                      rx="6"
+                      fill="black"
+                    />
+                  );
                 }
 
                 return (
-                  <rect
-                    key={`mask-rect-${m.id}`}
-                    x={m.x - mw / 2 + 2}
-                    y={m.y - mh / 2 + 2}
-                    width={mw - 4}
-                    height={mh - 4}
-                    rx="6"
-                    fill="black"
-                  />
+                  <g key={`mask-g-${m.id}`} transform={`rotate(${rot}, ${m.x}, ${m.y})`}>
+                    {maskShape}
+                  </g>
                 );
               })}
             </mask>
@@ -418,56 +424,60 @@ export const GrilleCanvas: React.FC<GrilleCanvasProps> = ({
                 className="cursor-pointer group"
                 pointerEvents="all"
               >
-                <rect
-                  x={m.x - mw / 2 - 6}
-                  y={m.y - mh / 2 - 6}
-                  width={mw + 12}
-                  height={mh + 12}
-                  fill={isSelected ? '#fef3c725' : 'transparent'}
-                  pointerEvents="all"
-                  stroke={isSelected ? '#f59e0b' : '#38bdf8'}
-                  strokeWidth={isSelected ? '2.5' : '1.2'}
-                  strokeDasharray={isSelected ? '5,3' : '4,4'}
-                  opacity={isSelected ? '1' : '0.6'}
-                  className="group-hover:opacity-100 group-hover:stroke-amber-500 transition-all"
-                  rx="4"
-                />
+                <g transform={`rotate(${m.rotation || 0}, ${m.x}, ${m.y})`}>
+                  <rect
+                    x={m.x - mw / 2 - 6}
+                    y={m.y - mh / 2 - 6}
+                    width={mw + 12}
+                    height={mh + 12}
+                    fill={isSelected ? '#fef3c725' : 'transparent'}
+                    pointerEvents="all"
+                    stroke={isSelected ? '#f59e0b' : '#38bdf8'}
+                    strokeWidth={isSelected ? '2.5' : '1.2'}
+                    strokeDasharray={isSelected ? '5,3' : '4,4'}
+                    opacity={isSelected ? '1' : '0.6'}
+                    className="group-hover:opacity-100 group-hover:stroke-amber-500 transition-all"
+                    rx="4"
+                  />
+
+                  {isSelected && (
+                    <>
+                      <circle cx={m.x - mw / 2 - 6} cy={m.y - mh / 2 - 6} r="3.5" fill="#f59e0b" stroke="#ffffff" strokeWidth="1" />
+                      <circle cx={m.x + mw / 2 + 6} cy={m.y - mh / 2 - 6} r="3.5" fill="#f59e0b" stroke="#ffffff" strokeWidth="1" />
+                      <circle cx={m.x - mw / 2 - 6} cy={m.y + mh / 2 + 6} r="3.5" fill="#f59e0b" stroke="#ffffff" strokeWidth="1" />
+                      <circle cx={m.x + mw / 2 + 6} cy={m.y + mh / 2 + 6} r="3.5" fill="#f59e0b" stroke="#ffffff" strokeWidth="1" />
+                    </>
+                  )}
+                </g>
 
                 {isSelected && (
-                  <>
-                    <circle cx={m.x - mw / 2 - 6} cy={m.y - mh / 2 - 6} r="3.5" fill="#f59e0b" stroke="#ffffff" strokeWidth="1" />
-                    <circle cx={m.x + mw / 2 + 6} cy={m.y - mh / 2 - 6} r="3.5" fill="#f59e0b" stroke="#ffffff" strokeWidth="1" />
-                    <circle cx={m.x - mw / 2 - 6} cy={m.y + mh / 2 + 6} r="3.5" fill="#f59e0b" stroke="#ffffff" strokeWidth="1" />
-                    <circle cx={m.x + mw / 2 + 6} cy={m.y + mh / 2 + 6} r="3.5" fill="#f59e0b" stroke="#ffffff" strokeWidth="1" />
-
-                    <g transform={`translate(${m.x}, ${m.y + mh / 2 + 16})`}>
-                      <rect
-                        x="-46"
-                        y="-8"
-                        width="92"
-                        height="17"
-                        rx="5"
-                        fill="#f59e0b"
-                        stroke="#ffffff"
-                        strokeWidth="1.2"
-                        className="drop-shadow-xs"
-                      />
-                      <text
-                        x="0"
-                        y="3"
-                        textAnchor="middle"
-                        fontSize="9.5"
-                        fontWeight="bold"
-                        fill="#ffffff"
-                        fontFamily="monospace"
-                      >
-                        {(m.price ?? motifUnitPrice).toLocaleString('vi-VN')} đ
-                      </text>
-                    </g>
-                  </>
+                  <g transform={`translate(${m.x}, ${m.y + (m.rotation === 90 || m.rotation === 270 ? mw / 2 : mh / 2) + 16})`}>
+                    <rect
+                      x="-46"
+                      y="-8"
+                      width="92"
+                      height="17"
+                      rx="5"
+                      fill="#f59e0b"
+                      stroke="#ffffff"
+                      strokeWidth="1.2"
+                      className="drop-shadow-xs"
+                    />
+                    <text
+                      x="0"
+                      y="3"
+                      textAnchor="middle"
+                      fontSize="9.5"
+                      fontWeight="bold"
+                      fill="#ffffff"
+                      fontFamily="monospace"
+                    >
+                      {(m.price ?? motifUnitPrice).toLocaleString('vi-VN')} đ
+                    </text>
+                  </g>
                 )}
 
-                <g transform={`translate(${m.x - mw / 2}, ${m.y - mh / 2})`}>
+                <g transform={`translate(${m.x - mw / 2}, ${m.y - mh / 2}) rotate(${m.rotation || 0}, ${mw / 2}, ${mh / 2})`}>
                   <GrilleMotifSvg motifType={m.motifType} color={barColor} width={mw} height={mh} />
                 </g>
               </g>

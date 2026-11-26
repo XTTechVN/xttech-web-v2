@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Gate from '../_components/gate';
 import { useQuery } from '@tanstack/react-query';
 import { getDashboardSummary } from '@/actions';
 import StatCard from '../_components/stats-card';
@@ -12,6 +13,8 @@ import WeeklyAttendanceChart from '../_components/weekly-attendance-chart';
 import LiveStaffWidget from '../_components/live-staff-widget';
 import { FolderGit2, CheckCircle2, Clock, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { MyTasksReminderWidget } from '../_components/my-tasks-reminder-widget';
+import { LatestRulesWidget } from '../_components/latest-rules-widget';
 
 export const SaleDashboard = () => {
   const router = useRouter();
@@ -33,6 +36,7 @@ export const SaleDashboard = () => {
       value: isLoading ? '...' : `${data?.activeProjectsCount ?? 0} dự án`,
       icon: <FolderGit2 size={18} />,
       onClick: () => router.push('/app/projects'),
+      requires: 'project:read',
     },
     {
       title: 'Trạng thái điểm danh',
@@ -51,6 +55,7 @@ export const SaleDashboard = () => {
       value: isLoading ? '...' : `${data?.totalEmployees ?? 0} người`,
       icon: <Users size={18} />,
       onClick: () => router.push('/app/employees'),
+      requires: 'user:read',
     },
   ];
 
@@ -64,6 +69,12 @@ export const SaleDashboard = () => {
           pendingLeavesCount={data?.pendingLeavesCount}
           pendingAdjustmentsCount={data?.pendingAdjustmentsCount}
         />
+        <Gate any={['staff_task:read']}>
+          <MyTasksReminderWidget />
+        </Gate>
+        <Gate any={['rule:read']}>
+          <LatestRulesWidget />
+        </Gate>
         <PersonalAttendanceHistory />
       </div>
 
@@ -78,12 +89,19 @@ export const SaleDashboard = () => {
               icon={stat.icon}
               trend={0}
               onClick={stat.onClick}
+              requires={stat.requires}
             />
           ))}
         </div>
 
         <div className="grid grid-cols-12 gap-4 min-w-0">
           <div className="col-span-8 flex flex-col gap-4 min-w-0">
+            <Gate any={['staff_task:read']}>
+              <MyTasksReminderWidget />
+            </Gate>
+            <Gate any={['rule:read']}>
+              <LatestRulesWidget />
+            </Gate>
             <QuickAttendanceCard attendance={data?.myAttendance} />
             <WeeklyAttendanceChart
               data={data?.weeklyStats}
@@ -92,7 +110,9 @@ export const SaleDashboard = () => {
           </div>
 
           <div className="col-span-4 flex flex-col gap-4 min-w-0">
-            <LiveStaffWidget />
+            <Gate any={['live_map:read']}>
+              <LiveStaffWidget />
+            </Gate>
             <PersonalAttendanceHistory />
           </div>
         </div>

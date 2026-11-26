@@ -85,7 +85,6 @@ export * from './brand';
 export * from './door-series';
 export * from './profile';
 export * from './glass';
-export * from './gasket';
 export * from './accessory-combo';
 export * from './brass-pattern';
 export * from './brass-ornament';
@@ -102,3 +101,15 @@ export * from './access';
 
 // Quản trị nền tảng (xem chéo doanh nghiệp)
 export * from './platform';
+export * from './supplier-door';
+
+// News
+export * from './news';
+
+// Public Lead Registrations
+export * from './lead';
+
+// Staff Tasks
+export * from './task';
+
+

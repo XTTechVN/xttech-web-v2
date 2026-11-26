@@ -4,6 +4,14 @@ import type { Customer } from './customer';
 import type { User } from './user';
 import type { Brand, BrandColor } from './brand';
 import type { DoorSeries } from './door-series';
+import type { Door } from './door';
+import type {
+  DoorFulfillmentType,
+  PositionCostStatus,
+  PositionVisualMode,
+  SupplierBrief,
+  SupplierDoorBrief,
+} from './supplier-door';
 
 export type ProjectStatus =
   | 'draft'
@@ -201,7 +209,7 @@ export interface ProjectDoorPosition {
   doorSeriesId?: number | null;
   colorId?: number | null;
   glassId?: number | null;
-  gasketId?: number | null;
+
   status: DoorPositionStatus;
   qrCodeToken: string;
   qrUrl?: string | null;
@@ -213,13 +221,24 @@ export interface ProjectDoorPosition {
   isContracted?: boolean | null;
   /** Cửa thuộc phương án thiết kế đang chào khách (null = cửa chính thức) */
   designOptionId?: number | null;
-  systemConfig?: Record<string, any> | null;
+  systemConfig?: Record<string, unknown> | null;
+  fulfillmentType: DoorFulfillmentType;
+  supplierId: number | null;
+  supplierDoorId: number | null;
+  costStatus: PositionCostStatus;
+  supplierCostPrice: number;
+  isInstallationIncluded: boolean;
+  customImagePath: string | null;
+  visualMode: PositionVisualMode;
   createdAt: string;
   updatedAt: string;
   floor?: Pick<ProjectFloor, 'id' | 'name'> | null;
+  templateDoor?: Pick<Door, 'id' | 'code' | 'name'> | null;
   brand?: Pick<Brand, 'id' | 'name'> | null;
   doorSeries?: Pick<DoorSeries, 'id' | 'name'> | null;
   color?: Pick<BrandColor, 'id' | 'name' | 'colorHex'> | null;
+  supplier?: SupplierBrief | null;
+  supplierDoor?: SupplierDoorBrief | null;
 }
 
 export interface ProjectDoorPositionCreate {
@@ -236,9 +255,16 @@ export interface ProjectDoorPositionCreate {
   doorSeriesId?: number;
   colorId?: number;
   glassId?: number;
-  gasketId?: number;
+
   status?: DoorPositionStatus;
-  systemConfig?: Record<string, any>;
+  systemConfig?: Record<string, unknown>;
+  fulfillmentType?: DoorFulfillmentType;
+  supplierId?: number | null;
+  supplierDoorId?: number | null;
+  costStatus?: PositionCostStatus;
+  supplierCostPrice?: number | null;
+  isInstallationIncluded?: boolean;
+  visualMode?: PositionVisualMode;
 }
 
 export interface ProjectDoorPositionBulkCreate {
@@ -256,8 +282,15 @@ export interface ProjectDoorPositionBulkCreate {
   doorSeriesId?: number;
   colorId?: number;
   glassId?: number;
-  gasketId?: number;
-  systemConfig?: Record<string, any>;
+
+  systemConfig?: Record<string, unknown>;
+  fulfillmentType?: DoorFulfillmentType;
+  supplierId?: number | null;
+  supplierDoorId?: number | null;
+  costStatus?: PositionCostStatus;
+  supplierCostPrice?: number | null;
+  isInstallationIncluded?: boolean;
+  visualMode?: PositionVisualMode;
 }
 
 export interface ProjectDoorPositionUpdate {
@@ -273,10 +306,17 @@ export interface ProjectDoorPositionUpdate {
   doorSeriesId?: number;
   colorId?: number;
   glassId?: number;
-  gasketId?: number;
+
   status?: DoorPositionStatus;
-  systemConfig?: Record<string, any>;
+  systemConfig?: Record<string, unknown>;
   revision?: number;
+  fulfillmentType?: DoorFulfillmentType;
+  supplierId?: number | null;
+  supplierDoorId?: number | null;
+  costStatus?: PositionCostStatus;
+  supplierCostPrice?: number | null;
+  isInstallationIncluded?: boolean;
+  visualMode?: PositionVisualMode;
 }
 
 export interface ProjectDoorPositionDuplicate {
@@ -508,6 +548,8 @@ export interface ProgressMatrixItem {
   width: number;
   height: number;
   areaM2: number;
+  fulfillmentType?: DoorFulfillmentType;
+  supplierName?: string | null;
   currentStatus: ProgressStepCode;
   surveyed: ProgressStepStatus;
   producing: ProgressStepStatus;
@@ -534,6 +576,7 @@ export interface ProductionSheetProfileItem {
   barType: string;
   weightKg?: number | null;
   stockSource?: string | null;
+  openDirection?: string | null;
 }
 
 export interface ProductionSheetGlassItem {
@@ -568,28 +611,44 @@ export interface ProductionSheetReinforcementItem {
 }
 
 export interface ProductionSheet {
-  orderCode: string;
-  orderName: string;
+  orderCode?: string | null;
+  orderName?: string | null;
   positionId: number;
   positionCode: string;
   positionName?: string | null;
   doorName: string;
+  floorId?: number | null;
   floorName: string;
+  doorType?: string | null;
   width: number;
   height: number;
   areaM2: number;
+  quantity?: number;
+  measureNote?: string | null;
   brandName?: string | null;
   seriesName?: string | null;
   colorName?: string | null;
   imagePath?: string | null;
   totalWeightKg: number;
   isEstimated: boolean;
+  fulfillmentType?: DoorFulfillmentType;
+  supplierName?: string | null;
+  specification?: string | null;
+  visualMode?: PositionVisualMode;
+  customImagePath?: string | null;
+  catalogImagePath?: string | null;
   profiles: ProductionSheetProfileItem[];
   glasses: ProductionSheetGlassItem[];
   gaskets: ProductionSheetGasketItem[];
   accessories: ProductionSheetAccessoryItem[];
   reinforcements: ProductionSheetReinforcementItem[];
-  systemConfig?: Record<string, any> | null;
+  systemConfig?: Record<string, unknown> | null;
+}
+
+export interface ProjectTechnicalSheetsParams {
+  designOptionId?: number | null;
+  floorId?: number;
+  fulfillmentType?: DoorFulfillmentType;
 }
 
 

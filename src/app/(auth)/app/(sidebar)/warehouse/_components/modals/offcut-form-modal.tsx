@@ -37,10 +37,16 @@ export function OffcutFormModal({
       .then((res) => {
         if (isMounted && res?.items) {
           setBrandColors(res.items);
+          setColorId((prev) => {
+            if (res.items.length > 0 && !res.items.some((c) => c.id === prev)) {
+              return res.items[0].id;
+            }
+            return prev;
+          });
         }
       })
-      .catch((err) => {
-        console.error('Lỗi tải danh mục màu sắc:', err);
+      .catch(() => {
+        // Ignore brand color loading error
       });
     return () => {
       isMounted = false;

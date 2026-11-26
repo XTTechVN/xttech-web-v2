@@ -31,7 +31,6 @@ import queryClient from '@/utils/query';
 // Types
 import type { CustomerLogCreate, CustomerLog } from '@/types';
 
-
 // Props của LogFormModal
 interface LogFormModalProps {
   isOpen: boolean;
@@ -211,12 +210,7 @@ export function LogFormModal({ isOpen, onClose, customerId, title, submitText = 
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <Input
-                label="Ngày chăm sóc tiếp theo"
-                type="date"
-                fullWidth
-                {...register('nextFollowDate')}
-              />
+              <Input label="Ngày chăm sóc tiếp theo" type="date" fullWidth {...register('nextFollowDate')} />
             </div>
 
             <div className="flex flex-col gap-1.5">

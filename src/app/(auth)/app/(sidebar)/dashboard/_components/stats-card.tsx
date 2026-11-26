@@ -1,5 +1,6 @@
 // Icons thư viện lucide - react
 import { TrendingDown, TrendingUp } from 'lucide-react';
+import { useCan } from '@/hooks';
 
 const StatCart = ({
   title,
@@ -8,23 +9,28 @@ const StatCart = ({
   trend,
   trendDirection = 'up',
   onClick,
+  requires,
 }: {
   title: string;
   value: string;
   icon: React.ReactNode;
-  trend: number;
+  trend?: number;
   trendDirection?: 'up' | 'down';
   onClick?: () => void;
+  /** Mã quyền cần có để thấy thẻ (số liệu và trang đích của thẻ đều là dữ liệu quản lý) */
+  requires?: string;
 }) => {
+  const { can } = useCan();
+  if (requires && !can(requires)) return null;
   const isUp = trendDirection === 'up';
 
   return (
     <div
-      className="bg-white rounded-xl md:rounded-2xl shadow-xs p-3 md:p-4 flex flex-col gap-2 md:gap-4 hover:shadow-sm transition w-full cursor-pointer border border-gray-100"
+      className="bg-white rounded-block shadow-xs p-3 md:p-4 flex flex-col gap-2 md:gap-4 hover:shadow-sm transition w-full cursor-pointer border border-gray-100"
       onClick={onClick}
     >
       <div className="flex items-center relative">
-        <div className={`p-2 md:p-3 rounded-lg md:rounded-xl bg-primary/5 text-primary [&>svg]:w-4 [&>svg]:h-4 md:[&>svg]:w-5 md:[&>svg]:h-5`}>
+        <div className={`p-2 md:p-3 rounded-control bg-primary/5 text-primary [&>svg]:w-4 [&>svg]:h-4 md:[&>svg]:w-5 md:[&>svg]:h-5`}>
           {icon}
         </div>
         {trend !== undefined && (
@@ -36,7 +42,7 @@ const StatCart = ({
         )}
       </div>
       <div className="flex flex-col gap-1 md:gap-3">
-        <span className="text-gray-500 text-[10px] md:text-xs font-medium truncate whitespace-nowrap overflow-hidden">{title}</span>
+        <span className="font-heading text-gray-500 text-[10px] md:text-xs font-medium truncate whitespace-nowrap overflow-hidden">{title}</span>
         <span className="text-lg md:text-2xl font-bold text-primary">{value}</span>
       </div>
     </div>

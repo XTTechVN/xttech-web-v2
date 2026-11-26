@@ -1,43 +1,14 @@
 import toast from 'react-hot-toast';
-import { GlassOrder, GlassOrderItem, ManualReason } from '@/types';
+import { GlassOrder, GlassOrderItem } from '@/types';
 import { ArchConfig, FrameShape } from '@/components/door-studio/studio-types';
 import { computeArchMetrics } from '@/components/door-studio/cad-engine/cad-geometry';
+import {
+  GLASS_GRIND_LABEL_MAP,
+  GLASS_MANUAL_REASON_MAP,
+  FRAME_SHAPE_LABEL_MAP,
+} from '@/config/warehouse';
 
-export const GLASS_GRIND_LABEL_MAP: Record<string, string> = {
-  grind_edge: 'Mài xiết cạnh',
-  grind_flat: 'Mài bóng phẳng',
-  grind_bevel: 'Mài vát cạnh',
-  no_grind: 'Không mài',
-};
-
-export const GLASS_MANUAL_REASON_MAP: Record<ManualReason, string> = {
-  spare: 'Kính dự phòng',
-  replacement: 'Kính thay thế (vỡ/lỗi)',
-  extra: 'Phát sinh ngoài thiết kế',
-  other: 'Khác',
-};
-
-export const FRAME_SHAPE_LABEL_MAP: Record<string, string> = {
-  rect: 'Chữ nhật',
-  arch_half: 'Vòm bán nguyệt',
-  arch_segment: 'Vòm cung tròn',
-  arch_semicircle: 'Vòm bán nguyệt có chân',
-  arch_semicircle_open: 'Vòm bán nguyệt mở đáy',
-  arch_segment_leg: 'Vòm cung có chân',
-  arch_segment_leg_open: 'Vòm cung mở đáy',
-  arch_pointed: 'Vòm nhọn Gothic',
-  arch_pointed_leg: 'Vòm nhọn có chân',
-  round_top: 'Tròn đầu',
-  round_top_open: 'Tròn đầu mở đáy',
-  round_top_2: 'Bo 2 góc trên',
-  round_top_2_open: 'Bo 2 góc trên mở đáy',
-  round_top_right: 'Bo 1 góc trên',
-  round_top_rw: 'Bo góc lệch',
-  round_4_corner: 'Bo 4 góc',
-  quad_circle: 'Vòm 1/4',
-  circle: 'Hình tròn',
-  ellipse: 'Hình elip',
-};
+export { GLASS_GRIND_LABEL_MAP, GLASS_MANUAL_REASON_MAP, FRAME_SHAPE_LABEL_MAP };
 
 export function formatPaneShapeSummary(
   frameShape?: string | null,

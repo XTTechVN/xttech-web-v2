@@ -1,9 +1,16 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { AccessoryCombo, Accessory, SelectedAccessoryItem, Brand } from '@/types';
+import {
+  AccessoryCombo,
+  Accessory,
+  SelectedAccessoryItem,
+  Brand,
+  DoorCalculateResponse,
+  formatAccessoryUnit,
+} from '@/types';
 import { Search, Boxes, Package, Plus } from 'lucide-react';
-import { ComboCategoryTab, detectComboCategory, detectComboBrand } from './accessories/types';
+import { ComboCategoryTab, detectComboCategory, detectComboBrand, getEffectiveComboPrice } from './accessories/types';
 import { SelectedItemsPanel } from './accessories/selected-items-panel';
 import { IndividualAccessoriesView } from './accessories/individual-accessories-view';
 import { ComboModal } from './accessories/modals';
@@ -20,6 +27,8 @@ interface AccessoriesTabViewProps {
   onClearAll?: () => void;
   hardwareColor?: string;
   onChangeHardwareColor?: (color: string) => void;
+  calcData?: DoorCalculateResponse | null;
+  isCalculating?: boolean;
 }
 
 const CATEGORY_TABS: { value: ComboCategoryTab; label: string; icon: string }[] = [
@@ -39,6 +48,8 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
   onUpdateAccessoryQty,
   onSetAccessoryQty,
   onClearAll,
+  calcData,
+  isCalculating,
 }) => {
   const [categoryTab, setCategoryTab] = useState<ComboCategoryTab>('frame');
   const [brandFilter, setBrandFilter] = useState<string>('all');
@@ -70,13 +81,15 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
   const dynamicBrandFilters = useMemo(() => {
     const set = new Set<string>();
     for (const c of combos) {
-      const b = detectComboBrand(c, brands);
+      const b = detectComboBrand(c, brands).trim();
       if (b && b !== 'Khác') set.add(b);
     }
     for (const b of brands) {
-      if (b.brandType === 'accessory' || b.brandType === 'both') set.add(b.name);
+      if ((b.brandType === 'accessory' || b.brandType === 'both') && b.name?.trim()) {
+        set.add(b.name.trim());
+      }
     }
-    return Array.from(set).sort((a, b) => a.localeCompare(b));
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'vi', { sensitivity: 'base' }));
   }, [combos, brands]);
 
   // Filter combos based on active category, brand, search
@@ -88,7 +101,7 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
       }
       if (brandFilter !== 'all') {
         const b = detectComboBrand(c, brands);
-        if (b.toLowerCase() !== brandFilter.toLowerCase()) return false;
+        if (b.trim().toLowerCase() !== brandFilter.trim().toLowerCase()) return false;
       }
       if (search.trim()) {
         const q = search.toLowerCase();
@@ -105,8 +118,8 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
     [combos, selectedComboIds]
   );
 
-  const totalCombosPrice = useMemo(() =>
-    selectedCombos.reduce((sum, c) => sum + (c.totalComboPrice || 0), 0),
+  const totalCombosPrice = useMemo(
+    () => selectedCombos.reduce((sum, c) => sum + getEffectiveComboPrice(c), 0),
     [selectedCombos]
   );
 
@@ -138,7 +151,9 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
 
   const activeFilterBrandId = useMemo(() => {
     if (brandFilter === 'all') return null;
-    const matched = brands.find((b) => b.name.toLowerCase() === brandFilter.toLowerCase());
+    const matched = brands.find(
+      (b) => b.name.trim().toLowerCase() === brandFilter.trim().toLowerCase()
+    );
     return matched?.id ?? null;
   }, [brandFilter, brands]);
 
@@ -326,6 +341,7 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
                           const catLabel = cat === 'frame' ? 'Khung' : cat === 'sash' ? 'Cánh' : 'Hướng mở';
                           const itemsCount = combo.comboItems?.length || 0;
                           const brand = detectComboBrand(combo, brands);
+                          const comboPrice = getEffectiveComboPrice(combo);
 
                           return (
                             <React.Fragment key={combo.id}>
@@ -358,10 +374,10 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
                                     <span>{itemsCount} món</span>
                                   </button>
                                 </td>
-                                <td className="py-2.5 px-3 text-right font-bold text-slate-900">
-                                  {combo.totalComboPrice
-                                    ? `${combo.totalComboPrice.toLocaleString('vi-VN')} đ`
-                                    : '-'}
+                                <td className="py-2.5 px-3 text-right font-bold text-slate-900 tabular-nums">
+                                  {comboPrice > 0
+                                    ? `${comboPrice.toLocaleString('vi-VN')} đ`
+                                    : '—'}
                                 </td>
                                 <td className="py-2.5 px-3 text-center">
                                   {isSelected ? (
@@ -403,7 +419,7 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
                                                 {idx + 1}. {item.accessoryName || item.accessoryCode || `Phụ kiện #${item.accessoryId}`}
                                               </span>
                                               <span className="text-slate-500 font-medium shrink-0">
-                                                ×{item.quantity} {item.unit || ''}
+                                                ×{item.quantity} {formatAccessoryUnit(item.unit)}
                                               </span>
                                             </div>
                                           ))}
@@ -454,6 +470,8 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
               onUpdateAccessoryQty={onUpdateAccessoryQty}
               onSetAccessoryQty={onSetAccessoryQty}
               onClearAll={onClearAll}
+              calcData={calcData}
+              isCalculating={isCalculating}
             />
           </div>
         </div>
@@ -463,9 +481,9 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
       <div className="bg-white border-t border-slate-200 px-4 py-2.5 shrink-0 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-slate-500 text-[11px]">Đã chọn</span>
-          {selectedComboIds.length > 0 && (
+          {selectedCombos.length > 0 && (
             <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-primary/10 text-primary border border-primary/20">
-              {selectedComboIds.length} Combo
+              {selectedCombos.length} Combo
             </span>
           )}
           {totalIndividualCount > 0 && (
@@ -473,7 +491,7 @@ export const AccessoriesTabView: React.FC<AccessoriesTabViewProps> = ({
               {totalIndividualCount} Phụ kiện rời
             </span>
           )}
-          {selectedComboIds.length === 0 && totalIndividualCount === 0 && (
+          {selectedCombos.length === 0 && totalIndividualCount === 0 && (
             <span className="text-[11px] text-slate-400 italic">Chưa có gì</span>
           )}
         </div>

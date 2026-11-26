@@ -1,5 +1,6 @@
 'use client';
 
+import { useCan } from '@/hooks';
 import React, { useState, useMemo } from 'react';
 import { Modal, Button, Avatar, Select } from '@/components';
 import { Briefcase, Check, X, Building2, AlertTriangle } from 'lucide-react';
@@ -25,9 +26,10 @@ interface PositionModalFormProps {
 }
 
 function PositionModalForm({ employee, defaultDepartmentId, onClose }: PositionModalFormProps) {
+  const { can } = useCan();
   // Lấy thông tin vị trí và phòng ban hiện tại của nhân sự (nếu có)
-  const currentPos = (employee.positions && employee.positions.length > 0) ? (employee.positions[0] as any) : null;
-  const currentDeptId = currentPos ? (currentPos.departmentId || currentPos.department?.id) : null;
+  const currentPos = employee.positions && employee.positions.length > 0 ? (employee.positions[0] as any) : null;
+  const currentDeptId = currentPos ? currentPos.departmentId || currentPos.department?.id : null;
 
   // Khởi tạo phòng ban ban đầu
   const [selectedDeptId, setSelectedDeptId] = useState<string>(() => {
@@ -51,6 +53,7 @@ function PositionModalForm({ employee, defaultDepartmentId, onClose }: PositionM
   const { data: deptsData, isLoading: isLoadingDepts } = useQuery({
     queryKey: ['departments', 'modal-select'],
     queryFn: () => getDepartments({ limit: 100 }),
+    enabled: can('department:read'),
   });
 
   // 2. Lấy danh sách tất cả các vị trí
@@ -65,9 +68,7 @@ function PositionModalForm({ employee, defaultDepartmentId, onClose }: PositionM
   // Lọc danh sách vị trí theo phòng ban được chọn (chỉ hiển thị khi đã chọn phòng ban)
   const filteredPositions = useMemo(() => {
     if (!selectedDeptId) return [];
-    return allPositions.filter(
-      (p: any) => String(p.departmentId || p.department?.id) === String(selectedDeptId)
-    );
+    return allPositions.filter((p: any) => String(p.departmentId || p.department?.id) === String(selectedDeptId));
   }, [allPositions, selectedDeptId]);
 
   // Tìm object vị trí đang được chọn
@@ -116,38 +117,29 @@ function PositionModalForm({ employee, defaultDepartmentId, onClose }: PositionM
   return (
     <div className="space-y-4 py-2">
       {/* Thông tin nhân viên */}
-      <div className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200/80 rounded-xl">
-        <Avatar
-          src={getFileUrl(employee.avatar) || undefined}
-          name={employee.fullName || employee.username}
-          size="md"
-        />
+      <div className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200/80 rounded-block">
+        <Avatar src={getFileUrl(employee.avatar) || undefined} name={employee.fullName || employee.username} size="md" />
         <div className="flex flex-col min-w-0">
-          <span className="font-bold text-slate-900 text-sm truncate">
-            {employee.fullName || employee.username}
-          </span>
+          <span className="font-bold text-slate-900 text-sm truncate">{employee.fullName || employee.username}</span>
           <span className="text-xs text-slate-500 truncate">{employee.email}</span>
         </div>
       </div>
 
       {/* Cảnh báo chuyển phòng ban nếu nhân sự đang ở phòng ban khác */}
       {isSwitchingDepartment && (
-        <div className="p-3 rounded-lg bg-amber-50/80 border border-amber-200 text-amber-900 text-xs flex gap-2.5 items-start">
+        <div className="p-3 rounded-control bg-amber-50/80 border border-amber-200 text-amber-900 text-xs flex gap-2.5 items-start">
           <AlertTriangle size={16} className="text-amber-600 shrink-0 mt-0.5" />
           <div className="leading-relaxed">
-            Nhân sự này hiện đang giữ chức vụ{' '}
-            <span className="font-bold text-amber-950">{currentPos?.name || 'Chức vụ'}</span> tại phòng ban{' '}
-            <span className="font-bold text-amber-950">{currentDeptObj?.name || `Phòng ban #${currentDeptId}`}</span>.
-            Khi chọn chức vụ mới ở đây, nhân sự sẽ được chuyển sang phòng ban này.
+            Nhân sự này hiện đang giữ chức vụ <span className="font-bold text-amber-950">{currentPos?.name || 'Chức vụ'}</span> tại phòng ban{' '}
+            <span className="font-bold text-amber-950">{currentDeptObj?.name || `Phòng ban #${currentDeptId}`}</span>. Khi chọn chức vụ mới ở đây,
+            nhân sự sẽ được chuyển sang phòng ban này.
           </div>
         </div>
       )}
 
       {/* Chọn Phòng ban */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-semibold text-gray-700 select-none">
-          Phòng ban trực thuộc
-        </label>
+        <label className="text-xs font-semibold text-gray-700 select-none">Phòng ban trực thuộc</label>
         <Select
           placeholder={isLoadingDepts ? 'Đang tải phòng ban...' : '-- Chọn phòng ban --'}
           options={deptOptions}
@@ -170,10 +162,8 @@ function PositionModalForm({ employee, defaultDepartmentId, onClose }: PositionM
       {/* Vị trí đang chọn (Single Select) */}
       {selectedPositionId && (
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-semibold text-gray-700 select-none">
-            Chức vụ đang chọn (Tối đa 1 chức vụ)
-          </label>
-          <div className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-200 rounded-lg">
+          <label className="text-xs font-semibold text-gray-700 select-none">Chức vụ đang chọn (Tối đa 1 chức vụ)</label>
+          <div className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-200 rounded-control">
             <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-800">
               <Briefcase size={14} className="text-primary shrink-0" />
               <span>{selectedPosObj?.name || `Vị trí #${selectedPositionId}`}</span>
@@ -193,21 +183,17 @@ function PositionModalForm({ employee, defaultDepartmentId, onClose }: PositionM
 
       {/* Chọn Vị trí trong danh sách */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-semibold text-gray-700 select-none">
-          Danh sách vị trí {selectedDeptId ? 'thuộc phòng ban này' : ''}
-        </label>
-        
+        <label className="text-xs font-semibold text-gray-700 select-none">Danh sách vị trí {selectedDeptId ? 'thuộc phòng ban này' : ''}</label>
+
         {!selectedDeptId ? (
-          <div className="p-8 border border-dashed border-gray-200 rounded-lg bg-gray-50/60 flex flex-col items-center justify-center text-center gap-2">
+          <div className="p-8 border border-dashed border-gray-200 rounded-control bg-gray-50/60 flex flex-col items-center justify-center text-center gap-2">
             <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
               <Building2 size={18} />
             </div>
-            <p className="text-xs font-medium text-gray-500">
-              Vui lòng chọn phòng ban ở trên để xem danh sách chức vụ
-            </p>
+            <p className="text-xs font-medium text-gray-500">Vui lòng chọn phòng ban ở trên để xem danh sách chức vụ</p>
           </div>
         ) : (
-          <div className="max-h-52 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden border border-gray-200 rounded-lg p-1 divide-y divide-gray-100 bg-white">
+          <div className="max-h-52 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden border border-gray-200 rounded-control p-1 divide-y divide-gray-100 bg-white">
             {isLoadingPositions ? (
               <div className="p-4 text-center text-xs text-gray-400">Đang tải danh sách vị trí...</div>
             ) : filteredPositions.length === 0 ? (
@@ -223,8 +209,8 @@ function PositionModalForm({ employee, defaultDepartmentId, onClose }: PositionM
                     key={pos.id}
                     onClick={() => handleSelectPosition(pos.id)}
                     className={cn(
-                      'p-2.5 flex items-center justify-between cursor-pointer rounded-md transition-colors',
-                      isSelected ? 'bg-primary/5 text-primary font-semibold' : 'hover:bg-gray-50 text-gray-700'
+                      'p-2.5 flex items-center justify-between cursor-pointer rounded-control transition-colors',
+                      isSelected ? 'bg-primary/5 text-primary font-semibold' : 'hover:bg-gray-50 text-gray-700',
                     )}
                   >
                     <div className="flex items-center gap-2">
@@ -245,12 +231,7 @@ function PositionModalForm({ employee, defaultDepartmentId, onClose }: PositionM
         <Button variant="outline" onClick={onClose} disabled={isPending}>
           Hủy
         </Button>
-        <Button
-          variant="primary"
-          onClick={() => handleSavePositions()}
-          loading={isPending}
-          disabled={isPending || !selectedPositionId}
-        >
+        <Button variant="primary" onClick={() => handleSavePositions()} loading={isPending} disabled={isPending || !selectedPositionId}>
           Lưu chức vụ
         </Button>
       </div>
@@ -258,19 +239,9 @@ function PositionModalForm({ employee, defaultDepartmentId, onClose }: PositionM
   );
 }
 
-export default function PositionModal({
-  isOpen,
-  onClose,
-  employee,
-  defaultDepartmentId,
-}: PositionModalProps) {
+export default function PositionModal({ isOpen, onClose, employee, defaultDepartmentId }: PositionModalProps) {
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Gán chức vụ / vị trí cho nhân sự"
-      className="m-2 max-w-lg w-full"
-    >
+    <Modal isOpen={isOpen} onClose={onClose} title="Gán chức vụ / vị trí cho nhân sự" className="m-2 max-w-lg w-full">
       {isOpen && employee ? (
         <PositionModalForm
           key={`${employee.id}-${defaultDepartmentId || 'all'}`}

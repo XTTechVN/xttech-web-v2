@@ -9,11 +9,10 @@ import { Calendar, Clock, AlertCircle, LogIn, LogOut, FileEdit, Briefcase, Eye, 
 import Link from 'next/link';
 import { useAuthStore } from '@/stores';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Capacitor } from '@capacitor/core';
-import { NativeTracking } from '@/hooks/useLocationTracker';
+import { useMyTodayAttendance } from '@/hooks';
 
 import { getAttendances } from '@/actions';
-import { Attendance, getAttendanceStatusLabel, getAttendanceStatusVariant } from '@/types';
+import { Attendance, AttendanceStatus, getAttendanceStatusLabel, getAttendanceStatusVariant } from '@/types';
 import StatCart from '../../dashboard/_components/stats-card';
 import AddAdjustmentModal from '../adjustments/_components/add-modal';
 import AttendanceDetailModal from '../_components/attendance-modal';
@@ -85,26 +84,10 @@ export default function PayrollDataPage() {
 
   const myMonthlyAttendances = useMemo(() => monthlyAttendances?.items ?? [], [monthlyAttendances?.items]);
 
-  // Ưu tiên tìm phiên chấm công đang mở (đã check-in nhưng chưa check-out)
-  const activeOpenAttendance = useMemo(() => {
-    return myAttendances.find((a) => a.checkIn && !a.checkOut);
-  }, [myAttendances]);
+  // Chỉ hiển thị 'Check-out ngay' khi có phiên chấm công đang mở hợp lệ của ngày hôm nay
+  const { isWorkingShift: isCheckOutAction } = useMyTodayAttendance();
 
-  // Chỉ hiển thị 'Check-out ngay' khi có phiên chấm công đang mở; ngược lại hiển thị 'Check-in ngay'
-  const isCheckOutAction = Boolean(activeOpenAttendance);
-
-  const handleTimekeepingButtonClick = async () => {
-    // Nếu là iPhone và chuẩn bị check-in vào ca: Kiểm tra quyền Luôn luôn (Always) qua Native Alert của iOS
-    if (Capacitor.getPlatform() === 'ios' && !isCheckOutAction && NativeTracking.ensureAlwaysPermission) {
-      try {
-        const res = await NativeTracking.ensureAlwaysPermission();
-        if (!res.isAlways) {
-          return; // Dừng lại, Native Alert của iOS đã hiển thị và xử lý
-        }
-      } catch (err) {
-        console.warn('[Payroll] Error checking iOS location permission:', err);
-      }
-    }
+  const handleTimekeepingButtonClick = () => {
     setShowTimekeepingModal(true);
   };
 
@@ -141,7 +124,7 @@ export default function PayrollDataPage() {
       limit,
       userId: user.id,
       search: searchQuery.trim() || undefined,
-      status: (filterStatus as any) || undefined,
+      status: (filterStatus as AttendanceStatus) || undefined,
     });
     return {
       items: response.items ?? [],
@@ -166,55 +149,48 @@ export default function PayrollDataPage() {
   };
 
   const payrollStats = useMemo(() => {
-    let workingDays = 0;
+    let workingShifts = 0;
     let leaveDays = 0;
     let absenceDays = 0;
     let overtimeCount = 0;
     let lateCount = 0;
 
     for (const a of myMonthlyAttendances) {
-      if (a.status !== 'absent') workingDays++;
+      if (a.status !== 'absent' && a.status !== 'leave') workingShifts++;
       if (a.status === 'leave') leaveDays++;
       if (a.status === 'absent') absenceDays++;
       if (a.status === 'overtime') overtimeCount++;
       if (a.status === 'late' || a.isLate || a.isEarlyLeave) lateCount++;
     }
 
+    // 1 ca làm việc = 0.5 công; không tính ca vắng mặt (absent) và nghỉ phép (leave)
+    const workingDays = workingShifts * 0.5;
+
     return [
       {
         title: 'Tổng ngày công',
         value: workingDays,
         icon: <Calendar />,
-        trend: workingDays,
-        trendDirection: workingDays > 0 ? 1 : -1,
       },
       {
         title: 'Tổng ngày phép',
         value: leaveDays,
         icon: <Briefcase />,
-        trend: leaveDays,
-        trendDirection: leaveDays > 0 ? 1 : -1,
       },
       {
         title: 'Ngày nghỉ',
         value: absenceDays,
         icon: <UserX />,
-        trend: absenceDays,
-        trendDirection: absenceDays > 0 ? 1 : -1,
       },
       {
         title: 'Tăng ca (OT)',
         value: overtimeCount,
         icon: <Clock />,
-        trend: overtimeCount,
-        trendDirection: overtimeCount > 0 ? 1 : -1,
       },
       {
         title: 'Đi muộn / Về sớm',
         value: `${lateCount}`,
         icon: <AlertCircle />,
-        trend: lateCount,
-        trendDirection: lateCount > 0 ? 1 : -1,
       },
     ];
   }, [myMonthlyAttendances]);
@@ -459,8 +435,6 @@ export default function PayrollDataPage() {
             title={stat.title}
             value={String(stat.value)}
             icon={stat.icon}
-            trend={stat.trend}
-            trendDirection={stat.trendDirection as any}
           />
         ))}
       </div>

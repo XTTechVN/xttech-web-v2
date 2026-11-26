@@ -1,14 +1,24 @@
-// Thành phần dùng riêng cho trang
-import { Header, Hero, Footer } from './_components';
+﻿import type { Metadata } from 'next';
+import {
+  PAGE_SEO_META,
+  buildHomeJsonLd,
+  buildPageMetadata,
+  serializeJsonLd,
+} from '@/config';
+import { Hero } from './_components';
+
+export const metadata: Metadata = buildPageMetadata(PAGE_SEO_META.home);
 
 export default function Home() {
+  const jsonLd = buildHomeJsonLd();
+
   return (
-    <div className="min-h-screen bg-white font-sans text-gray-900 selection:bg-blue-100 selection:text-blue-900 ">
-      <Header />
-      <main>
-        <Hero />
-      </main>
-      <Footer />
-    </div>
+    <main>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
+      />
+      <Hero />
+    </main>
   );
 }

@@ -22,6 +22,8 @@ export interface DoorTypeConfig {
 }
 
 export const DOOR_TYPE_LABELS: Record<string, string> = {
+  door: 'Cửa đi',
+  window: 'Cửa sổ',
   glass_wall: 'Vách kính',
   casement_window: 'Cửa sổ mở quay',
   sliding_window: 'Cửa sổ lùa',
@@ -188,6 +190,7 @@ export interface ProfileBarCut {
   positions?: string[];
   calcSteps?: CalculationStep[];
   calcNote?: string | null;
+  openDirection?: string | null;
 }
 
 export interface BeadCut {
@@ -217,13 +220,19 @@ export interface GlassCellBOM {
   areaM2: number;
   pricingAreaM2: number;
   openType?: string | null;
+  glassId?: number | null;
+  glassCode?: string | null;
   glassName?: string | null;
   glassPrice?: number | null;
+  isExtra?: boolean;
+  layerIndex?: number;
   calcSteps?: CalculationStep[];
   calcNote?: string | null;
 }
 
 export interface GroupedGlassCellBOM {
+  glassId?: number | null;
+  glassCode?: string | null;
   glassName: string;
   glassW: number;
   glassH: number;
@@ -231,20 +240,27 @@ export interface GroupedGlassCellBOM {
   totalAreaM2: number;
   qty: number;
   glassPrice?: number;
+  isExtra?: boolean;
 }
+
+export type CornerJointPosition = 'frame' | 'sash' | 'safety_frame';
+export type CornerJointTypeCode = 'crimped' | 'permanent_screw' | 'spring_clip' | 'miter_45';
 
 export interface CornerJointBOM {
   name: string;
-  position: 'frame' | 'sash';
+  position: CornerJointPosition;
   qty: number;
   unit: string;
-  jointType?: string | null;
+  jointType?: CornerJointTypeCode | string | null;
   formula?: string | null;
+  comboId?: number | null;
+  comboName?: string | null;
+  baseQuantity?: number | null;
   accessoryId?: number | null;
   accessoryCode?: string | null;
   accessoryName?: string | null;
-  unitPrice?: number;
-  totalPrice?: number;
+  unitPrice: number;
+  totalPrice: number;
   isConfigured: boolean;
   note?: string | null;
 }
@@ -264,7 +280,7 @@ export interface GlassGrilleBOM {
   cornerLengthM: number;
   totalBarLengthM: number;
   motifQty: number;
-  motifItems: Array<{ id: string; motifType: string; name?: string; qty: number }>;
+  motifItems: Array<{ id: string; motifType: string; name?: string; qty: number; rotation?: number }>;
   unitPricePerM: number;
   totalBarPrice: number;
   totalMotifPrice: number;
@@ -280,7 +296,9 @@ export interface AccessoryBOMItem {
   category?: string | null;
   brandName?: string | null;
   unit: string;
+  baseQuantity?: number | null;
   quantity: number;
+  scaleFormula?: string | null;
   unitPrice: number;
   totalPrice: number;
   note?: string | null;
@@ -297,6 +315,31 @@ export interface GasketBOMItem {
   totalPrice: number;
   target: string;
   note?: string | null;
+}
+
+export type HardwareWarningTarget = 'frame' | 'sash' | 'safety_frame' | 'opening' | 'dynamic_mullion';
+export type HardwareWarningSeverity = 'warning' | 'info';
+export type HardwareWarningCode =
+  | 'missing_frame_corner_joint'
+  | 'insufficient_frame_corner_joint'
+  | 'missing_sash_corner_joint'
+  | 'insufficient_sash_corner_joint'
+  | 'missing_safety_corner_joint'
+  | 'insufficient_safety_corner_joint'
+  | 'missing_opening_hardware'
+  | 'insufficient_opening_combo_sashes'
+  | 'missing_dynamic_mullion_accessory'
+  | 'insufficient_dynamic_mullion_accessory';
+
+export interface HardwareWarningItem {
+  code: HardwareWarningCode;
+  target: HardwareWarningTarget;
+  severity: HardwareWarningSeverity;
+  requiredQty: number;
+  selectedQty: number;
+  shortageQty: number;
+  unit: string;
+  message: string;
 }
 
 export interface DoorCalculateResponse {
@@ -323,6 +366,7 @@ export interface DoorCalculateResponse {
   totalGasketLengthM?: number;
   totalGasketPrice?: number;
   hasUnconfiguredJoints?: boolean;
+  hardwareWarnings?: HardwareWarningItem[];
 }
 
 export interface DoorCalculateRequest {

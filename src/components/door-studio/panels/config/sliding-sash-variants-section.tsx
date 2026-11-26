@@ -8,6 +8,12 @@ import {
 } from '../../studio-types';
 import { ProfileBar } from '@/types';
 import { Select } from '@/components/select';
+import {
+  findStudioProfile,
+  isSameProfileId,
+  parseStudioProfileId,
+  StudioProfileId,
+} from '../../utils/profile-combine-utils';
 
 interface SlidingSashVariantsSectionProps {
   config: SashConfig;
@@ -42,7 +48,7 @@ export const SlidingSashVariantsSection: React.FC<SlidingSashVariantsSectionProp
       p.barType === 'INTERLOCK' ||
       p.name.toLowerCase().includes('móc') ||
       p.name.toLowerCase().includes('interlock') ||
-      p.id === config.interlockProfileId
+      isSameProfileId(p.id, config.interlockProfileId)
   );
   const interlockOptions = interlockCandidates.length > 0 ? interlockCandidates : profiles;
 
@@ -53,12 +59,12 @@ export const SlidingSashVariantsSection: React.FC<SlidingSashVariantsSectionProp
       p.barType === 'INTERLOCK' ||
       p.name.toLowerCase().includes('ốp nối') ||
       p.name.toLowerCase().includes('đố động') ||
-      p.id === config.opNoiProfileId
+      isSameProfileId(p.id, config.opNoiProfileId)
   );
   const opNoiOptions = opNoiCandidates.length > 0 ? opNoiCandidates : profiles;
 
-  const isValidSashId = (pid?: number) =>
-    Boolean(pid && sashProfiles.some((p) => p.id === pid));
+  const isValidSashId = (pid?: StudioProfileId) =>
+    Boolean(pid && sashProfiles.some((p) => isSameProfileId(p.id, pid)));
 
   const fallbackLeftSashId = isValidSashId(config.leftProfileId)
     ? config.leftProfileId
@@ -155,8 +161,8 @@ export const SlidingSashVariantsSection: React.FC<SlidingSashVariantsSectionProp
 
       {VARIANT_CARDS.map(({ role, title, canInheritFromLeft }) => {
         const v = getVariant(role);
-        const leftProf = profiles.find((p) => p.id === v.leftProfileId);
-        const topProf = profiles.find((p) => p.id === (v.topProfileId || v.leftProfileId));
+        const leftProf = findStudioProfile(profiles, v.leftProfileId);
+        const topProf = findStudioProfile(profiles, v.topProfileId || v.leftProfileId);
         const inheritFrom1Label = leftProf ? `${leftProf.code} (kế thừa)` : 'Kế thừa từ [1]';
         const inheritFrom2Label = topProf ? `${topProf.code} (kế thừa)` : inheritFrom1Label;
 
@@ -191,7 +197,7 @@ export const SlidingSashVariantsSection: React.FC<SlidingSashVariantsSectionProp
                   value={v.leftProfileId || ''}
                   onChange={(e) =>
                     handleVariantChange(role, {
-                      leftProfileId: e.target.value ? Number(e.target.value) : undefined,
+                      leftProfileId: parseStudioProfileId(e.target.value),
                     })
                   }
                   options={[
@@ -230,7 +236,7 @@ export const SlidingSashVariantsSection: React.FC<SlidingSashVariantsSectionProp
                   value={v.topProfileId || ''}
                   onChange={(e) =>
                     handleVariantChange(role, {
-                      topProfileId: e.target.value ? Number(e.target.value) : undefined,
+                      topProfileId: parseStudioProfileId(e.target.value),
                     })
                   }
                   options={[
@@ -255,7 +261,7 @@ export const SlidingSashVariantsSection: React.FC<SlidingSashVariantsSectionProp
                   value={v.rightProfileId || ''}
                   onChange={(e) =>
                     handleVariantChange(role, {
-                      rightProfileId: e.target.value ? Number(e.target.value) : undefined,
+                      rightProfileId: parseStudioProfileId(e.target.value),
                     })
                   }
                   options={[
@@ -280,7 +286,7 @@ export const SlidingSashVariantsSection: React.FC<SlidingSashVariantsSectionProp
                   value={v.bottomProfileId || ''}
                   onChange={(e) =>
                     handleVariantChange(role, {
-                      bottomProfileId: e.target.value ? Number(e.target.value) : undefined,
+                      bottomProfileId: parseStudioProfileId(e.target.value),
                     })
                   }
                   options={[
@@ -307,7 +313,7 @@ export const SlidingSashVariantsSection: React.FC<SlidingSashVariantsSectionProp
             fullWidth
             value={config.mullionProfileId || ''}
             onChange={(e) =>
-              onChangeConfig({ mullionProfileId: e.target.value ? Number(e.target.value) : undefined })
+              onChangeConfig({ mullionProfileId: parseStudioProfileId(e.target.value) })
             }
             options={[
               { value: '', label: 'Chọn profile...' },
@@ -327,7 +333,7 @@ export const SlidingSashVariantsSection: React.FC<SlidingSashVariantsSectionProp
             fullWidth
             value={config.beadProfileId || ''}
             onChange={(e) =>
-              onChangeConfig({ beadProfileId: e.target.value ? Number(e.target.value) : undefined })
+              onChangeConfig({ beadProfileId: parseStudioProfileId(e.target.value) })
             }
             options={[
               { value: '', label: 'Chọn profile...' },
@@ -347,7 +353,7 @@ export const SlidingSashVariantsSection: React.FC<SlidingSashVariantsSectionProp
             fullWidth
             value={config.interlockProfileId || ''}
             onChange={(e) =>
-              onChangeConfig({ interlockProfileId: e.target.value ? Number(e.target.value) : undefined })
+              onChangeConfig({ interlockProfileId: parseStudioProfileId(e.target.value) })
             }
             options={[
               { value: '', label: 'Chọn profile ốp móc...' },
@@ -370,7 +376,7 @@ export const SlidingSashVariantsSection: React.FC<SlidingSashVariantsSectionProp
             fullWidth
             value={config.opNoiProfileId || ''}
             onChange={(e) =>
-              onChangeConfig({ opNoiProfileId: e.target.value ? Number(e.target.value) : undefined })
+              onChangeConfig({ opNoiProfileId: parseStudioProfileId(e.target.value) })
             }
             options={[
               { value: '', label: 'Chọn profile ốp nối...' },

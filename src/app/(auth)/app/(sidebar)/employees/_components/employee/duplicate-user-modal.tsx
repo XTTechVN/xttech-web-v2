@@ -15,14 +15,7 @@ interface DuplicateUserModalProps {
   onCancel: () => void;
 }
 
-export function DuplicateUserModal({
-  isOpen,
-  user,
-  duplicateField,
-  isRestoring,
-  onRestore,
-  onCancel,
-}: DuplicateUserModalProps) {
+export function DuplicateUserModal({ isOpen, user, duplicateField, isRestoring, onRestore, onCancel }: DuplicateUserModalProps) {
   if (!isOpen || !user) return null;
 
   const fieldLabel = duplicateField === 'email' ? 'Email' : 'Căn cước công dân';
@@ -38,13 +31,7 @@ export function DuplicateUserModal({
       disabled={isRestoring}
       footer={
         <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 w-full">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onCancel}
-            disabled={isRestoring}
-            className="w-full sm:w-auto"
-          >
+          <Button variant="outline" size="sm" onClick={onCancel} disabled={isRestoring} className="w-full sm:w-auto">
             Hủy bỏ
           </Button>
           <Button
@@ -62,7 +49,7 @@ export function DuplicateUserModal({
     >
       <div className="space-y-4 py-1">
         {/* Banner Cảnh báo */}
-        <div className="p-3 bg-amber-50 border border-amber-200/80 rounded-xl flex items-start gap-2.5">
+        <div className="p-3 bg-amber-50 border border-amber-200/80 rounded-block flex items-start gap-2.5">
           <AlertTriangle className="text-amber-600 shrink-0 mt-0.5" size={18} />
           <div className="text-xs text-amber-800 leading-relaxed">
             Phát hiện thông tin <strong>{fieldLabel}</strong> trùng khớp với một nhân sự đã có trong hệ thống.
@@ -70,13 +57,11 @@ export function DuplicateUserModal({
         </div>
 
         {/* Card thông tin User tồn tại */}
-        <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-xl space-y-3">
+        <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-block space-y-3">
           <div className="flex items-center gap-3">
             <Avatar src={avatarUrl} name={user.fullName || user.username} size="md" />
             <div className="flex flex-col min-w-0">
-              <span className="font-bold text-slate-900 text-sm truncate">
-                {user.fullName || user.username}
-              </span>
+              <span className="font-bold text-slate-900 text-sm truncate">{user.fullName || user.username}</span>
               <span className="text-xs text-slate-500 truncate">{user.email}</span>
               <span className="text-[11px] text-slate-400 truncate">@{user.username}</span>
             </div>
@@ -107,9 +92,7 @@ export function DuplicateUserModal({
             </div>
             <div>
               <span className="text-slate-400 block text-[11px]">Ngày tạo</span>
-              <p className="font-semibold text-slate-700">
-                {user.createdAt ? new Date(user.createdAt).toLocaleDateString('vi-VN') : '---'}
-              </p>
+              <p className="font-semibold text-slate-700">{user.createdAt ? new Date(user.createdAt).toLocaleDateString('vi-VN') : '---'}</p>
             </div>
           </div>
         </div>

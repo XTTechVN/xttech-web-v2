@@ -1,239 +1,190 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import {
-  getBrands,
-  getProfileBars,
-  deleteProfileBar,
-  bulkDeleteProfileBars,
-  getDoorSeriesList,
-  exportProfileBarsExcel,
-} from '@/actions';
-import { ConfirmActionModal } from '@/components';
-import { useBulkDeleteSelection } from '@/hooks';
-import { getDefaultBrandId, type ProfileBar } from '@/types';
+import { useMemo, useState } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { CheckCircle2, Download, Layers, Plus, Ruler, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
-import queryClient from '@/utils/query';
+import { deleteProfileBar, exportProfileBarsExcel, getBrands, getDoorSeriesList, getProfileBars } from '@/actions';
+import { Button, ConfirmDelete, FilterDrawer, SearchField, StatGrid, TabState } from '@/components-remake';
+import { useCan, useDebounce } from '@/hooks';
+import { getDefaultBrandId, type ProfileBar } from '@/types';
 import { showErrorToast } from '@/utils';
+import queryClient from '@/utils/query';
 import { BrandSidebar } from '../../_components';
-import {
-  ProfileBarToolbar,
-  ProfileBarTable,
-  ProfileBarModal,
-  ProfileBarSkeleton,
-  ProfileBarEmptyState,
-  ProfileBarExcelModal,
-} from './_components';
+import { ProfileBarDrawer } from './_components/profile-bar-drawer';
+import { ProfileBarList } from './_components/profile-bar-list';
+import { ProfileBarFormDrawer } from './_components/profile-bar-form-drawer';
+import { ProfileBarExcelDrawer } from './_components/modals';
 
+// Thanh profile theo hãng và hệ nhôm; cột hãng bên trái giữ nguyên
 export default function ProfileBarsTab() {
+  const { can } = useCan();
   const [search, setSearch] = useState('');
-  const [selectedBrandId, setSelectedBrandId] = useState<number | null>(null);
-  const [selectedSeriesId, setSelectedSeriesId] = useState<number | null>(null);
+  const [pickedBrandId, setPickedBrandId] = useState<number | null>(null);
+  const [filter, setFilter] = useState<Record<string, string>>({});
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [form, setForm] = useState<{ bar: ProfileBar | null; copy: boolean } | null>(null);
+  const [excelOpen, setExcelOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [deleting, setDeleting] = useState<ProfileBar | null>(null);
+  const kw = useDebounce(search.trim(), 300);
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedBar, setSelectedBar] = useState<ProfileBar | null>(null);
-  const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
-
-  // Queries danh sách thương hiệu (chỉ lấy hãng nhôm)
-  const { data: brandsData, isLoading: isBrandsLoading } = useQuery({
+  const brandsQuery = useQuery({
     queryKey: ['brands', 'aluminum'],
     queryFn: async () => (await getBrands({ offset: 0, limit: 9999, brandType: 'aluminum' })).items,
   });
+  const brands = useMemo(() => brandsQuery.data ?? [], [brandsQuery.data]);
+  const sortedBrands = useMemo(() => [...brands].sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' })), [brands]);
+  const brandId = pickedBrandId ?? getDefaultBrandId(sortedBrands);
+  const seriesId = filter.series ? Number(filter.series) : null;
 
-  const brandsList = useMemo(() => brandsData ?? [], [brandsData]);
-
-  const sortedBrands = useMemo(() => {
-    return [...brandsList].sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' }));
-  }, [brandsList]);
-
-  // Tự động lấy hãng đầu tiên nếu chưa chọn (Derived State - tránh setState trong useEffect)
-  const activeBrandId = selectedBrandId ?? getDefaultBrandId(sortedBrands);
-
-  // Queries danh sách Hệ nhôm theo Hãng đang chọn
-  const { data: seriesData } = useQuery({
-    queryKey: ['door-series', activeBrandId],
-    queryFn: async () => {
-      const res = await getDoorSeriesList({
-        offset: 0,
-        limit: 9999,
-        ...(activeBrandId ? { brandId: activeBrandId } : {}),
-      });
-      return res.items;
-    },
-    enabled: activeBrandId !== null,
+  const seriesQuery = useQuery({
+    queryKey: ['door-series', brandId],
+    queryFn: async () => (await getDoorSeriesList({ offset: 0, limit: 9999, ...(brandId ? { brandId } : {}) })).items,
+    enabled: brandId !== null,
+  });
+  const barsQuery = useQuery({
+    queryKey: ['profile-bars', brandId, seriesId, kw],
+    queryFn: async () =>
+      (await getProfileBars({ brandId: brandId!, seriesId: seriesId || undefined, limit: 1000, offset: 0, allowDeleted: false, search: kw || undefined })).items,
+    enabled: brandId !== null,
   });
 
-  const seriesList = seriesData || [];
+  const rows = useMemo(() => barsQuery.data ?? [], [barsQuery.data]);
+  const selected = useMemo(() => rows.find((b) => b.id === selectedId) ?? null, [rows, selectedId]);
+  const brandName = brands.find((b) => b.id === brandId)?.name;
 
-  // Queries danh sách thanh profile theo Hãng + Hệ nhôm đang chọn
-  const { data: profileBarsData, isLoading: isBarsLoading } = useQuery({
-    queryKey: ['profile-bars', activeBrandId, selectedSeriesId, search],
-    queryFn: async () => {
-      if (!activeBrandId) return [];
-      const res = await getProfileBars({
-        brandId: activeBrandId,
-        seriesId: selectedSeriesId || undefined,
-        limit: 1000,
-        offset: 0,
-        allowDeleted: false,
-        search: search.trim() || undefined,
-      });
-      return res.items;
-    },
-    enabled: activeBrandId !== null,
-  });
-
-  const profileBars = useMemo(() => profileBarsData || [], [profileBarsData]);
-
-  const bulkSelection = useBulkDeleteSelection(profileBars);
-
-  // Mutations xóa thanh profile đơn lẻ
-  const { mutate: deleteBarMutate } = useMutation({
+  const remove = useMutation({
     mutationFn: (id: number) => deleteProfileBar(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile-bars'] });
-      toast.success('Xóa thanh profile thành công');
+      toast.success('Đã xóa thanh profile');
+      setDeleting(null);
     },
-    onError: (err) => showErrorToast(err, 'Lỗi khi xóa thanh profile'),
+    onError: (e) => showErrorToast(e, 'Không thể xóa thanh profile'),
   });
 
-  // Mutations xóa hàng loạt thanh profile
-  const { mutate: bulkDeleteMutate, isPending: isBulkDeleting } = useMutation({
-    mutationFn: (ids: number[]) => bulkDeleteProfileBars({ ids }),
-    onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: ['profile-bars'] });
-      toast.success(`Đã xóa hàng loạt ${res.deletedCount} thanh profile nhôm`);
-      bulkSelection.exitBulkMode();
-    },
-    onError: (err) => showErrorToast(err, 'Lỗi khi xóa hàng loạt thanh profile'),
-  });
-
-  const selectedBrand = useMemo(() => {
-    return activeBrandId ? brandsList.find((b) => b.id === activeBrandId) : null;
-  }, [brandsList, activeBrandId]);
-
-  const handleSelectBrand = (brandId: number) => {
-    setSelectedBrandId(brandId);
-    setSelectedSeriesId(null);
-  };
-
-  const handleOpenCreateModal = () => {
-    setSelectedBar(null);
-    setIsModalOpen(true);
-  };
-
-  const handleOpenEditModal = (bar: ProfileBar) => {
-    setSelectedBar(bar);
-    setIsModalOpen(true);
-  };
-
-  const handleDeleteBar = (bar: ProfileBar) => {
-    if (confirm(`Xác nhận xóa thanh profile "${bar.name}" (${bar.code})?`)) {
-      deleteBarMutate(bar.id);
-    }
-  };
-
-  const handleExportExcel = async () => {
+  const exportExcel = async () => {
     try {
-      setIsExporting(true);
-      await exportProfileBarsExcel({
-        brandId: activeBrandId,
-        seriesId: selectedSeriesId,
-      });
+      setExporting(true);
+      await exportProfileBarsExcel({ brandId, seriesId });
       toast.success('Đã xuất file Excel danh sách thanh profile');
-    } catch (err) {
-      showErrorToast(err, 'Lỗi khi xuất file Excel');
+    } catch (e) {
+      showErrorToast(e, 'Lỗi khi xuất file Excel');
     } finally {
-      setIsExporting(false);
+      setExporting(false);
     }
   };
 
-  const isLoading = isBrandsLoading || isBarsLoading;
+  const openForm = (bar: ProfileBar | null, copy: boolean) => {
+    setSelectedId(null);
+    setForm({ bar, copy });
+  };
+
+  const stats = [
+    { label: 'Thanh của hãng', value: rows.length, icon: Ruler },
+    { label: 'Hệ nhôm', value: seriesQuery.data?.length ?? 0, icon: Layers },
+    { label: 'Đang hoạt động', value: rows.filter((b) => b.isActive !== false).length, icon: CheckCircle2 },
+  ];
 
   return (
-    <div className="flex flex-col md:flex-row items-start min-h-[calc(100vh-105px)]">
-      <BrandSidebar
-        brands={brandsList}
-        selectedBrandId={activeBrandId}
-        onSelectBrand={handleSelectBrand}
-      />
-
-      <div className="flex-1 flex flex-col gap-4 min-w-0 w-full p-4">
-        <ProfileBarToolbar
-          search={search}
-          onSearchChange={setSearch}
-          onAddClick={handleOpenCreateModal}
-          onExportExcelClick={handleExportExcel}
-          onImportExcelClick={() => setIsExcelModalOpen(true)}
-          isExporting={isExporting}
-          seriesList={seriesList}
-          selectedSeriesId={selectedSeriesId}
-          onSeriesChange={setSelectedSeriesId}
-          isBulkMode={bulkSelection.isBulkMode}
-          selectedCount={bulkSelection.selectedCount}
-          totalCount={bulkSelection.totalCount}
-          isAllSelected={bulkSelection.isAllSelected}
-          isBulkDeleting={isBulkDeleting}
-          onEnterBulkMode={bulkSelection.enterBulkMode}
-          onExitBulkMode={bulkSelection.exitBulkMode}
-          onToggleSelectAll={bulkSelection.toggleSelectAll}
-          onConfirmBulkDelete={() => bulkSelection.setIsConfirmOpen(true)}
+    <div className="flex flex-col gap-4 px-4 pb-4 md:px-6 md:pb-6">
+      <StatGrid items={stats} />
+      <div className="flex items-center gap-2">
+        <SearchField value={search} onChange={setSearch} label="Tìm thanh profile" placeholder="Tìm theo mã hoặc tên thanh..." />
+        <FilterDrawer
+          groups={[
+            {
+              key: 'series',
+              label: 'Hệ nhôm',
+              options: (seriesQuery.data ?? []).map((s) => ({ value: String(s.id), label: `${s.name} (${s.code})` })),
+            },
+          ]}
+          value={filter}
+          onChange={setFilter}
         />
-
-        {isLoading ? (
-          <ProfileBarSkeleton count={6} />
-        ) : profileBars.length === 0 ? (
-          <ProfileBarEmptyState selectedBrandName={selectedBrand?.name} />
-        ) : (
-          <ProfileBarTable
-            profileBars={profileBars}
-            onEdit={handleOpenEditModal}
-            onDelete={handleDeleteBar}
-            isBulkMode={bulkSelection.isBulkMode}
-            selectedIdSet={bulkSelection.selectedIdSet}
-            isAllSelected={bulkSelection.isAllSelected}
-            isPartiallySelected={bulkSelection.isPartiallySelected}
-            onToggleSelect={bulkSelection.toggleSelect}
-            onToggleSelectAll={bulkSelection.toggleSelectAll}
-          />
-        )}
+        <div className="ml-auto flex flex-none items-center gap-2">
+          <Button variant="outline" icon={<Download size={16} />} iconOnly="mobile" loading={exporting} onClick={exportExcel}>
+            Xuất Excel
+          </Button>
+          {can('catalog:create') && (
+            <>
+              <Button variant="outline" icon={<Upload size={16} />} iconOnly="mobile" onClick={() => setExcelOpen(true)}>
+                Nhập Excel
+              </Button>
+              <Button icon={<Plus size={18} />} iconOnly="mobile" onClick={() => openForm(null, false)}>
+                Thêm thanh profile
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
-      <ProfileBarModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setSelectedBar(null);
+      <div className="flex flex-col gap-4 md:flex-row">
+        <BrandSidebar
+          brands={brands}
+          selectedBrandId={brandId}
+          onSelectBrand={(id) => {
+            setPickedBrandId(id);
+            setFilter({});
+          }}
+        />
+        <div className="w-full min-w-0 flex-1">
+          <TabState
+            loading={brandsQuery.isLoading || barsQuery.isLoading}
+            error={brandsQuery.isError || barsQuery.isError}
+            onRetry={() => {
+              brandsQuery.refetch();
+              barsQuery.refetch();
+            }}
+            empty={rows.length === 0}
+            emptyText={kw || seriesId ? 'Không có thanh profile khớp bộ lọc.' : `${brandName ? `Hãng ${brandName}` : 'Hãng này'} chưa có thanh profile.`}
+            emptyAction={
+              !kw &&
+              !seriesId &&
+              can('catalog:create') && (
+                <Button icon={<Plus size={18} />} onClick={() => openForm(null, false)}>
+                  Thêm thanh profile
+                </Button>
+              )
+            }
+          >
+            <ProfileBarList rows={rows} onOpen={(b) => setSelectedId(b.id)} />
+          </TabState>
+        </div>
+      </div>
+
+      <ProfileBarDrawer
+        bar={selected}
+        canCreate={can('catalog:create')}
+        canEdit={can('catalog:update')}
+        canDelete={can('catalog:delete')}
+        onClose={() => setSelectedId(null)}
+        onEdit={(b) => openForm(b, false)}
+        onCopy={(b) => openForm(b, true)}
+        onDelete={(b) => {
+          setSelectedId(null);
+          setDeleting(b);
         }}
-        profileBar={selectedBar}
-        brands={brandsList}
-        defaultBrandId={activeBrandId}
       />
-
-      <ProfileBarExcelModal
-        isOpen={isExcelModalOpen}
-        onClose={() => setIsExcelModalOpen(false)}
-        brands={brandsList}
+      <ProfileBarFormDrawer
+        isOpen={!!form}
+        onClose={() => setForm(null)}
+        profileBar={form?.bar ?? null}
+        isCopy={form?.copy ?? false}
+        brands={brands}
+        defaultBrandId={brandId}
       />
-
-      <ConfirmActionModal
-        isOpen={bulkSelection.isConfirmOpen}
-        onClose={() => bulkSelection.setIsConfirmOpen(false)}
-        onConfirm={() => bulkDeleteMutate(bulkSelection.selectedIds)}
-        title="Xác nhận xóa hàng loạt thanh profile nhôm"
-        description={
-          <>
-            Bạn có chắc chắn muốn xóa <strong>{bulkSelection.selectedCount}</strong> thanh profile nhôm đã chọn thuộc hãng{' '}
-            <strong>{selectedBrand?.name || ''}</strong> không?
-          </>
-        }
-        warningNote="Các thanh profile đã chọn sẽ bị đưa vào trạng thái xóa và ẩn khỏi danh sách cấu hình."
-        confirmText={`Xóa ${bulkSelection.selectedCount} thanh profile`}
-        variant="danger"
-        loading={isBulkDeleting}
-      />
+      <ProfileBarExcelDrawer isOpen={excelOpen} onClose={() => setExcelOpen(false)} brands={brands} defaultBrandId={brandId} />
+      <ConfirmDelete
+        isOpen={!!deleting}
+        title="Xác nhận xóa thanh profile"
+        pending={remove.isPending}
+        onClose={() => setDeleting(null)}
+        onConfirm={() => deleting && remove.mutate(deleting.id)}
+      >
+        Xóa thanh profile <strong className="font-semibold text-slate-900 [overflow-wrap:anywhere]">{deleting?.name}</strong> ({deleting?.code})?
+      </ConfirmDelete>
     </div>
   );
 }

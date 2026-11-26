@@ -4,9 +4,13 @@ import React, { useRef } from 'react';
 import toast from 'react-hot-toast';
 import { Plus, Trash2, Download, UploadCloud } from 'lucide-react';
 import { Button } from '@/components';
-import { WarehouseItem, WarehouseItemType } from '@/types';
+import { ReceiptType, WarehouseItem, WarehouseItemType } from '@/types';
 import { ReceiptItemCombobox } from './receipt-item-combobox';
-import { downloadReceiptTemplateCsv, parseReceiptCsv } from '../../_utils/excel-template';
+import {
+  downloadReceiptTemplateExcel,
+  parseReceiptExcelFile,
+  toDisplayUnit,
+} from '../../_utils';
 
 export interface FormRowItem {
   id: string;
@@ -26,10 +30,11 @@ export interface FormRowItem {
 interface ReceiptItemsTableProps {
   rows: FormRowItem[];
   itemsList: WarehouseItem[];
+  receiptType?: ReceiptType;
   onAddRow: () => void;
   onRemoveRow: (id: string) => void;
   onSelectPredefinedItem: (rowId: string, item: WarehouseItem) => void;
-  onRowChange: (id: string, field: keyof FormRowItem, value: any) => void;
+  onRowChange: (id: string, field: keyof FormRowItem, value: string | number) => void;
   onImportRows?: (imported: FormRowItem[]) => void;
   totalAmount: number;
 }
@@ -37,6 +42,7 @@ interface ReceiptItemsTableProps {
 export function ReceiptItemsTable({
   rows,
   itemsList,
+  receiptType = 'import',
   onAddRow,
   onRemoveRow,
   onSelectPredefinedItem,
@@ -46,27 +52,47 @@ export function ReceiptItemsTable({
 }: ReceiptItemsTableProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const text = event.target?.result as string;
-      if (!text) return;
+    try {
+      const { items: parsed, unmatchedCodes, overStockItems } = await parseReceiptExcelFile(
+        file,
+        itemsList
+      );
 
-      const parsed = parseReceiptCsv(text, itemsList);
       if (parsed.length === 0) {
-        toast.error('File không chứa dữ liệu hợp lệ. Vui lòng tải file mẫu để kiểm tra.');
+        toast.error('File không chứa dữ liệu hợp lệ. Vui lòng tải file mẫu Excel để kiểm tra.');
         return;
       }
 
-      const newRows: FormRowItem[] = parsed.map((p) => ({
-        id: Math.random().toString(36).substring(7),
+      if (receiptType === 'export') {
+        if (unmatchedCodes.length > 0) {
+          toast.error(
+            `Cảnh báo: Có ${unmatchedCodes.length} mã vật tư chưa có trong kho (${unmatchedCodes.slice(0, 5).join(', ')}).`
+          );
+        }
+        if (overStockItems.length > 0) {
+          const summary = overStockItems
+            .slice(0, 3)
+            .map((it) => `${it.itemCode} (yêu cầu ${it.requested} / khả dụng ${it.available} ${it.unit})`)
+            .join('; ');
+          toast.error(`Cảnh báo vượt tồn khả dụng: ${summary}`);
+        }
+      }
+
+      const newRows: FormRowItem[] = parsed.map((p, idx) => ({
+        id: `row-imp-${Date.now()}-${idx}`,
         itemId: p.itemId,
         itemCode: p.itemCode,
         itemName: p.itemName,
-        unit: p.unit,
+        itemType: p.itemType,
+        profileBarId: p.profileBarId,
+        colorId: p.colorId,
+        colorName: p.colorName || '',
+        unit: toDisplayUnit(p.unit),
         quantity: p.quantity,
         unitPrice: p.unitPrice ?? 0,
         note: p.note,
@@ -76,9 +102,9 @@ export function ReceiptItemsTable({
         onImportRows(newRows);
         toast.success(`Đã nạp thành công ${newRows.length} mặt hàng từ file!`);
       }
-    };
-    reader.readAsText(file, 'utf-8');
-    e.target.value = '';
+    } catch {
+      toast.error('Không thể đọc file đã chọn. Vui lòng sử dụng đúng biểu mẫu Excel (.xlsx).');
+    }
   };
 
   return (
@@ -91,7 +117,7 @@ export function ReceiptItemsTable({
           <input
             ref={fileInputRef}
             type="file"
-            accept=".csv,.txt"
+            accept=".xlsx,.xls,.csv"
             onChange={handleFileChange}
             className="hidden"
           />
@@ -99,11 +125,11 @@ export function ReceiptItemsTable({
             type="button"
             variant="outline"
             size="sm"
-            onClick={downloadReceiptTemplateCsv}
+            onClick={() => downloadReceiptTemplateExcel(receiptType, itemsList)}
             className="gap-1 text-xs text-slate-600 hover:text-slate-800"
           >
             <Download size={13} />
-            Tải Mẫu (.CSV)
+            Tải Mẫu Excel (.xlsx)
           </Button>
           <Button
             type="button"
@@ -113,7 +139,7 @@ export function ReceiptItemsTable({
             className="gap-1 text-xs text-emerald-700 border-emerald-300 hover:bg-emerald-50"
           >
             <UploadCloud size={13} />
-            Nhập File (.CSV)
+            Nhập File Excel (.xlsx)
           </Button>
           <Button
             type="button"
@@ -145,8 +171,7 @@ export function ReceiptItemsTable({
           </thead>
           <tbody className="divide-y divide-slate-100 bg-white">
             {rows.map((row) => {
-              const rowTotal =
-                (Number(row.quantity) || 0) * (Number(row.unitPrice) || 0);
+              const rowTotal = (Number(row.quantity) || 0) * (Number(row.unitPrice) || 0);
               return (
                 <tr key={row.id} className="hover:bg-slate-50/50">
                   <td className="p-2">
@@ -162,9 +187,7 @@ export function ReceiptItemsTable({
                     <input
                       type="text"
                       value={row.itemCode}
-                      onChange={(e) =>
-                        onRowChange(row.id, 'itemCode', e.target.value)
-                      }
+                      onChange={(e) => onRowChange(row.id, 'itemCode', e.target.value)}
                       placeholder="Mã VT"
                       required
                       className="w-full text-xs px-2 py-1.5 border border-slate-200 rounded font-mono uppercase focus:ring-1 focus:ring-indigo-500"
@@ -174,9 +197,7 @@ export function ReceiptItemsTable({
                     <input
                       type="text"
                       value={row.itemName}
-                      onChange={(e) =>
-                        onRowChange(row.id, 'itemName', e.target.value)
-                      }
+                      onChange={(e) => onRowChange(row.id, 'itemName', e.target.value)}
                       placeholder="Tên quy cách vật tư"
                       required
                       className="w-full text-xs px-2 py-1.5 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500"
@@ -187,9 +208,7 @@ export function ReceiptItemsTable({
                       type="text"
                       list="aluminum-colors-suggestions"
                       value={row.colorName || ''}
-                      onChange={(e) =>
-                        onRowChange(row.id, 'colorName', e.target.value)
-                      }
+                      onChange={(e) => onRowChange(row.id, 'colorName', e.target.value)}
                       placeholder="Màu nhôm"
                       className="w-full text-xs px-2 py-1.5 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500 bg-white placeholder:text-slate-300"
                     />
@@ -212,9 +231,7 @@ export function ReceiptItemsTable({
                     <input
                       type="text"
                       value={row.unit}
-                      onChange={(e) =>
-                        onRowChange(row.id, 'unit', e.target.value)
-                      }
+                      onChange={(e) => onRowChange(row.id, 'unit', e.target.value)}
                       className="w-full text-xs px-2 py-1.5 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-500"
                     />
                   </td>
@@ -222,9 +239,7 @@ export function ReceiptItemsTable({
                     <input
                       type="number"
                       value={row.quantity}
-                      onChange={(e) =>
-                        onRowChange(row.id, 'quantity', e.target.value)
-                      }
+                      onChange={(e) => onRowChange(row.id, 'quantity', e.target.value)}
                       min={0}
                       step="any"
                       className="w-full text-xs px-2 py-1.5 border border-slate-200 rounded font-semibold text-right focus:ring-1 focus:ring-indigo-500"
@@ -234,9 +249,7 @@ export function ReceiptItemsTable({
                     <input
                       type="number"
                       value={row.unitPrice}
-                      onChange={(e) =>
-                        onRowChange(row.id, 'unitPrice', e.target.value)
-                      }
+                      onChange={(e) => onRowChange(row.id, 'unitPrice', e.target.value)}
                       min={0}
                       step="any"
                       className="w-full text-xs px-2 py-1.5 border border-slate-200 rounded text-right focus:ring-1 focus:ring-indigo-500"

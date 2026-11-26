@@ -110,6 +110,8 @@ export function BrandModal({ isOpen, onClose, brand }: BrandModalProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['brands'] });
+      queryClient.invalidateQueries({ queryKey: ['brands-picker'] });
+      queryClient.invalidateQueries({ queryKey: ['brands-list'] });
       toast.success(isEdit ? 'Cập nhật thương hiệu thành công' : 'Thêm thương hiệu thành công');
       onClose();
     },

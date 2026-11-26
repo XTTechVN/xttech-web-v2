@@ -1,6 +1,6 @@
 import React from 'react';
 import { ArchConfig, FrameConfig, FrameShape, SashConfig, SceneCellNode } from '../../studio-types';
-import { CAD_PROPORTIONS } from '../cad-config';
+import { CadGlassEffectOverlay } from './cad-glass-effect-overlay';
 import {
   getArchCenterlinePath,
   getArchXAtY,
@@ -19,6 +19,7 @@ interface CadCurvedDoubleDoorProps {
   h: number;
   frameD: number;
   sashD: number;
+  beadW: number;
   mullionT: number;
   aluminumColor: string;
   hardwareColor: string;
@@ -28,7 +29,6 @@ interface CadCurvedDoubleDoorProps {
   onEditDimension?: (target: 'w' | 'h' | 'cell' | 'cell-w' | 'cell-h' | 'handleHeight', cellId?: string) => void;
   leftNode: SceneCellNode;
   rightNode?: SceneCellNode;
-  frameConfig?: FrameConfig;
   sashConfig?: SashConfig;
   scaledArchConfig?: ArchConfig;
 }
@@ -48,6 +48,8 @@ export const CadCurvedDoubleDoor: React.FC<CadCurvedDoubleDoorProps> = ({
   fh,
   h,
   frameD,
+  sashD,
+  beadW,
   aluminumColor,
   hardwareColor,
   isOpenBottom,
@@ -56,18 +58,12 @@ export const CadCurvedDoubleDoor: React.FC<CadCurvedDoubleDoorProps> = ({
   onEditDimension,
   leftNode,
   rightNode,
-  frameConfig,
   sashConfig,
   scaledArchConfig,
 }) => {
-  const isSlim = sashConfig?.sashStyle === 'slim';
   const dFrame = frameD;
-  const dSash = isSlim
-    ? Math.max(6, Math.round(dFrame * (CAD_PROPORTIONS.slimSashD / CAD_PROPORTIONS.frameD)))
-    : Math.max(10, Math.round(dFrame * (CAD_PROPORTIONS.sashD / CAD_PROPORTIONS.frameD)));
-  const dBead = isSlim
-    ? Math.max(2, Math.round(dFrame * (CAD_PROPORTIONS.slimBeadD / CAD_PROPORTIONS.frameD)))
-    : Math.max(3.5, Math.round(dFrame * (CAD_PROPORTIONS.beadD / CAD_PROPORTIONS.frameD)));
+  const dSash = sashD;
+  const dBead = beadW;
 
   const effectiveOpenBottom = Boolean(isOpenBottom || isArchOpenBottomShape(frameShape));
   const dBot = effectiveOpenBottom ? 0 : dFrame;
@@ -286,6 +282,22 @@ export const CadCurvedDoubleDoor: React.FC<CadCurvedDoubleDoorProps> = ({
             onSelectCell(rightNode ? rightNode.id : leftNode.id);
           }}
         />
+        {paneType === 'glass' && (
+          <CadGlassEffectOverlay
+            cellId={id || 'curved'}
+            pathD={beadInnerPath}
+            bbox={{
+              x: ox + dFrame + dSash + dBead,
+              y: oy + dFrame + dSash + dBead,
+              width: Math.max(10, fw - (dFrame + dSash + dBead) * 2),
+              height: Math.max(10, effFh - (dFrame + dSash + dBead) * 2),
+            }}
+            clipId={glassClipId}
+            effect={leftNode?.glassVisualEffect}
+            color={leftNode?.glassVisualColor}
+            splitCount={leftNode?.glassSplitCount}
+          />
+        )}
       </g>
 
       {/* 2. Vành Khung Cánh uốn vòm bao quanh (Sash Arch Ring) */}
@@ -502,6 +514,7 @@ interface CadCurvedSingleDoorProps {
   h: number;
   frameD: number;
   sashD: number;
+  beadW: number;
   mullionT: number;
   aluminumColor: string;
   hardwareColor: string;
@@ -529,6 +542,8 @@ export const CadCurvedSingleDoor: React.FC<CadCurvedSingleDoorProps> = ({
   fh,
   h,
   frameD,
+  sashD,
+  beadW,
   aluminumColor,
   hardwareColor,
   isOpenBottom,
@@ -540,19 +555,12 @@ export const CadCurvedSingleDoor: React.FC<CadCurvedSingleDoorProps> = ({
   sashConfig,
   scaledArchConfig,
 }) => {
-  const isSlim = sashConfig?.sashStyle === 'slim';
   const sashType = node?.sashType ?? 'fixed';
   const hasSash = sashType !== 'fixed';
 
   const dFrame = frameD;
-  const dSash = hasSash
-    ? isSlim
-      ? Math.max(6, Math.round(dFrame * (CAD_PROPORTIONS.slimSashD / CAD_PROPORTIONS.frameD)))
-      : Math.max(10, Math.round(dFrame * (CAD_PROPORTIONS.sashD / CAD_PROPORTIONS.frameD)))
-    : 0;
-  const dBead = isSlim
-    ? Math.max(2, Math.round(dFrame * (CAD_PROPORTIONS.slimBeadD / CAD_PROPORTIONS.frameD)))
-    : Math.max(3.5, Math.round(dFrame * (CAD_PROPORTIONS.beadD / CAD_PROPORTIONS.frameD)));
+  const dSash = hasSash ? sashD : 0;
+  const dBead = beadW;
 
   const effectiveOpenBottom = Boolean(isOpenBottom || isArchOpenBottomShape(frameShape));
   const dBot = effectiveOpenBottom && hasSash ? 0 : dFrame;
@@ -735,6 +743,17 @@ export const CadCurvedSingleDoor: React.FC<CadCurvedSingleDoorProps> = ({
             onSelectCell(node.id);
           }}
         />
+        {paneType === 'glass' && (
+          <CadGlassEffectOverlay
+            cellId={id || 'curved-single'}
+            pathD={beadInnerPath}
+            bbox={{ x: gx, y: gy, width: gw, height: gh }}
+            clipId={glassClipId}
+            effect={node.glassVisualEffect}
+            color={node.glassVisualColor}
+            splitCount={node.glassSplitCount}
+          />
+        )}
       </g>
 
       {/* 2. Vành Cánh uốn vòm (nếu không phải ô Fix) */}

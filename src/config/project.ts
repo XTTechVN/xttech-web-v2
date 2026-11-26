@@ -1,8 +1,15 @@
-import type {
-  ProjectStatus,
-  WarrantyIssueTag,
-  WarrantyState,
-  WarrantyVisitStatus,
+import {
+  DOOR_TYPE_LABELS,
+  type DoorFulfillmentType,
+  type HardwareWarningSeverity,
+  type HardwareWarningTarget,
+  type MaterialType,
+  type PositionCostStatus,
+  type PositionVisualMode,
+  type ProjectStatus,
+  type WarrantyIssueTag,
+  type WarrantyState,
+  type WarrantyVisitStatus,
 } from '@/types';
 import type { BadgeProps } from '@/components';
 
@@ -136,4 +143,180 @@ export const getProjectStageLabel = (
     shortLabel: fallback?.shortLabel ?? mapped ?? status,
     order: fallback?.order ?? 50,
   };
+};
+
+export const CORNER_JOINT_POSITION_MAP: Record<string, string> = {
+  frame: 'Khung bao',
+  sash: 'Cánh cửa',
+  safety_frame: 'Khung bảo vệ',
+};
+
+export const HARDWARE_WARNING_TARGET_MAP: Record<HardwareWarningTarget, string> = {
+  frame: 'Khung bao',
+  sash: 'Cánh cửa',
+  safety_frame: 'Khung bảo vệ',
+  opening: 'Hướng mở & Vận hành',
+  dynamic_mullion: 'Đố động',
+};
+
+export const HARDWARE_WARNING_SEVERITY_STYLES: Record<
+  HardwareWarningSeverity,
+  { containerClass: string; badgeClass: string; textClass: string; iconClass: string }
+> = {
+  warning: {
+    containerClass: 'bg-amber-50/90 border-amber-200 text-amber-900',
+    badgeClass: 'bg-amber-100 text-amber-800 border-amber-300/70',
+    textClass: 'text-amber-800',
+    iconClass: 'text-amber-600',
+  },
+  info: {
+    containerClass: 'bg-blue-50/90 border-blue-200 text-blue-900',
+    badgeClass: 'bg-blue-100 text-blue-800 border-blue-300/70',
+    textClass: 'text-blue-800',
+    iconClass: 'text-blue-600',
+  },
+};
+
+export const CORNER_JOINT_TYPE_MAP: Record<
+  string,
+  { label: string; methodLabel: string; badgeClass: string }
+> = {
+  crimped: {
+    label: 'Ke ép góc',
+    methodLabel: 'Dập bấm góc',
+    badgeClass: 'bg-blue-50 text-blue-700 border border-blue-200/60',
+  },
+  permanent_screw: {
+    label: 'Ke vĩnh cửu',
+    methodLabel: 'Bắt vít lục giác',
+    badgeClass: 'bg-purple-50 text-purple-700 border border-purple-200/60',
+  },
+  spring_clip: {
+    label: 'Ke nhảy',
+    methodLabel: 'Bấm chốt lò xo',
+    badgeClass: 'bg-emerald-50 text-emerald-700 border border-emerald-200/60',
+  },
+  miter_45: {
+    label: 'Ghép góc 45°',
+    methodLabel: 'Ghép 45°',
+    badgeClass: 'bg-slate-100 text-slate-700 border border-slate-200/60',
+  },
+  ke_ep_goc: {
+    label: 'Ke ép góc',
+    methodLabel: 'Dập bấm góc',
+    badgeClass: 'bg-blue-50 text-blue-700 border border-blue-200/60',
+  },
+  ke_vinh_cuu: {
+    label: 'Ke vĩnh cửu',
+    methodLabel: 'Bắt vít lục giác',
+    badgeClass: 'bg-purple-50 text-purple-700 border border-purple-200/60',
+  },
+  ke_nhay: {
+    label: 'Ke nhảy',
+    methodLabel: 'Bấm chốt lò xo',
+    badgeClass: 'bg-emerald-50 text-emerald-700 border border-emerald-200/60',
+  },
+  '45': {
+    label: 'Ghép góc 45°',
+    methodLabel: 'Ghép 45°',
+    badgeClass: 'bg-slate-100 text-slate-700 border border-slate-200/60',
+  },
+};
+
+export const DOOR_FULFILLMENT_TYPE_MAP: Record<
+  DoorFulfillmentType,
+  { label: string; shortLabel: string; badgeClass: string }
+> = {
+  in_house: {
+    label: 'Tự sản xuất',
+    shortLabel: 'Tự SX',
+    badgeClass: 'bg-slate-100 text-slate-700 border border-slate-200',
+  },
+  outsourced: {
+    label: 'Nhập nguyên bộ (NCC)',
+    shortLabel: 'Nhập NCC',
+    badgeClass: 'bg-primary/10 text-primary border border-primary/25',
+  },
+};
+
+export const POSITION_COST_STATUS_MAP: Record<
+  PositionCostStatus,
+  { label: string; shortLabel: string; variant: NonNullable<BadgeProps['variant']>; badgeClass: string }
+> = {
+  estimated: {
+    label: 'Giá tạm tính',
+    shortLabel: 'Tạm tính',
+    variant: 'warning',
+    badgeClass: 'bg-amber-50 text-amber-800 border border-amber-200',
+  },
+  confirmed: {
+    label: 'Đã chốt giá NCC',
+    shortLabel: 'Đã chốt giá',
+    variant: 'success',
+    badgeClass: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
+  },
+};
+
+export const POSITION_VISUAL_MODE_MAP: Record<PositionVisualMode, string> = {
+  cad: 'Bản vẽ CAD 2D',
+  catalog_image: 'Ảnh mẫu NCC',
+  custom_image: 'Ảnh báo giá NCC',
+};
+
+export interface SupplierDoorTypeOption {
+  value: string;
+  label: string;
+}
+
+export const SUPPLIER_DOOR_TYPE_OPTIONS: SupplierDoorTypeOption[] = [
+  { value: 'composite_wood', label: 'Cửa nhựa gỗ Composite' },
+  { value: 'steel_wood', label: 'Cửa thép vân gỗ' },
+  { value: 'abs_korean', label: 'Cửa nhựa ABS Hàn Quốc' },
+  { value: 'fireproof', label: 'Cửa thép chống cháy' },
+  { value: 'industrial_wood', label: 'Cửa gỗ công nghiệp (MDF/HDF)' },
+  { value: 'rolling_door', label: 'Cửa cuốn' },
+  { value: 'automatic_door', label: 'Cửa kính tự động' },
+  { value: 'imported_aluminum', label: 'Cửa nhôm nhập nguyên bộ' },
+  { value: 'casement_door', label: 'Cửa đi mở quay' },
+  { value: 'sliding_door', label: 'Cửa đi lùa' },
+  { value: 'other', label: 'Khác' },
+];
+
+export const POSITION_DOOR_TYPE_LABEL_MAP: Record<string, string> = {
+  ...DOOR_TYPE_LABELS,
+  door: 'Cửa đi',
+  window: 'Cửa sổ',
+  ...Object.fromEntries(SUPPLIER_DOOR_TYPE_OPTIONS.map((item) => [item.value, item.label])),
+};
+
+export const getPositionDoorTypeLabel = (doorType?: string | null): string => {
+  if (!doorType) return 'Chưa phân loại';
+  const trimmed = doorType.trim();
+  if (!trimmed) return 'Chưa phân loại';
+  return (
+    POSITION_DOOR_TYPE_LABEL_MAP[trimmed] ??
+    POSITION_DOOR_TYPE_LABEL_MAP[trimmed.toLowerCase()] ??
+    trimmed
+  );
+};
+
+export const GLASS_MATERIAL_TYPE_MAP: Record<
+  MaterialType,
+  { label: string; shortLabel: string; badgeClass: string }
+> = {
+  glass: {
+    label: 'Kính',
+    shortLabel: 'Kính',
+    badgeClass: 'bg-sky-50 text-sky-700 border border-sky-200',
+  },
+  panel: {
+    label: 'Tấm / Panel',
+    shortLabel: 'Panel',
+    badgeClass: 'bg-amber-50 text-amber-800 border border-amber-200',
+  },
+  screen_mesh: {
+    label: 'Lưới',
+    shortLabel: 'Lưới',
+    badgeClass: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
+  },
 };

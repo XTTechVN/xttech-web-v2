@@ -6,10 +6,7 @@ export const getPurchasableShortages = (shortages: ShortageItemDetail[]): Shorta
   shortages.filter((shortage) => shortage.isConfigured !== false);
 
 // Chuyển danh sách thiếu hụt thành dòng phiếu mua bù (dùng chung cho Kho và Sản xuất)
-export const buildShortagePurchaseItems = (
-  shortages: ShortageItemDetail[],
-  projectText: string,
-): WarehouseReceiptItemCreatePayload[] =>
+export const buildShortagePurchaseItems = (shortages: ShortageItemDetail[], projectText: string): WarehouseReceiptItemCreatePayload[] =>
   getPurchasableShortages(shortages).map((shortage) => ({
     itemId: shortage.itemId || undefined,
     itemCode: shortage.itemCode,

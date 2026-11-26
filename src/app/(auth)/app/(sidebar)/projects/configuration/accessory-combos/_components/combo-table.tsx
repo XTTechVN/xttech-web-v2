@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { ChevronRight, Pencil, Trash2, PackageOpen, ChevronLeft, Star } from 'lucide-react';
+import { ChevronRight, Pencil, Trash2, Copy, PackageOpen, ChevronLeft, Star } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
 import { updateAccessoryCombo } from '@/actions';
 import { formatCurrency, showErrorToast } from '@/utils';
@@ -35,9 +35,11 @@ interface ComboTableProps {
   combos: AccessoryCombo[];
   isLoading: boolean;
   search: string;
+  hasActiveFilter?: boolean;
   total: number;
   offset: number;
   pageSize: number;
+  onCopy: (combo: AccessoryCombo) => void;
   onEdit: (combo: AccessoryCombo) => void;
   onDelete: (combo: AccessoryCombo) => void;
   onPageChange: (offset: number) => void;
@@ -59,7 +61,7 @@ function ComboSkeleton() {
   );
 }
 
-function ComboEmptyState({ search }: { search: string }) {
+function ComboEmptyState({ isFiltered }: { isFiltered: boolean }) {
   return (
     <tr>
       <td colSpan={TOTAL_COLUMNS} className="py-16 text-center text-slate-400">
@@ -67,7 +69,9 @@ function ComboEmptyState({ search }: { search: string }) {
           <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center">
             <PackageOpen size={22} className="text-slate-400" />
           </div>
-          <p className="text-sm font-semibold text-slate-600">{search ? 'Không tìm thấy combo phù hợp' : 'Chưa có gói combo nào'}</p>
+          <p className="text-sm font-semibold text-slate-600">
+            {isFiltered ? 'Không tìm thấy combo phù hợp' : 'Chưa có gói combo nào'}
+          </p>
           <p className="text-xs text-slate-400">Nhấn &quot;Thêm combo mới&quot; để tạo gói combo đầu tiên.</p>
         </div>
       </td>
@@ -79,12 +83,14 @@ function ComboRow({
   combo,
   isExpanded,
   onToggle,
+  onCopy,
   onEdit,
   onDelete,
 }: {
   combo: AccessoryCombo;
   isExpanded: boolean;
   onToggle: () => void;
+  onCopy: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }) {
@@ -124,10 +130,7 @@ function ComboRow({
               {doorTypes.map((dt) => {
                 const dtCfg = getDoorTypeConfig(dt);
                 return (
-                  <span
-                    key={dt}
-                    className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border whitespace-nowrap ${dtCfg.className}`}
-                  >
+                  <span key={dt} className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border whitespace-nowrap ${dtCfg.className}`}>
                     {dtCfg.label}
                   </span>
                 );
@@ -139,9 +142,7 @@ function ComboRow({
         </td>
         <td className="py-3.5 px-4">
           {combo.description ? (
-            <p className="text-xs text-slate-600 line-clamp-2 max-w-60" title={combo.description}>
-              {combo.description}
-            </p>
+            <p className="text-xs text-slate-600 line-clamp-2 max-w-60" title={combo.description}>{combo.description}</p>
           ) : (
             <span className="text-xs text-slate-400">—</span>
           )}
@@ -171,16 +172,15 @@ function ComboRow({
           </button>
         </td>
         <td className="py-3.5 px-4 text-center">
-          <span
-            className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border whitespace-nowrap ${
-              combo.isActive ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-600 border-slate-200'
-            }`}
-          >
+          <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border whitespace-nowrap ${combo.isActive ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
             {combo.isActive ? 'Hoạt động' : 'Tạm ngưng'}
           </span>
         </td>
         <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center justify-end gap-1">
+            <button type="button" onClick={onCopy} className="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-md transition-colors cursor-pointer" title="Sao chép combo">
+              <Copy size={15} />
+            </button>
             <button type="button" onClick={onEdit} className="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-md transition-colors cursor-pointer" title="Chỉnh sửa">
               <Pencil size={15} />
             </button>
@@ -203,27 +203,21 @@ function ComboRow({
                 transition={{ duration: 0.2, ease: 'easeInOut' }}
                 style={{ overflow: 'hidden' }}
               >
-                <div className="border-b border-slate-100 bg-slate-50/60 px-4 py-2.5 pl-14">
-                  <div className="flex flex-col gap-1.5">
-                    {(combo.comboItems || []).map((item, idx) => (
-                      <div key={idx} className="flex items-center gap-3 py-1.5 px-3 bg-white rounded-lg border border-slate-100 shadow-2xs">
-                        <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-500 text-[10px] font-bold flex items-center justify-center shrink-0">
-                          {idx + 1}
-                        </span>
-                        {item.accessoryCode && (
-                          <span className="font-mono text-[11px] font-bold text-primary bg-primary/8 border border-primary/15 px-1.5 py-0.5 rounded shrink-0">
-                            {item.accessoryCode}
-                          </span>
-                        )}
-                        <span className="flex-1 text-xs text-slate-700 font-medium min-w-0 truncate">{item.accessoryName || '—'}</span>
-                        {item.category && <span className="text-[11px] text-slate-400 shrink-0 hidden sm:block">{item.category}</span>}
-                        <span className="text-[11px] font-semibold text-slate-600 shrink-0 bg-slate-50 border border-slate-200 rounded px-1.5 py-0.5">
-                          ×{item.quantity} {item.unit || ''}
-                        </span>
-                        {item.note && <span className="text-[11px] text-slate-400 italic shrink-0 hidden md:block max-w-35 truncate">{item.note}</span>}
-                      </div>
-                    ))}
-                  </div>
+                <div className="border-b border-slate-100 bg-slate-50/60 px-4 py-2.5 pl-14 flex flex-col gap-1.5">
+                  {(combo.comboItems || []).map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-3 py-1.5 px-3 bg-white rounded-lg border border-slate-100 shadow-2xs">
+                      <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-500 text-[10px] font-bold flex items-center justify-center shrink-0">{idx + 1}</span>
+                      {item.accessoryCode && (
+                        <span className="font-mono text-[11px] font-bold text-primary bg-primary/8 border border-primary/15 px-1.5 py-0.5 rounded shrink-0">{item.accessoryCode}</span>
+                      )}
+                      <span className="flex-1 text-xs text-slate-700 font-medium min-w-0 truncate">{item.accessoryName || '—'}</span>
+                      {item.category && <span className="text-[11px] text-slate-400 shrink-0 hidden sm:block">{item.category}</span>}
+                      <span className="text-[11px] font-semibold text-slate-600 shrink-0 bg-slate-50 border border-slate-200 rounded px-1.5 py-0.5">
+                        ×{item.quantity} {item.unit || ''}
+                      </span>
+                      {item.note && <span className="text-[11px] text-slate-400 italic shrink-0 hidden md:block max-w-35 truncate">{item.note}</span>}
+                    </div>
+                  ))}
                 </div>
               </motion.div>
             )}
@@ -234,7 +228,7 @@ function ComboRow({
   );
 }
 
-export function ComboTable({ combos, isLoading, search, total, offset, pageSize, onEdit, onDelete, onPageChange }: ComboTableProps) {
+export function ComboTable({ combos, isLoading, search, hasActiveFilter, total, offset, pageSize, onCopy, onEdit, onDelete, onPageChange }: ComboTableProps) {
   const [expandedId, setExpandedId] = React.useState<number | null>(null);
   const hasNext = offset + pageSize < total;
   const hasPrev = offset > 0;
@@ -264,7 +258,7 @@ export function ComboTable({ combos, isLoading, search, total, offset, pageSize,
             {isLoading ? (
               <ComboSkeleton />
             ) : combos.length === 0 ? (
-              <ComboEmptyState search={search} />
+              <ComboEmptyState isFiltered={Boolean(search || hasActiveFilter)} />
             ) : (
               combos.map((combo) => (
                 <ComboRow
@@ -272,6 +266,7 @@ export function ComboTable({ combos, isLoading, search, total, offset, pageSize,
                   combo={combo}
                   isExpanded={expandedId === combo.id}
                   onToggle={() => setExpandedId(expandedId === combo.id ? null : combo.id)}
+                  onCopy={() => onCopy(combo)}
                   onEdit={() => onEdit(combo)}
                   onDelete={() => onDelete(combo)}
                 />
@@ -287,20 +282,10 @@ export function ComboTable({ combos, isLoading, search, total, offset, pageSize,
             Trang {currentPage} / {totalPages} &nbsp;·&nbsp; {total} gói combo
           </span>
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              disabled={!hasPrev}
-              onClick={() => onPageChange(Math.max(0, offset - pageSize))}
-              className="p-1.5 rounded-md border border-slate-200 text-slate-600 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
-            >
+            <button type="button" disabled={!hasPrev} onClick={() => onPageChange(Math.max(0, offset - pageSize))} className="p-1.5 rounded-md border border-slate-200 text-slate-600 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer">
               <ChevronLeft size={15} />
             </button>
-            <button
-              type="button"
-              disabled={!hasNext}
-              onClick={() => onPageChange(offset + pageSize)}
-              className="p-1.5 rounded-md border border-slate-200 text-slate-600 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
-            >
+            <button type="button" disabled={!hasNext} onClick={() => onPageChange(offset + pageSize)} className="p-1.5 rounded-md border border-slate-200 text-slate-600 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer">
               <ChevronRight size={15} />
             </button>
           </div>

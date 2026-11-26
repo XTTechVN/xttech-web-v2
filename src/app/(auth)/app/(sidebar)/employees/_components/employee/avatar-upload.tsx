@@ -31,19 +31,12 @@ export function AvatarUpload({ previewUrl, fullName, register, setValue }: Avata
         <input id="avatar-file-input" type="file" accept="image/*" className="hidden" {...register('avatar')} />
       </div>
       <div className="flex items-center gap-4">
-        <label
-          htmlFor="avatar-file-input"
-          className="text-xs text-primary font-medium hover:underline cursor-pointer flex items-center gap-1"
-        >
+        <label htmlFor="avatar-file-input" className="text-xs text-primary font-medium hover:underline cursor-pointer flex items-center gap-1">
           <Camera size={14} />
           <span>Chọn ảnh đại diện</span>
         </label>
         {previewUrl && (
-          <button
-            type="button"
-            className="text-xs text-red-500 font-medium hover:underline cursor-pointer"
-            onClick={() => setValue('avatar', null)}
-          >
+          <button type="button" className="text-xs text-red-500 font-medium hover:underline cursor-pointer" onClick={() => setValue('avatar', null)}>
             Xóa ảnh
           </button>
         )}

@@ -7,7 +7,7 @@ import { getWarehouseItems, getWarehouseSuppliers } from '@/actions';
 import { Button } from '@/components';
 import queryClient from '@/utils/query';
 import type { ShortageItemDetail } from '@/types';
-import { ReceiptFormModal } from '../../../../../warehouse/_components/modals';
+import ReceiptFormDrawer from '../../../../../warehouse/_components/receipts/receipt-form-drawer';
 import {
   buildShortagePurchaseItems,
   getPurchasableShortages,
@@ -48,7 +48,7 @@ export function CuttingShortagePanel({
 
   if (shortages.length === 0) {
     return (
-      <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-2.5 text-xs text-emerald-800">
+      <div className="flex items-center gap-2 rounded-control border border-emerald-200 bg-emerald-50 p-2.5 text-xs text-emerald-800">
         <CheckCircle2 size={14} /> Kho đủ vật tư cho lệnh này, có thể tạo phiếu xuất kho.
       </div>
     );
@@ -58,7 +58,7 @@ export function CuttingShortagePanel({
   const hasUnconfigured = purchasableCount < shortages.length;
 
   return (
-    <div className="space-y-2 rounded-lg border border-red-200 bg-red-50/60 p-3">
+    <div className="space-y-2 rounded-control border border-red-200 bg-red-50/60 p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="flex items-center gap-1.5 text-xs font-bold text-red-800">
           <AlertTriangle size={14} /> Thiếu hụt / chưa khai báo {shortages.length} mặt hàng vật tư
@@ -82,7 +82,7 @@ export function CuttingShortagePanel({
             className="flex items-center justify-between gap-2"
           >
             <span className="min-w-0 truncate">
-              <span className="font-mono font-semibold">{item.itemCode}</span> - {item.itemName}
+              <span className="tabular-nums font-semibold">{item.itemCode}</span> - {item.itemName}
               {item.colorName ? ` (${item.colorName})` : ''}
               {!item.itemId && item.isConfigured !== false && (
                 <span className="ml-1.5 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
@@ -95,7 +95,7 @@ export function CuttingShortagePanel({
                 </span>
               )}
             </span>
-            <span className="shrink-0 font-mono font-bold text-red-600">
+            <span className="shrink-0 tabular-nums font-bold text-red-600">
               +{item.shortageQty.toLocaleString('vi-VN')} {toDisplayUnit(item.unit)}
             </span>
           </li>
@@ -109,15 +109,15 @@ export function CuttingShortagePanel({
         </p>
       )}
 
-      <ReceiptFormModal
+      <ReceiptFormDrawer
         isOpen={isReceiptOpen}
         onClose={() => setInternalReceiptOpen(false)}
         onSuccess={() => {
           setInternalReceiptOpen(false);
           queryClient.invalidateQueries({ queryKey: ['order_shortage', projectId, orderId] });
         }}
-        itemsList={itemsData?.items ?? []}
-        suppliersList={suppliersData?.items ?? []}
+        items={itemsData?.items ?? []}
+        suppliers={suppliersData?.items ?? []}
         initialItems={buildShortagePurchaseItems(shortages, `#${projectId}`)}
       />
     </div>

@@ -1,6 +1,22 @@
 import type { AccessoryCategory } from './accessory-category';
 import type { Brand } from './brand';
 
+export type AccessoryUnit =
+  | 'set'
+  | 'pcs'
+  | 'pair'
+  | 'unit'
+  | 'roll'
+  | 'box'
+  | 'bag'
+  | 'meter'
+  | 'bottle'
+  | 'sheet'
+  | 'bar'
+  | 'sqm'
+  | 'kg'
+  | 'tube';
+
 export interface AccessoryUnitConfig {
   label: string;
   className: string;
@@ -39,9 +55,29 @@ export const ACCESSORY_UNIT_CONFIG: Record<string, AccessoryUnitConfig> = {
     label: 'Mét',
     className: 'bg-rose-50 text-rose-700 border-rose-200/70',
   },
+  bottle: {
+    label: 'Chai / Tuýp',
+    className: 'bg-pink-50 text-pink-700 border-pink-200/70',
+  },
   sheet: {
     label: 'Tấm',
     className: 'bg-orange-50 text-orange-700 border-orange-200/70',
+  },
+  bar: {
+    label: 'Cây',
+    className: 'bg-slate-50 text-slate-700 border-slate-200/70',
+  },
+  sqm: {
+    label: 'm²',
+    className: 'bg-blue-50 text-blue-700 border-blue-200/70',
+  },
+  kg: {
+    label: 'kg',
+    className: 'bg-lime-50 text-lime-700 border-lime-200/70',
+  },
+  tube: {
+    label: 'Tuýp',
+    className: 'bg-pink-50 text-pink-700 border-pink-200/70',
   },
 };
 
@@ -54,7 +90,12 @@ export const ACCESSORY_UNIT_MAP: Record<string, string> = {
   box: 'Hộp',
   bag: 'Túi',
   meter: 'Mét',
+  bottle: 'Chai / Tuýp',
   sheet: 'Tấm',
+  bar: 'Cây',
+  sqm: 'm²',
+  kg: 'kg',
+  tube: 'Tuýp',
 };
 
 export const getAccessoryUnitConfig = (unit: string | null | undefined): AccessoryUnitConfig => {
@@ -98,12 +139,21 @@ export interface Accessory {
   name: string;
   specification: string | null;
   unit: string | null;
+  unitLabel?: string | null;
   color?: string | null;
   costPrice: number;
   imagePath: string | null;
   isActive?: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface AccessoryDropdownItem {
+  id: number;
+  name: string;
+  code?: string | null;
+  unit?: string | null;
+  unitLabel?: string | null;
 }
 
 export interface AccessoryCreate {
@@ -135,12 +185,14 @@ export interface AccessoryUpdate {
 export interface AccessoryQueryParams {
   search?: string;
   code?: string;
-  unit?: string;
+  unit?: AccessoryUnit | string;
   categoryId?: number;
   brandId?: number;
   isActive?: boolean;
   offset?: number;
   limit?: number;
+  orderBy?: string;
+  sortBy?: 'asc' | 'desc';
   allowDeleted?: boolean;
   materialId?: number;
   doorId?: number;

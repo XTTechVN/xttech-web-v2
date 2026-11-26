@@ -44,6 +44,83 @@ export const createDefaultRootCell = (width = 1400, height = 1600): SceneCellNod
   children: [],
 });
 
+export function pickLeafOverrides(node?: SceneCellNode | null): Partial<SceneCellNode> {
+  if (!node) return {};
+  return {
+    seriesIdOverride: node.seriesIdOverride,
+    sashProfileIdOverride: node.sashProfileIdOverride,
+    sashTopProfileIdOverride: node.sashTopProfileIdOverride,
+    sashBottomProfileIdOverride: node.sashBottomProfileIdOverride,
+    sashLeftProfileIdOverride: node.sashLeftProfileIdOverride,
+    sashRightProfileIdOverride: node.sashRightProfileIdOverride,
+    sashCornerJointOverride: node.sashCornerJointOverride,
+    beadProfileIdOverride: node.beadProfileIdOverride,
+    openBottomOverride: node.openBottomOverride,
+    hasBottomFrameOverride: node.hasBottomFrameOverride,
+    reversalOverride: node.reversalOverride,
+    hasFrameReversalOverride: node.hasFrameReversalOverride,
+    reversalProfileIdOverride: node.reversalProfileIdOverride,
+    reversalOffsetMmOverride: node.reversalOffsetMmOverride,
+  };
+}
+
+export function pickGlassConfig(node?: SceneCellNode | null): Partial<SceneCellNode> {
+  if (!node) return {};
+  return {
+    glassId: node.glassId,
+    glassName: node.glassName,
+    glassThickness: node.glassThickness,
+    glassSplitCount: node.glassSplitCount,
+    glassVisualEffect: node.glassVisualEffect,
+    glassVisualEffectOverride: node.glassVisualEffectOverride,
+    glassVisualColor: node.glassVisualColor,
+    extraGlasses: node.extraGlasses?.map((g) => ({ ...g })),
+  };
+}
+
+export interface EnclosingFrameUnitInfo {
+  unitNode: SceneCellNode;
+  isCoupledSubFrame: boolean;
+  unitLabel: string;
+}
+
+export function findEnclosingFrameUnit(
+  root: SceneCellNode,
+  targetId: string
+): EnclosingFrameUnitInfo | null {
+  const findPath = (curr: SceneCellNode, path: SceneCellNode[]): SceneCellNode[] | null => {
+    if (curr.id === targetId) return [...path, curr];
+    if (curr.children) {
+      for (const child of curr.children) {
+        const found = findPath(child, [...path, curr]);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+  const path = findPath(root, []);
+  if (!path || path.length === 0) return null;
+
+  for (let i = path.length - 1; i >= 1; i--) {
+    const node = path[i];
+    const parent = path[i - 1];
+    if (node.isFrameUnit || parent.splitType === 'coupling') {
+      const idx = parent.children ? parent.children.findIndex((c) => c.id === node.id) : 0;
+      return {
+        unitNode: node,
+        isCoupledSubFrame: true,
+        unitLabel: `Khối khung #${idx + 1} (${Math.round(node.w)}×${Math.round(node.h)} mm)`,
+      };
+    }
+  }
+
+  return {
+    unitNode: root,
+    isCoupledSubFrame: false,
+    unitLabel: `Khung bao chính (${Math.round(root.w)}×${Math.round(root.h)} mm)`,
+  };
+}
+
 export const rescaleTree = (node: SceneCellNode, scaleX: number, scaleY: number): SceneCellNode => {
   const newW = Math.max(1, Math.round(node.w * scaleX));
   const newH = Math.max(1, Math.round(node.h * scaleY));
@@ -115,6 +192,31 @@ export const rescaleTree = (node: SceneCellNode, scaleX: number, scaleY: number)
   };
 };
 
+const hasTreeDimensionMismatch = (
+  curr: SceneCellNode,
+  expectedW: number,
+  expectedH: number
+): boolean => {
+  if (Math.abs((curr.w || 0) - expectedW) >= 1 || Math.abs((curr.h || 0) - expectedH) >= 1) {
+    return true;
+  }
+  if (curr.children && curr.children.length > 0) {
+    const isVert = curr.splitDirection === 'vertical';
+    const isHoriz = curr.splitDirection === 'horizontal';
+    if (isVert || isHoriz) {
+      const expectedSpan = isVert ? expectedW : expectedH;
+      const childrenSum = curr.children.reduce((sum, c) => sum + ((isVert ? c.w : c.h) || 0), 0);
+      if (Math.abs(childrenSum - expectedSpan) >= 1) {
+        return true;
+      }
+      return curr.children.some((c) =>
+        hasTreeDimensionMismatch(c, isVert ? c.w || 1 : expectedW, isVert ? expectedH : c.h || 1)
+      );
+    }
+  }
+  return false;
+};
+
 export const ensureRootCellDimensions = (
   node: SceneCellNode,
   targetW: number,
@@ -125,17 +227,7 @@ export const ensureRootCellDimensions = (
   const curW = node.w || safeW;
   const curH = node.h || safeH;
 
-  const isVert = node.splitDirection === 'vertical';
-  const isHoriz = node.splitDirection === 'horizontal';
-  const childrenSpanMismatch =
-    node.children && node.children.length > 0 && (isVert || isHoriz)
-      ? Math.abs(
-          node.children.reduce((sum, c) => sum + ((isVert ? c.w : c.h) || 0), 0) -
-            (isVert ? safeW : safeH)
-        ) >= 1
-      : false;
-
-  if (curW === safeW && curH === safeH && !childrenSpanMismatch) {
+  if (!hasTreeDimensionMismatch(node, safeW, safeH)) {
     return node;
   }
 
@@ -148,7 +240,8 @@ export const createSplitChildren = (
   totalH: number,
   count: number,
   direction: 'vertical' | 'horizontal',
-  defaultSashType: SashOpenType = 'fixed'
+  defaultSashType: SashOpenType = 'fixed',
+  sourceGlassConfig?: Partial<SceneCellNode>
 ): SceneCellNode[] => {
   const isVert = direction === 'vertical';
   const span = isVert ? totalW : totalH;
@@ -160,7 +253,17 @@ export const createSplitChildren = (
     const currentSpan = isLast ? span - accumulated : basePart;
     accumulated += currentSpan;
 
+    const clonedGlassConfig: Partial<SceneCellNode> | undefined = sourceGlassConfig
+      ? {
+          ...sourceGlassConfig,
+          ...(sourceGlassConfig.extraGlasses !== undefined
+            ? { extraGlasses: sourceGlassConfig.extraGlasses.map((g) => ({ ...g })) }
+            : {}),
+        }
+      : undefined;
+
     return {
+      ...clonedGlassConfig,
       id: `${parentId}_c${i}_${crypto.randomUUID().slice(0, 8)}`,
       w: isVert ? currentSpan : totalW,
       h: isVert ? totalH : currentSpan,
@@ -228,16 +331,18 @@ export const applySashTypeToCluster = (
         }
 
         return {
+          ...pickLeafOverrides(targetNode),
+          ...pickGlassConfig(targetNode),
           id: childId,
           w: cw,
           h: ch,
           sashType: dirStr,
           paneType: targetNode.paneType || 'glass',
-          glassName: targetNode.glassName,
-          glassThickness: targetNode.glassThickness,
           hasLock: sashDef.hasHandle,
           handleHeight: sashDef.hasHandle ? Math.round(ch / 2) : undefined,
-          handleType: sashDef.hasHandle ? ((sashDef.handleType as any) || 'lever') : undefined,
+          handleType: sashDef.hasHandle
+            ? ((sashDef.handleType as SceneCellNode['handleType']) || 'lever')
+            : undefined,
           sashZIndex: sashDef.zIndex,
           sashArrow: sashDef.arrowType,
           sashJoiner: sashDef.joiner,
@@ -261,19 +366,27 @@ export const applySashTypeToCluster = (
     // 2.2: Cấu hình 1 cánh đơn trong Catalog
     const singleDef = layout.sashes[0];
     const dirStr = Array.isArray(singleDef.huongMo) ? singleDef.huongMo.join(',') : singleDef.huongMo;
+    const singleGlassSource =
+      targetNode.glassId !== undefined ||
+      targetNode.glassName !== undefined ||
+      targetNode.extraGlasses !== undefined
+        ? targetNode
+        : activeContainer;
     const mergedNode: SceneCellNode = {
       ...activeContainer,
+      ...pickLeafOverrides(targetNode),
+      ...pickGlassConfig(singleGlassSource),
       sashType: dirStr,
       sashLayout: layout.id,
       splitDirection: undefined,
       splitType: undefined,
       children: [],
       paneType: targetNode.paneType || activeContainer.paneType || 'glass',
-      glassName: targetNode.glassName || activeContainer.glassName,
-      glassThickness: targetNode.glassThickness || activeContainer.glassThickness,
       hasLock: singleDef.hasHandle,
       handleHeight: singleDef.hasHandle ? Math.round(activeContainer.h / 2) : undefined,
-      handleType: singleDef.hasHandle ? ((singleDef.handleType as any) || 'lever') : undefined,
+      handleType: singleDef.hasHandle
+        ? ((singleDef.handleType as SceneCellNode['handleType']) || 'lever')
+        : undefined,
       sashZIndex: singleDef.zIndex,
       sashArrow: singleDef.arrowType,
       sashHingeSymbol: singleDef.hingeSymbol,
@@ -307,16 +420,22 @@ export const applySashTypeToCluster = (
     }
 
     const sashHasHandle = ['swing_left', 'swing_right', 'tilt_turn', 'awning', 'tilt', 'tilt_down', 'sliding'].includes(newSashType);
+    const clusterGlassSource =
+      targetNode.glassId !== undefined ||
+      targetNode.glassName !== undefined ||
+      targetNode.extraGlasses !== undefined
+        ? targetNode
+        : c0;
     const mergedNode: SceneCellNode = {
       ...clusterContainer,
+      ...pickLeafOverrides(targetNode),
+      ...pickGlassConfig(clusterGlassSource),
       sashType: newSashType,
       sashLayout: undefined,
       splitDirection: undefined,
       splitType: undefined,
       children: [],
       paneType: targetNode.paneType || c0.paneType || 'glass',
-      glassName: targetNode.glassName || c0.glassName,
-      glassThickness: targetNode.glassThickness || c0.glassThickness,
       hasLock: sashHasHandle,
       handleHeight: sashHasHandle ? Math.round(clusterContainer.h / 2) : undefined,
       handleType: sashHasHandle ? targetNode.handleType || c1.handleType || 'lever' : undefined,
@@ -334,23 +453,23 @@ export const applySashTypeToCluster = (
       const halfW = Math.round(targetNode.w / 2);
       const newChildren: SceneCellNode[] = [
         {
+          ...pickLeafOverrides(targetNode),
+          ...pickGlassConfig(targetNode),
           id: `${targetNode.id}_c0_${crypto.randomUUID().slice(0, 8)}`,
           w: halfW,
           h: targetNode.h,
           sashType: 'swing_left',
           paneType: targetNode.paneType || 'glass',
-          glassName: targetNode.glassName,
-          glassThickness: targetNode.glassThickness,
           hasLock: false,
         },
         {
+          ...pickLeafOverrides(targetNode),
+          ...pickGlassConfig(targetNode),
           id: `${targetNode.id}_c1_${crypto.randomUUID().slice(0, 8)}`,
           w: targetNode.w - halfW,
           h: targetNode.h,
           sashType: 'swing_right',
           paneType: targetNode.paneType || 'glass',
-          glassName: targetNode.glassName,
-          glassThickness: targetNode.glassThickness,
           hasLock: true,
           handleHeight: Math.round(targetNode.h / 2),
           handleType: targetNode.handleType || 'lever',
@@ -384,10 +503,36 @@ export const applySashTypeToCluster = (
   return { updatedRoot: root, nextSelectedId: targetId };
 };
 
-/**
- * Tổng quát: resize 1 cell bất kỳ trong cây, bù lại cho sibling kế tiếp
- */
-export const resizeCellInParent = (
+export const resolveAxisResizableCellId = (
+  root: SceneCellNode,
+  cellId: string,
+  axis: 'w' | 'h'
+): string => {
+  const findPath = (curr: SceneCellNode, path: SceneCellNode[]): SceneCellNode[] | null => {
+    const nextPath = [...path, curr];
+    if (curr.id === cellId) return nextPath;
+    if (curr.children) {
+      for (const child of curr.children) {
+        const found = findPath(child, nextPath);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  const path = findPath(root, []);
+  if (!path || path.length < 2) return cellId;
+
+  const expectedDir = axis === 'w' ? 'vertical' : 'horizontal';
+  for (let i = path.length - 1; i >= 1; i--) {
+    if (path[i - 1].splitDirection === expectedDir) {
+      return path[i].id;
+    }
+  }
+  return cellId;
+};
+
+const resizeDirectCellInParent = (
   root: SceneCellNode,
   cellId: string,
   newValue: number,
@@ -452,7 +597,20 @@ export const resizeCellInParent = (
   }
 
   // Không tìm thấy ở cấp này, đệ quy xuống sâu hơn
-  return { ...root, children: root.children.map((c) => resizeCellInParent(c, cellId, newValue, axis)) };
+  return { ...root, children: root.children.map((c) => resizeDirectCellInParent(c, cellId, newValue, axis)) };
+};
+
+/**
+ * Tổng quát: resize 1 cell bất kỳ trong cây, bù lại cho sibling kế tiếp
+ */
+export const resizeCellInParent = (
+  root: SceneCellNode,
+  cellId: string,
+  newValue: number,
+  axis: 'w' | 'h'
+): SceneCellNode => {
+  const effectiveCellId = resolveAxisResizableCellId(root, cellId, axis);
+  return resizeDirectCellInParent(root, effectiveCellId, newValue, axis);
 };
 
 /**
@@ -481,3 +639,109 @@ export const isInsideSash = (root: SceneCellNode, targetId: string): boolean => 
   );
 };
 
+/**
+ * Nhận diện nút cụm cánh lùa chồng đè (Sliding cluster) — SSOT dùng chung giữa CAD traverser & reference engine
+ */
+export function isSlidingClusterNode(node: SceneCellNode): boolean {
+  if (node.splitType !== 'sash_pair') return false;
+  return Boolean(
+    node.sashLayout?.includes('lua') ||
+      node.sashLayout?.includes('sliding') ||
+      node.sashType?.includes('lua') ||
+      node.sashType?.includes('sliding') ||
+      node.children?.some(
+        (c) =>
+          c.sashType?.includes('lua') ||
+          c.sashType === 'sliding' ||
+          Boolean(c.sashArrow?.includes('lua')) ||
+          c.sashZIndex !== undefined
+      )
+  );
+}
+
+/**
+ * Kiểm tra giữa hai ô con liền kề c1, c2 của parentNode có thanh đố khung tĩnh hay không
+ */
+export function hasFrameMullionBetween(
+  parentNode: SceneCellNode,
+  c1: SceneCellNode,
+  c2: SceneCellNode
+): boolean {
+  if (
+    parentNode.splitType === 'coupling' ||
+    parentNode.splitType === 'sash_mullion' ||
+    parentNode.splitType === 'sash_pair' ||
+    parentNode.sashType === 'swing_double' ||
+    isSlidingClusterNode(parentNode)
+  ) {
+    return false;
+  }
+  if (
+    parentNode.splitDirection === 'vertical' &&
+    c1.sashType === 'swing_left' &&
+    c2.sashType === 'swing_right'
+  ) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Chuẩn hóa mảng độ rộng/cao các khoang đố cánh phẳng (`node.sashMullions`) về đúng tổng kích thước cánh
+ */
+export function resolveFlatSashMullionPositions(node: SceneCellNode): number[] {
+  const count = node.sashMullions?.count ?? 1;
+  const isVert = (node.sashMullions?.direction || 'vertical') === 'vertical';
+  const rawSpan = isVert ? node.w : node.h;
+  const totalSpan = Math.max(1, Number.isFinite(rawSpan) && rawSpan > 0 ? rawSpan : 1);
+
+  if (count <= 1) {
+    return [totalSpan];
+  }
+
+  const roundClean = (val: number): number => {
+    const r = Math.round(val * 10) / 10;
+    return Math.abs(r) < 1e-9 ? 0 : r;
+  };
+  const roundRemainder = (val: number): number => {
+    const r = Math.round(val * 1000) / 1000;
+    return Math.abs(r) < 1e-9 ? 0 : r;
+  };
+
+  const positions = node.sashMullions?.positions;
+  const isValidPositions = Boolean(
+    positions &&
+      positions.length === count &&
+      positions.every((p) => Number.isFinite(p) && p > 0)
+  );
+
+  if (isValidPositions && positions) {
+    const sum = positions.reduce((acc, p) => acc + p, 0);
+    if (Math.abs(sum - totalSpan) < 1e-6) {
+      return [...positions];
+    }
+    let acc = 0;
+    return positions.map((p, idx) => {
+      if (idx === count - 1) {
+        return Math.max(0.01, roundRemainder(totalSpan - acc));
+      }
+      const scaled = (totalSpan * p) / sum;
+      const maxSafe = Math.max(0.01, totalSpan - acc - (count - 1 - idx) * 0.1);
+      const val = totalSpan >= count ? Math.max(0.1, Math.min(maxSafe, roundClean(scaled))) : scaled;
+      acc += val;
+      return val;
+    });
+  }
+
+  let acc = 0;
+  return Array.from({ length: count }, (_, idx) => {
+    if (idx === count - 1) {
+      return Math.max(0.01, roundRemainder(totalSpan - acc));
+    }
+    const equalPart = totalSpan / count;
+    const maxSafe = Math.max(0.01, totalSpan - acc - (count - 1 - idx) * 0.1);
+    const val = totalSpan >= count ? Math.max(0.1, Math.min(maxSafe, roundClean(equalPart))) : equalPart;
+    acc += val;
+    return val;
+  });
+}

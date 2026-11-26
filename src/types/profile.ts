@@ -31,6 +31,40 @@ export interface ProfileSectionUpdate {
   grooveWidthMm?: number | null;
 }
 
+export interface ProfileBarVariant {
+  id?: number;
+  profileBarId?: number;
+  role: string;
+  code: string;
+  name?: string | null;
+  note?: string | null;
+  sectionHeightMm?: number | null;
+  deductSashMm?: number | null;
+  deductBeadMm?: number | null;
+  deductGlassMm?: number | null;
+  deductMullionMm?: number | null;
+  sortOrder?: number;
+}
+
+export interface ProfileBarCompanion {
+  id?: number;
+  profileBarId?: number;
+  companionBarId: number;
+  code?: string | null;
+  name?: string | null;
+  offsetMm: number;
+  qty: number;
+  goc1?: number | null;
+  goc2?: number | null;
+  note?: string | null;
+  sortOrder?: number;
+  companionCode?: string | null;
+  companionName?: string | null;
+  companionBarType?: string | null;
+  companionWeightPerM?: number | null;
+  companionSectionHeightMm?: number | null;
+}
+
 export interface ProfileBar {
   id: number;
   brandId: number;
@@ -47,7 +81,12 @@ export interface ProfileBar {
   deductBeadMm?: number;
   deductGlassMm?: number;
   sectionImagePath?: string | null;
+  note?: string | null;
+  isVirtual: boolean;
+  isFullCompanion: boolean;
   isActive: boolean;
+  variants: ProfileBarVariant[];
+  companions: ProfileBarCompanion[];
   createdAt: string;
   updatedAt: string;
   brand?: Brand | null;
@@ -70,27 +109,15 @@ export interface ProfileBarCreate {
   deductGlassMm?: number;
   sectionLibraryId?: number | null;
   sectionImagePath?: string | null;
+  note?: string | null;
+  isVirtual?: boolean;
+  isFullCompanion?: boolean;
   isActive?: boolean;
+  variants?: ProfileBarVariant[];
+  companions?: ProfileBarCompanion[];
 }
 
-export interface ProfileBarUpdate {
-  brandId?: number;
-  seriesId?: number;
-  code?: string;
-  name?: string;
-  barType?: string;
-  weightPerM?: number;
-  sectionHeightMm?: number;
-  barLengthMm?: number;
-  deductMullionMm?: number;
-  deductSashMm?: number;
-  deductBeadMm?: number;
-  deductGlassMm?: number;
-  sectionLibraryId?: number | null;
-  sectionImagePath?: string | null;
-  isActive?: boolean;
-}
-
+export type ProfileBarUpdate = Partial<ProfileBarCreate>;
 export interface ProfileBarQueryParams {
   search?: string;
   brandId?: number;

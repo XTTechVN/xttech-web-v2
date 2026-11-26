@@ -49,18 +49,26 @@ const DoorBOMModalContent: React.FC<{ door: Door; isOpen: boolean; onClose: () =
     enabled: isOpen && !!door.id,
   });
 
+  const allWarnings = bom?.hardwareWarnings ?? [];
+  const hasJointWarnings =
+    allWarnings.some((w) => w.target === 'frame' || w.target === 'sash' || w.target === 'safety_frame') ||
+    (!allWarnings.length && Boolean(bom?.hasUnconfiguredJoints));
+  const hasAccessoryWarnings = allWarnings.some(
+    (w) => w.target === 'opening' || w.target === 'dynamic_mullion'
+  );
+
   const tabs: Array<{ key: BomTabKey; label: string; count: number; show?: boolean; warning?: boolean; amber?: boolean }> = [
     { key: 'bars', label: 'Cắt nhôm', count: bom?.groupedBars?.length || 0 },
     { key: 'beads', label: 'Nẹp kính', count: bom?.groupedBeads?.length || 0 },
     { key: 'glass', label: 'Đặt kính', count: bom?.cells?.length || 0 },
-    { key: 'joints', label: 'Con ke', count: bom?.cornerJoints?.length || 0, warning: bom?.hasUnconfiguredJoints },
+    { key: 'joints', label: 'Con ke', count: bom?.cornerJoints?.length || 0, warning: hasJointWarnings },
     { key: 'grilles', label: 'Nan đồng', count: bom?.grilles?.length || 0, show: Boolean(bom?.grilles?.length), amber: true },
-    { key: 'accessories', label: 'Phụ kiện', count: bom?.accessories?.length || 0 },
+    { key: 'accessories', label: 'Phụ kiện', count: bom?.accessories?.length || 0, warning: hasAccessoryWarnings },
   ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-5xl bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl border border-slate-100 flex flex-col h-[100dvh] sm:h-auto sm:max-h-[92vh] overflow-hidden">
+      <div className="relative w-full max-w-5xl bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl border border-slate-100 flex flex-col h-dvh sm:h-auto sm:max-h-[92vh] overflow-hidden">
         {/* Header */}
         <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/80 shrink-0">
           <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
@@ -69,7 +77,7 @@ const DoorBOMModalContent: React.FC<{ door: Door; isOpen: boolean; onClose: () =
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                <h3 className="text-sm sm:text-base font-bold text-slate-900 truncate max-w-[200px] sm:max-w-md">{door.name}</h3>
+                <h3 className="text-sm sm:text-base font-bold text-slate-900 truncate max-w-50 sm:max-w-md">{door.name}</h3>
                 <span className="px-1.5 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200/60 shrink-0">
                   {door.code || 'CS_MẪU'}
                 </span>
@@ -119,10 +127,15 @@ const DoorBOMModalContent: React.FC<{ door: Door; isOpen: boolean; onClose: () =
                 Kính: <strong className="font-bold">{bom.totalGlassAreaM2} m²</strong>
               </div>
               {bom.totalJointQty !== undefined && (
-                <div className={`px-2 sm:px-2.5 py-1 rounded-md border flex items-center gap-1 whitespace-nowrap shrink-0 ${bom.hasUnconfiguredJoints ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-purple-50 text-purple-700 border-purple-100'}`}>
+                <div className={`px-2 sm:px-2.5 py-1 rounded-md border flex items-center gap-1 whitespace-nowrap shrink-0 ${hasJointWarnings ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-purple-50 text-purple-700 border-purple-100'}`}>
                   <Wrench size={11} />
-                  <span>Ke: <strong className="font-bold">{bom.totalJointQty} con</strong></span>
-                  {bom.hasUnconfiguredJoints && <span className="text-[9px] font-semibold text-amber-700 underline">(!)</span>}
+                  <span>
+                    Ke: <strong className="font-bold">{bom.totalJointQty} con</strong>
+                    {Boolean(bom.totalJointPrice && bom.totalJointPrice > 0) && (
+                      <span className="ml-1 font-semibold">({bom.totalJointPrice!.toLocaleString('vi-VN')} đ)</span>
+                    )}
+                  </span>
+                  {hasJointWarnings && <span className="text-[9px] font-semibold text-amber-700 underline">(!)</span>}
                 </div>
               )}
               {Boolean(bom.totalGrillePrice && bom.totalGrillePrice > 0) && (
@@ -130,9 +143,9 @@ const DoorBOMModalContent: React.FC<{ door: Door; isOpen: boolean; onClose: () =
                   Nan: <strong className="font-bold">{bom.totalGrillePrice!.toLocaleString('vi-VN')} đ</strong>
                 </div>
               )}
-              {Boolean(bom.totalAccessoryPrice && bom.totalAccessoryPrice > 0) && (
+              {Boolean((bom.totalAccessoryPrice || 0) + (bom.totalJointPrice || 0) > 0) && (
                 <div className="px-2 sm:px-2.5 py-1 bg-purple-50 text-purple-800 rounded-md border border-purple-200 font-medium whitespace-nowrap shrink-0">
-                  PK: <strong className="font-bold">{bom.totalAccessoryPrice!.toLocaleString('vi-VN')} đ</strong>
+                  PK + Ke: <strong className="font-bold">{((bom.totalAccessoryPrice || 0) + (bom.totalJointPrice || 0)).toLocaleString('vi-VN')} đ</strong>
                 </div>
               )}
             </div>
@@ -168,7 +181,7 @@ const DoorBOMModalContent: React.FC<{ door: Door; isOpen: boolean; onClose: () =
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
               Bản vẽ kỹ thuật 2D Vector
             </h4>
-            <div className="w-full aspect-[4/4.5] max-h-[60vh] lg:max-h-none rounded-xl border border-slate-200/80 bg-white flex items-center justify-center p-2 overflow-hidden shadow-inner relative">
+            <div className="w-full aspect-4/4.5 max-h-[60vh] lg:max-h-none rounded-xl border border-slate-200/80 bg-white flex items-center justify-center p-2 overflow-hidden shadow-inner relative">
               {hasStudioDesign ? (
                 <div className="w-full h-full flex items-center justify-center pointer-events-none">
                   <DoorCadRenderer
@@ -213,7 +226,12 @@ const DoorBOMModalContent: React.FC<{ door: Door; isOpen: boolean; onClose: () =
                     }`}
                   >
                     <span>{t.label} ({t.count})</span>
-                    {t.warning && <span className="w-1.5 h-1.5 rounded-full bg-amber-500" title="Có vị trí chưa gán con ke" />}
+                    {t.warning && (
+                      <span
+                        className="w-1.5 h-1.5 rounded-full bg-amber-500"
+                        title={t.key === 'joints' ? 'Có cảnh báo con ke góc' : 'Có cảnh báo thiếu phụ kiện'}
+                      />
+                    )}
                   </button>
                 ))}
             </div>
@@ -231,11 +249,21 @@ const DoorBOMModalContent: React.FC<{ door: Door; isOpen: boolean; onClose: () =
                 {activeTab === 'beads' && <BomBeadsTable beads={bom.groupedBeads} />}
                 {activeTab === 'glass' && <BomGlassTable cells={bom.cells} />}
                 {activeTab === 'joints' && (
-                  <BomJointsTable joints={bom.cornerJoints} hasUnconfiguredJoints={bom.hasUnconfiguredJoints} totalJointPrice={bom.totalJointPrice} />
+                  <BomJointsTable
+                    joints={bom.cornerJoints}
+                    warnings={bom.hardwareWarnings}
+                    hasUnconfiguredJoints={bom.hasUnconfiguredJoints}
+                    totalJointPrice={bom.totalJointPrice}
+                  />
                 )}
                 {activeTab === 'grilles' && <BomGrillesTable grilles={bom.grilles} totalGrillePrice={bom.totalGrillePrice} />}
                 {activeTab === 'accessories' && (
-                  <BomAccessoriesTable accessories={bom.accessories} totalAccessoryQty={bom.totalAccessoryQty} totalAccessoryPrice={bom.totalAccessoryPrice} />
+                  <BomAccessoriesTable
+                    accessories={bom.accessories}
+                    warnings={bom.hardwareWarnings}
+                    totalAccessoryQty={bom.totalAccessoryQty}
+                    totalAccessoryPrice={bom.totalAccessoryPrice}
+                  />
                 )}
               </div>
             )}

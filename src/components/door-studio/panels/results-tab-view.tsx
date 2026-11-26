@@ -2,8 +2,9 @@
 
 import React, { useState } from 'react';
 import { CalculationStep, DoorCalculateResponse } from '@/types';
-import { FrameConfig, SashConfig, SceneCellNode } from '../studio-types';
+import { FrameConfig, SashConfig, SceneCellNode, OPEN_DIRECTION_BADGES } from '../studio-types';
 import { detectProfileIssues } from '../utils/detect-profile-issues';
+import { ResultsHardwareSection } from './results';
 import { Calculator, Info, MapPin } from 'lucide-react';
 
 export { detectProfileIssues };
@@ -14,6 +15,19 @@ const CORNER_JOINT_LABEL_MAP: Record<string, string> = {
   '90_vert': '90° Dọc phủ',
   '45_top_90_bot': '45° trên - 90° dưới',
   '63': 'Góc 63° (gấp xếp)',
+};
+
+const renderOpenDirectionBadge = (openDirection?: string | null) => {
+  if (!openDirection) return null;
+  const badgeConfig = OPEN_DIRECTION_BADGES[openDirection];
+  if (!badgeConfig) return null;
+  return (
+    <span
+      className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border ${badgeConfig.className}`}
+    >
+      {badgeConfig.label}
+    </span>
+  );
 };
 
 interface CalculationStepsBreakdownProps {
@@ -161,7 +175,7 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
   seriesId,
   onNavigateTab,
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'bars' | 'beads' | 'glass' | 'grilles' | 'gaskets'>('bars');
+  const [activeSubTab, setActiveSubTab] = useState<'bars' | 'beads' | 'glass' | 'grilles' | 'gaskets' | 'hardware'>('bars');
   const [selectedBarIndex, setSelectedBarIndex] = useState<number | null>(null);
   const [selectedBeadIndex, setSelectedBeadIndex] = useState<number | null>(null);
   const [selectedGlassIndex, setSelectedGlassIndex] = useState<number | null>(null);
@@ -348,6 +362,17 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                   5. Roan gắn kính ({calcData.gaskets.length})
                 </button>
               )}
+              <button
+                type="button"
+                onClick={() => setActiveSubTab('hardware')}
+                className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+                  activeSubTab === 'hardware'
+                    ? 'bg-primary/10 text-primary border border-primary/25 font-bold shadow-2xs'
+                    : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/70 hover:text-slate-900'
+                }`}
+              >
+                6. Phụ kiện & Ke ({(calcData.cornerJoints?.length || 0) + (calcData.accessories?.length || 0)})
+              </button>
             </div>
 
             {/* Table Content */}
@@ -381,9 +406,10 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                               }`}
                             >
                               <td className="py-2.5 px-3 font-medium text-gray-800">
-                                <div className="flex items-center gap-1.5">
+                                <div className="flex items-center gap-1.5 flex-wrap">
                                   <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-primary' : 'bg-slate-300'}`} />
                                   <span>{bar.name}</span>
+                                  {renderOpenDirectionBadge(bar.openDirection)}
                                 </div>
                               </td>
                               <td className="py-2.5 px-3">
@@ -471,7 +497,10 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                           {/* Tiêu đề & thẻ số lượng */}
                           <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                             <div>
-                              <span className="font-bold text-slate-800 text-xs block">{selectedBar.name}</span>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="font-bold text-slate-800 text-xs">{selectedBar.name}</span>
+                                {renderOpenDirectionBadge(selectedBar.openDirection)}
+                              </div>
                               <span className="text-[11px] text-slate-400">
                                 Mã Profile: {selectedBar.profileCode || 'Chưa gắn mã'}
                                 {selectedBar.profileName ? ` (${selectedBar.profileName})` : ''}
@@ -516,7 +545,10 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                               className="bg-white rounded-lg border border-slate-200/80 p-2.5 text-xs hover:border-primary/50 transition cursor-pointer space-y-1"
                             >
                               <div className="flex items-center justify-between">
-                                <span className="font-semibold text-slate-800">{bar.name}</span>
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="font-semibold text-slate-800">{bar.name}</span>
+                                  {renderOpenDirectionBadge(bar.openDirection)}
+                                </div>
                                 <span className="font-bold text-slate-900">{bar.length} mm</span>
                               </div>
                               <div className="text-[11px] text-slate-500 flex items-center justify-between">
@@ -696,7 +728,16 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                                   <span>{cell.path}</span>
                                 </div>
                               </td>
-                              <td className="py-2.5 px-3 text-gray-600">{cell.glassName || 'Kính cường lực'}</td>
+                              <td className="py-2.5 px-3 text-gray-600">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span>{cell.glassName || 'Kính cường lực'}</span>
+                                  {cell.isExtra && (
+                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                                      Bổ sung
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
                               <td className="py-2.5 px-3 text-right font-bold text-gray-900">
                                 {cell.glassW} × {cell.glassH}
                               </td>
@@ -735,7 +776,14 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                           <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                             <div>
                               <span className="font-bold text-slate-800 text-xs block">Vị trí: {selectedCell.path}</span>
-                              <span className="text-[11px] text-slate-400">Chủng loại: {selectedCell.glassName || 'Kính cường lực'}</span>
+                              <span className="text-[11px] text-slate-400 flex items-center gap-1.5 flex-wrap">
+                                <span>Chủng loại: {selectedCell.glassName || 'Kính cường lực'}</span>
+                                {selectedCell.isExtra && (
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                                    Bổ sung
+                                  </span>
+                                )}
+                              </span>
                             </div>
                             <div className="text-right">
                               <span className="px-2 py-0.5 rounded text-[11px] bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">
@@ -773,9 +821,16 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                                 <span className="font-semibold text-slate-800">Ô {cell.path}</span>
                                 <span className="font-bold text-slate-900">{cell.glassW} × {cell.glassH} mm</span>
                               </div>
-                              <div className="text-[11px] text-slate-500 flex items-center justify-between">
-                                <span>{cell.glassName || 'Kính cường lực'}</span>
-                                <span>Diện tích: {cell.areaM2?.toFixed(2)} m²</span>
+                              <div className="text-[11px] text-slate-500 flex items-center justify-between gap-2">
+                                <span className="flex items-center gap-1.5 flex-wrap">
+                                  <span>{cell.glassName || 'Kính cường lực'}</span>
+                                  {cell.isExtra && (
+                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                                      Bổ sung
+                                    </span>
+                                  )}
+                                </span>
+                                <span className="shrink-0">Diện tích: {cell.areaM2?.toFixed(2)} m²</span>
                               </div>
                             </div>
                           ))}
@@ -829,7 +884,44 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                 </table>
               )}
 
-              {activeSubTab === 'gaskets' && (
+              {activeSubTab === 'gaskets' && (() => {
+                const rawGaskets = calcData.gaskets ?? [];
+                const sashKeys = new Set(
+                  rawGaskets
+                    .filter((item) => item.target === 'sash' || (item.lengthM || 0) > 0)
+                    .map((item) => `${(item.code || '').trim().toLowerCase()}_${(item.name || '').trim().toLowerCase()}`),
+                );
+                const resolvedGaskets = rawGaskets.map((g) => {
+                  const key = `${(g.code || '').trim().toLowerCase()}_${(g.name || '').trim().toLowerCase()}`;
+                  if ((g.lengthM || 0) <= 0 && g.target === 'frame' && g.measure === 'bead' && !sashKeys.has(key)) {
+                    const nameLower = (g.name || '').toLowerCase();
+                    let mm = 0;
+                    if (nameLower.includes('cánh') || nameLower.includes('sash')) {
+                      const sashBeads = beadsList.filter((b) => !(b.name || '').toLowerCase().includes('fix'));
+                      mm = sashBeads.reduce((sum, b) => sum + (b.length || 0) * (b.qty || 1), 0);
+                      if (mm <= 0) {
+                        mm = cellsList
+                          .filter((c) => c.openType !== 'fixed' && !c.isExtra)
+                          .reduce((sum, c) => sum + 2 * ((c.glassW || 0) + (c.glassH || 0)), 0);
+                      }
+                    } else {
+                      mm = 2 * (w + h);
+                    }
+                    const fallbackLenM = Math.round(((mm * 1.03) / 1000) * 100) / 100;
+                    const fallbackPrice = Math.round(fallbackLenM * (g.unitPrice || 0) * 100) / 100;
+                    return {
+                      ...g,
+                      lengthM: fallbackLenM,
+                      totalPrice: fallbackPrice,
+                      note: g.note === 'Khung không có ô kính fix' ? '1 lần/ô' : g.note,
+                    };
+                  }
+                  return g;
+                });
+                const resolvedTotalLenM = resolvedGaskets.reduce((sum, it) => sum + (it.lengthM || 0), 0);
+                const resolvedTotalPrice = resolvedGaskets.reduce((sum, it) => sum + (it.totalPrice || 0), 0);
+
+                return (
                 <div className="space-y-3">
                   <table className="w-full text-left border-collapse">
                     <thead>
@@ -845,7 +937,7 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100 text-xs">
-                      {calcData.gaskets?.map((g, idx) => {
+                      {resolvedGaskets.map((g, idx) => {
                         const measureMap: Record<string, string> = {
                           bead: g.target === 'frame' ? 'Theo nẹp kính ô fix' : 'Theo nẹp kính cánh',
                           glass_perimeter: g.target === 'frame' ? 'Theo chu vi kính ô fix' : 'Theo chu vi kính cánh',
@@ -900,25 +992,23 @@ export const ResultsTabView: React.FC<ResultsTabViewProps> = ({
                     <div className="text-slate-600">
                       Tổng chiều dài roan:{' '}
                       <span className="text-slate-900 font-bold">
-                        {calcData.totalGasketLengthM ||
-                          calcData.gaskets?.reduce((sum, it) => sum + it.lengthM, 0).toFixed(2)}{' '}
+                        {resolvedTotalLenM.toFixed(2)}{' '}
                         m
                       </span>
                     </div>
                     <div className="text-slate-600">
                       Tổng chi phí roan:{' '}
                       <span className="text-pink-700 font-bold text-sm">
-                        {(
-                          calcData.totalGasketPrice ||
-                          calcData.gaskets?.reduce((sum, it) => sum + it.totalPrice, 0) ||
-                          0
-                        ).toLocaleString('vi-VN')}{' '}
+                        {resolvedTotalPrice.toLocaleString('vi-VN')}{' '}
                         đ
                       </span>
                     </div>
                   </div>
                 </div>
-              )}
+                );
+              })()}
+
+              {activeSubTab === 'hardware' && <ResultsHardwareSection calcData={calcData} />}
             </div>
           </div>
         )}

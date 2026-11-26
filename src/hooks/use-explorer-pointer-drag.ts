@@ -157,7 +157,7 @@ export function useExplorerPointerDrag({
       if (item.canMove === false) return;
 
       const target = e.target as HTMLElement | null;
-      if (target && target.closest('button, [role="button"], [data-no-select="true"]')) return;
+      if (target && target.closest('[data-no-select="true"]')) return;
 
       const itemKey = `${item.type === 'folder' ? 'folder' : 'doc'}-${item.id}`;
       const isSelected = selectedItemKeysRef.current.has(itemKey);

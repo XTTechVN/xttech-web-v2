@@ -1,3 +1,4 @@
+import { QUOTATION_SHEET_ROW_TYPE_MAP } from '@/config';
 import type { QuotationSheet, QuotationSheetRow } from '@/types';
 import { getFileUrl } from '@/utils';
 import { DoorThumbnail } from '@/components';
@@ -8,25 +9,26 @@ import {
 } from '../utils/quotation-sheet-format';
 
 const COLUMN_WIDTHS = [4, 11, 8, 24, 5, 6, 6, 5, 7, 11, 13];
-const COLUMN_COUNT = COLUMN_WIDTHS.length;
 const LABEL_SPAN = 7;
 
 const ROW_CLASS: Record<QuotationSheetRow['rowType'], string> = {
-  door: '',
-  accessory: 'qt-accessory',
-  extra: '',
+  door: QUOTATION_SHEET_ROW_TYPE_MAP.door.rowClass,
+  glass: QUOTATION_SHEET_ROW_TYPE_MAP.glass.rowClass,
+  accessory: QUOTATION_SHEET_ROW_TYPE_MAP.accessory.rowClass,
+  extra: QUOTATION_SHEET_ROW_TYPE_MAP.extra.rowClass,
 };
 
 interface ItemRowProps {
   row: QuotationSheetRow;
-  // Số dòng mà TT / Hình / Ký hiệu chiếm (dòng cửa kèm phụ kiện rời = 2)
+  // Số dòng mà TT và Hình ảnh chiếm (dòng cửa + các dòng kính bổ sung & phụ kiện đi kèm)
   identitySpan?: number;
-  // Dòng phụ kiện nằm dưới dòng cửa: 3 ô đầu đã được dòng cửa gộp
+  // Dòng con (kính bổ sung / phụ kiện) nằm dưới dòng cửa: 2 ô đầu đã được dòng cửa gộp
   isIdentityMerged?: boolean;
 }
 
 function ItemRow({ row, identitySpan = 1, isIdentityMerged = false }: ItemRowProps) {
   const isDoor = row.rowType === 'door';
+  const isGlass = row.rowType === 'glass';
   const hasCad = isDoor && Boolean(row.systemConfig?.rootCell);
 
   return (
@@ -50,17 +52,15 @@ function ItemRow({ row, identitySpan = 1, isIdentityMerged = false }: ItemRowPro
               )
             )}
           </td>
-          <td className="qt-center" rowSpan={identitySpan}>
-            {row.positionCode}
-          </td>
         </>
       )}
+      <td className="qt-center">{row.positionCode}</td>
       <td className="qt-left">{row.description}</td>
       <td className="qt-center">{SHEET_UNIT_LABELS[row.unit]}</td>
       <td className="qt-center">{formatSheetNumber(row.width)}</td>
       <td className="qt-center">{formatSheetNumber(row.height)}</td>
       <td className="qt-center">{row.quantity}</td>
-      <td className="qt-center">{isDoor ? formatSheetNumber(row.areaM2, 2) : ''}</td>
+      <td className="qt-center">{isDoor || isGlass ? formatSheetNumber(row.areaM2, 2) : ''}</td>
       <td className="qt-right">{formatSheetNumber(row.unitPrice)}</td>
       <td className="qt-right">{formatSheetNumber(row.amount)}</td>
     </tr>
@@ -192,14 +192,32 @@ function FloorRows({
         <td className="qt-right">{totalAmount ? formatSheetNumber(totalAmount) : ''}</td>
       </tr>
       {rows.map((row, index) => {
-        const isAccessoryFollowing = row.rowType === 'door' && rows[index + 1]?.rowType === 'accessory';
-        const isAccessoryOfDoor = row.rowType === 'accessory' && rows[index - 1]?.rowType === 'door';
+        let identitySpan = 1;
+        let isIdentityMerged = false;
+
+        if (row.rowType === 'door') {
+          let offset = 1;
+          while (
+            index + offset < rows.length &&
+            (rows[index + offset].rowType === 'glass' || rows[index + offset].rowType === 'accessory')
+          ) {
+            offset += 1;
+          }
+          identitySpan = offset;
+        } else if (row.rowType === 'glass' || row.rowType === 'accessory') {
+          let prev = index - 1;
+          while (prev >= 0 && (rows[prev].rowType === 'glass' || rows[prev].rowType === 'accessory')) {
+            prev -= 1;
+          }
+          isIdentityMerged = prev >= 0 && rows[prev].rowType === 'door';
+        }
+
         return (
           <ItemRow
             key={`${row.positionCode}-${row.rowType}-${index}`}
             row={row}
-            identitySpan={isAccessoryFollowing ? 2 : 1}
-            isIdentityMerged={isAccessoryOfDoor}
+            identitySpan={identitySpan}
+            isIdentityMerged={isIdentityMerged}
           />
         );
       })}

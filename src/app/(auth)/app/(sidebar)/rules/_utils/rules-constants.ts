@@ -6,17 +6,7 @@ export { RULES_QUERY_KEYS };
 
 export type RulesTab = 'current' | 'drafts' | 'to_process';
 
-export const RULES_TAB_VALUES: RulesTab[] = ['current', 'drafts', 'to_process'];
-
-export type CurrentScopeChip = Extract<RulesScope, 'all' | 'company' | 'department' | 'user' | 'mine'>;
-
-export const CURRENT_SCOPE_CHIPS: CurrentScopeChip[] = ['all', 'company', 'department', 'user', 'mine'];
-
-export const EMPLOYEE_SCOPE_CHIPS: CurrentScopeChip[] = ['all', 'company', 'department', 'mine'];
-
 export const RULES_PAGE_SIZE = 20;
-
-export const EXPIRING_SOON_DAYS = 30;
 
 export const CURRENT_STATUS_OPTIONS = [
   { value: '', label: 'Tất cả trạng thái' },

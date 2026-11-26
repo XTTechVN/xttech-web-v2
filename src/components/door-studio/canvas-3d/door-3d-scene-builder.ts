@@ -15,8 +15,13 @@ import {
   isArchOpenBottomShape,
 } from '../cad-engine/cad-geometry';
 import { buildCadLayout, collectSashMullions } from '../cad-engine/cad-tree-traverser';
+import { resolveBottomOpenPlan } from '../cad-engine/cad-cell-config-resolver';
+import { resolveReversalMm } from '../cad-engine/cad-metrics';
+import { BottomBarSegment } from '../cad-engine/cad-types';
+import { addGlassEffectDetails3D, resolveGlassEffectAppearance } from './door-3d-glass-effects';
 import { Door3DMeshCollector, hexToRgb01, MaterialId, Vec3 } from './door-3d-math';
 import { DEFAULT_DOOR_3D_SETTINGS, Door3DCustomSettings } from './door-3d-types';
+import { findStudioProfile } from '../utils/profile-combine-utils';
 
 export type SlidingCycleDirection = 'right_to_left' | 'left_to_right';
 
@@ -71,14 +76,35 @@ function addFourPerimeterBars3D(
   edgeColor: Vec3,
   options?: {
     isOpenBottom?: boolean;
+    /** Hở đáy từng phần: chân thanh đứng trái/phải chạy xuống sàn cắt 90° khi bên đó Hở */
+    isOpenBotLeft?: boolean;
+    isOpenBotRight?: boolean;
+    /** Hở đáy từng phần: các đoạn thanh khung đáy còn lại (dưới ô Kín) */
+    bottomBarSegments?: BottomBarSegment[];
     hasInnerRebate?: boolean;
     gapMm?: number;
+    mullions?: Array<{
+      x: number;
+      y: number;
+      w: number;
+      h: number;
+      direction?: 'vertical' | 'horizontal';
+      cutStart?: boolean;
+      cutEnd?: boolean;
+      isSashMullion?: boolean;
+      isCoupling?: boolean;
+    }>;
   }
 ) {
   const { x, y, w, h } = box;
   const { left: dL, top: dT, right: dR, bottom: dB } = barW;
   const gap = options?.gapMm ?? 0.6;
   const isOpenBot = Boolean(options?.isOpenBottom);
+  const isOpenBotLeft = options?.isOpenBotLeft ?? isOpenBot;
+  const isOpenBotRight = options?.isOpenBotRight ?? isOpenBot;
+  const frameMullions = (options?.mullions || []).filter(
+    (m) => !m.isSashMullion && !m.isCoupling
+  );
 
   let tlMiter = true;
   let trMiter = true;
@@ -126,14 +152,14 @@ function addFourPerimeterBars3D(
   // 1. Thanh Đứng Trái (Left Bar)
   const lTopOuterY = tlMiter ? y + gap : vertCoversTop ? y : y + dT + gap;
   const lTopInnerY = tlMiter ? y + dT + gap : vertCoversTop ? y : y + dT + gap;
-  const lBotOuterY = isOpenBot
+  const lBotOuterY = isOpenBotLeft
     ? y + h
     : blMiter
       ? y + h - gap
       : vertCoversBot
         ? y + h
         : y + h - dB - gap;
-  const lBotInnerY = isOpenBot
+  const lBotInnerY = isOpenBotLeft
     ? y + h
     : blMiter
       ? y + h - dB - gap
@@ -141,25 +167,74 @@ function addFourPerimeterBars3D(
         ? y + h
         : y + h - dB - gap;
 
-  const leftPts2d = ensureCCW([
-    to3D(x, lTopOuterY),
-    to3D(x + dL, lTopInnerY),
-    to3D(x + dL, lBotInnerY),
-    to3D(x, lBotOuterY),
-  ]);
-  collector.addExtrudedConvexPolygon(leftPts2d, zBack, zFront, color, matId, edgeColor);
+  const leftCuts = frameMullions
+    .filter(
+      (m) =>
+        (m.direction === 'horizontal' || m.w > m.h) &&
+        Boolean(m.cutStart) &&
+        Math.abs(m.x - x) < 2
+    )
+    .sort((a, b) => a.y - b.y);
+
+  if (leftCuts.length === 0) {
+    const leftPts2d = ensureCCW([
+      to3D(x, lTopOuterY),
+      to3D(x + dL, lTopInnerY),
+      to3D(x + dL, lBotInnerY),
+      to3D(x, lBotOuterY),
+    ]);
+    collector.addExtrudedConvexPolygon(leftPts2d, zBack, zFront, color, matId, edgeColor);
+  } else {
+    let curOuterTop = lTopOuterY;
+    let curInnerTop = lTopInnerY;
+    leftCuts.forEach((mc) => {
+      const segBotY = mc.y - gap;
+      if (segBotY > Math.max(curOuterTop, curInnerTop) + 2) {
+        collector.addExtrudedConvexPolygon(
+          ensureCCW([
+            to3D(x, curOuterTop),
+            to3D(x + dL, curInnerTop),
+            to3D(x + dL, segBotY),
+            to3D(x, segBotY),
+          ]),
+          zBack,
+          zFront,
+          color,
+          matId,
+          edgeColor
+        );
+      }
+      curOuterTop = mc.y + mc.h + gap;
+      curInnerTop = mc.y + mc.h + gap;
+    });
+    if (Math.min(lBotOuterY, lBotInnerY) > curOuterTop + 2) {
+      collector.addExtrudedConvexPolygon(
+        ensureCCW([
+          to3D(x, curOuterTop),
+          to3D(x + dL, curInnerTop),
+          to3D(x + dL, lBotInnerY),
+          to3D(x, lBotOuterY),
+        ]),
+        zBack,
+        zFront,
+        color,
+        matId,
+        edgeColor
+      );
+    }
+  }
 
   // 2. Thanh Đứng Phải (Right Bar)
   const rTopOuterY = trMiter ? y + gap : vertCoversTop ? y : y + dT + gap;
   const rTopInnerY = trMiter ? y + dT + gap : vertCoversTop ? y : y + dT + gap;
-  const rBotOuterY = isOpenBot
+  const rBotOuterY = isOpenBotRight
     ? y + h
     : brMiter
       ? y + h - gap
       : vertCoversBot
         ? y + h
         : y + h - dB - gap;
-  const rBotInnerY = isOpenBot
+  const rBotInnerY = isOpenBotRight
     ? y + h
     : brMiter
       ? y + h - dB - gap
@@ -167,13 +242,62 @@ function addFourPerimeterBars3D(
         ? y + h
         : y + h - dB - gap;
 
-  const rightPts2d = ensureCCW([
-    to3D(x + w - dR, rTopInnerY),
-    to3D(x + w, rTopOuterY),
-    to3D(x + w, rBotOuterY),
-    to3D(x + w - dR, rBotInnerY),
-  ]);
-  collector.addExtrudedConvexPolygon(rightPts2d, zBack, zFront, color, matId, edgeColor);
+  const rightCuts = frameMullions
+    .filter(
+      (m) =>
+        (m.direction === 'horizontal' || m.w > m.h) &&
+        Boolean(m.cutEnd) &&
+        Math.abs(m.x + m.w - (x + w)) < 2
+    )
+    .sort((a, b) => a.y - b.y);
+
+  if (rightCuts.length === 0) {
+    const rightPts2d = ensureCCW([
+      to3D(x + w - dR, rTopInnerY),
+      to3D(x + w, rTopOuterY),
+      to3D(x + w, rBotOuterY),
+      to3D(x + w - dR, rBotInnerY),
+    ]);
+    collector.addExtrudedConvexPolygon(rightPts2d, zBack, zFront, color, matId, edgeColor);
+  } else {
+    let curOuterTop = rTopOuterY;
+    let curInnerTop = rTopInnerY;
+    rightCuts.forEach((mc) => {
+      const segBotY = mc.y - gap;
+      if (segBotY > Math.max(curOuterTop, curInnerTop) + 2) {
+        collector.addExtrudedConvexPolygon(
+          ensureCCW([
+            to3D(x + w - dR, curInnerTop),
+            to3D(x + w, curOuterTop),
+            to3D(x + w, segBotY),
+            to3D(x + w - dR, segBotY),
+          ]),
+          zBack,
+          zFront,
+          color,
+          matId,
+          edgeColor
+        );
+      }
+      curOuterTop = mc.y + mc.h + gap;
+      curInnerTop = mc.y + mc.h + gap;
+    });
+    if (Math.min(rBotOuterY, rBotInnerY) > curOuterTop + 2) {
+      collector.addExtrudedConvexPolygon(
+        ensureCCW([
+          to3D(x + w - dR, curInnerTop),
+          to3D(x + w, curOuterTop),
+          to3D(x + w, rBotOuterY),
+          to3D(x + w - dR, rBotInnerY),
+        ]),
+        zBack,
+        zFront,
+        color,
+        matId,
+        edgeColor
+      );
+    }
+  }
 
   // 3. Thanh Ngang Trên (Top Bar)
   const tLeftOuterX = tlMiter ? x + gap : vertCoversTop ? x + dL + gap : x;
@@ -181,30 +305,155 @@ function addFourPerimeterBars3D(
   const tRightOuterX = trMiter ? x + w - gap : vertCoversTop ? x + w - dR - gap : x + w;
   const tRightInnerX = trMiter ? x + w - dR - gap : vertCoversTop ? x + w - dR - gap : x + w;
 
-  const topPts2d = ensureCCW([
-    to3D(tLeftOuterX, y),
-    to3D(tRightOuterX, y),
-    to3D(tRightInnerX, y + dT),
-    to3D(tLeftInnerX, y + dT),
-  ]);
-  collector.addExtrudedConvexPolygon(topPts2d, zBack, zFront, color, matId, edgeColor);
+  const topCuts = frameMullions
+    .filter(
+      (m) =>
+        (m.direction === 'vertical' || m.h > m.w) &&
+        Boolean(m.cutStart) &&
+        Math.abs(m.y - y) < 2
+    )
+    .sort((a, b) => a.x - b.x);
+
+  if (topCuts.length === 0) {
+    const topPts2d = ensureCCW([
+      to3D(tLeftOuterX, y),
+      to3D(tRightOuterX, y),
+      to3D(tRightInnerX, y + dT),
+      to3D(tLeftInnerX, y + dT),
+    ]);
+    collector.addExtrudedConvexPolygon(topPts2d, zBack, zFront, color, matId, edgeColor);
+  } else {
+    let curOuterLeft = tLeftOuterX;
+    let curInnerLeft = tLeftInnerX;
+    topCuts.forEach((mc) => {
+      const segRightX = mc.x - gap;
+      if (segRightX > Math.max(curOuterLeft, curInnerLeft) + 2) {
+        collector.addExtrudedConvexPolygon(
+          ensureCCW([
+            to3D(curOuterLeft, y),
+            to3D(segRightX, y),
+            to3D(segRightX, y + dT),
+            to3D(curInnerLeft, y + dT),
+          ]),
+          zBack,
+          zFront,
+          color,
+          matId,
+          edgeColor
+        );
+      }
+      curOuterLeft = mc.x + mc.w + gap;
+      curInnerLeft = mc.x + mc.w + gap;
+    });
+    if (Math.min(tRightOuterX, tRightInnerX) > curOuterLeft + 2) {
+      collector.addExtrudedConvexPolygon(
+        ensureCCW([
+          to3D(curOuterLeft, y),
+          to3D(tRightOuterX, y),
+          to3D(tRightInnerX, y + dT),
+          to3D(curInnerLeft, y + dT),
+        ]),
+        zBack,
+        zFront,
+        color,
+        matId,
+        edgeColor
+      );
+    }
+  }
 
   // 4. Thanh Ngang Dưới (Bottom Bar)
-  if (!isOpenBot && dB > 0) {
+  if (!isOpenBot && dB > 0 && !options?.bottomBarSegments) {
     const bLeftOuterX = blMiter ? x + gap : vertCoversBot ? x + dL + gap : x;
     const bLeftInnerX = blMiter ? x + dL + gap : vertCoversBot ? x + dL + gap : x;
     const bRightOuterX = brMiter ? x + w - gap : vertCoversBot ? x + w - dR - gap : x + w;
     const bRightInnerX = brMiter ? x + w - dR - gap : vertCoversBot ? x + w - dR - gap : x + w;
 
-    const botPts2d = ensureCCW([
-      to3D(bLeftInnerX, y + h - dB),
-      to3D(bRightInnerX, y + h - dB),
-      to3D(bRightOuterX, y + h),
-      to3D(bLeftOuterX, y + h),
-    ]);
-    collector.addExtrudedConvexPolygon(botPts2d, zBack, zFront, color, matId, edgeColor);
+    const botCuts = frameMullions
+      .filter(
+        (m) =>
+          (m.direction === 'vertical' || m.h > m.w) &&
+          Boolean(m.cutEnd) &&
+          Math.abs(m.y + m.h - (y + h)) < 2
+      )
+      .sort((a, b) => a.x - b.x);
+
+    if (botCuts.length === 0) {
+      const botPts2d = ensureCCW([
+        to3D(bLeftInnerX, y + h - dB),
+        to3D(bRightInnerX, y + h - dB),
+        to3D(bRightOuterX, y + h),
+        to3D(bLeftOuterX, y + h),
+      ]);
+      collector.addExtrudedConvexPolygon(botPts2d, zBack, zFront, color, matId, edgeColor);
+    } else {
+      let curOuterLeft = bLeftOuterX;
+      let curInnerLeft = bLeftInnerX;
+      botCuts.forEach((mc) => {
+        const segRightX = mc.x - gap;
+        if (segRightX > Math.max(curOuterLeft, curInnerLeft) + 2) {
+          collector.addExtrudedConvexPolygon(
+            ensureCCW([
+              to3D(curInnerLeft, y + h - dB),
+              to3D(segRightX, y + h - dB),
+              to3D(segRightX, y + h),
+              to3D(curOuterLeft, y + h),
+            ]),
+            zBack,
+            zFront,
+            color,
+            matId,
+            edgeColor
+          );
+        }
+        curOuterLeft = mc.x + mc.w + gap;
+        curInnerLeft = mc.x + mc.w + gap;
+      });
+      if (Math.min(bRightOuterX, bRightInnerX) > curOuterLeft + 2) {
+        collector.addExtrudedConvexPolygon(
+          ensureCCW([
+            to3D(curInnerLeft, y + h - dB),
+            to3D(bRightInnerX, y + h - dB),
+            to3D(bRightOuterX, y + h),
+            to3D(curOuterLeft, y + h),
+          ]),
+          zBack,
+          zFront,
+          color,
+          matId,
+          edgeColor
+        );
+      }
+    }
   }
 
+  // 4b. Hở đáy từng phần: chỉ dựng các đoạn thanh đáy dưới ô Kín; đầu đâm vào đố đứng cắt 90°, đầu chạm khung đứng theo góc ghép
+  if (options?.bottomBarSegments && dB > 0) {
+    const frameStartOuterX = blMiter ? x + gap : vertCoversBot ? x + dL + gap : x;
+    const frameStartInnerX = blMiter ? x + dL + gap : vertCoversBot ? x + dL + gap : x;
+    const frameEndOuterX = brMiter ? x + w - gap : vertCoversBot ? x + w - dR - gap : x + w;
+    const frameEndInnerX = brMiter ? x + w - dR - gap : vertCoversBot ? x + w - dR - gap : x + w;
+    options.bottomBarSegments.forEach((segment) => {
+      const startOuterX = segment.isFrameStart ? frameStartOuterX : segment.x0 + gap;
+      const startInnerX = segment.isFrameStart ? frameStartInnerX : segment.x0 + gap;
+      const endOuterX = segment.isFrameEnd ? frameEndOuterX : segment.x1 - gap;
+      const endInnerX = segment.isFrameEnd ? frameEndInnerX : segment.x1 - gap;
+      if (Math.min(endOuterX, endInnerX) <= Math.max(startOuterX, startInnerX) + 2) return;
+      collector.addExtrudedConvexPolygon(
+        ensureCCW([
+          to3D(startInnerX, y + h - dB),
+          to3D(endInnerX, y + h - dB),
+          to3D(endOuterX, y + h),
+          to3D(startOuterX, y + h),
+        ]),
+        zBack,
+        zFront,
+        color,
+        matId,
+        edgeColor
+      );
+    });
+  }
   // Gờ hèm bậc trong (Rebate step) tạo chiều sâu cơ khí như thanh nhôm thật
   if (options?.hasInnerRebate) {
     const rebateW = Math.max(8, Math.round(Math.min(dL, dT) * 0.28));
@@ -216,8 +465,8 @@ function addFourPerimeterBars3D(
       ensureCCW([
         to3D(x + dL, y + dT),
         to3D(x + dL + rebateW, y + dT + rebateW),
-        to3D(x + dL + rebateW, y + h - (isOpenBot ? 0 : dB + rebateW)),
-        to3D(x + dL, y + h - (isOpenBot ? 0 : dB)),
+        to3D(x + dL + rebateW, y + h - (isOpenBotLeft ? 0 : dB + rebateW)),
+        to3D(x + dL, y + h - (isOpenBotLeft ? 0 : dB)),
       ]),
       zMid1,
       zMid2,
@@ -230,8 +479,8 @@ function addFourPerimeterBars3D(
       ensureCCW([
         to3D(x + w - dR - rebateW, y + dT + rebateW),
         to3D(x + w - dR, y + dT),
-        to3D(x + w - dR, y + h - (isOpenBot ? 0 : dB)),
-        to3D(x + w - dR - rebateW, y + h - (isOpenBot ? 0 : dB + rebateW)),
+        to3D(x + w - dR, y + h - (isOpenBotRight ? 0 : dB)),
+        to3D(x + w - dR - rebateW, y + h - (isOpenBotRight ? 0 : dB + rebateW)),
       ]),
       zMid1,
       zMid2,
@@ -528,14 +777,24 @@ function addInfillPane3D(
     return;
   }
 
-  const glassColor: Vec3 = hexToRgb01(glassOpts?.colorHex || '#88ccff', [0.53, 0.8, 1.0]);
-  const baseAlpha = Math.max(0.08, Math.min(0.85, 0.55 - (glassOpts?.transparency ?? 0.34) * 0.55));
+  // Hiệu ứng kính riêng của ô (clear = giữ nguyên màu/độ trong theo cài đặt chung)
+  const effectAppearance = resolveGlassEffectAppearance(cellNode.glassVisualEffect, cellNode.glassVisualColor);
+  const glassColor: Vec3 = effectAppearance?.color ?? hexToRgb01(glassOpts?.colorHex || '#88ccff', [0.53, 0.8, 1.0]);
+  const baseAlpha =
+    effectAppearance?.alpha ?? Math.max(0.08, Math.min(0.85, 0.55 - (glassOpts?.transparency ?? 0.34) * 0.55));
   const halfGlass = glassThickM / 2;
   const zF = zCenter + halfGlass;
   const zB = zCenter - halfGlass;
 
   collector.addTransQuad([x1, yBot, zF], [x2, yBot, zF], [x2, yTop, zF], [x1, yTop, zF], glassColor, baseAlpha);
   collector.addTransQuad([x2, yBot, zB], [x1, yBot, zB], [x1, yTop, zB], [x2, yTop, zB], glassColor, baseAlpha);
+  addGlassEffectDetails3D(
+    collector,
+    { x1, x2, yTop, yBot, zF, zB },
+    cellNode.glassVisualEffect,
+    cellNode.glassSplitCount,
+    cellNode.id
+  );
 
   const diagLen = Math.min(pw, ph) * 0.28;
   collector.addLine(
@@ -677,12 +936,12 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
   const beadRgb = darkenColor(aluRgb, 1.04);
 
   // 1. Tính toán độ rộng bản nhôm (mm)
-  const selectedFrameProfile = availableProfiles?.find(
-    (p) =>
-      p.id === frameConfig?.leftEdge?.profileId ||
-      p.id === frameConfig?.topEdge?.profileId ||
-      p.id === frameConfig?.rightEdge?.profileId ||
-      p.id === frameConfig?.bottomEdge?.profileId
+  const selectedFrameProfile = findStudioProfile(
+    availableProfiles,
+    frameConfig?.leftEdge?.profileId ||
+      frameConfig?.topEdge?.profileId ||
+      frameConfig?.rightEdge?.profileId ||
+      frameConfig?.bottomEdge?.profileId
   );
   const rawFrameMm =
     selectedFrameProfile?.sectionHeightMm && selectedFrameProfile.sectionHeightMm > 0
@@ -692,12 +951,12 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
 
   const isSlim = sashConfig?.sashStyle === 'slim';
   const isDoorUnit = safeH >= 1800;
-  const selectedSashProfile = availableProfiles?.find(
-    (p) =>
-      p.id === sashConfig?.leftProfileId ||
-      p.id === sashConfig?.topProfileId ||
-      p.id === sashConfig?.rightProfileId ||
-      p.id === sashConfig?.bottomProfileId
+  const selectedSashProfile = findStudioProfile(
+    availableProfiles,
+    sashConfig?.leftProfileId ||
+      sashConfig?.topProfileId ||
+      sashConfig?.rightProfileId ||
+      sashConfig?.bottomProfileId
   );
   const defaultSashMm = isSlim
     ? CAD_CONFIG.SASH.SLIM_DEFAULT_MM
@@ -710,8 +969,9 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
       : defaultSashMm;
   const sashMm = frameShape !== 'rect' ? Math.min(rawSashMm, 68) : rawSashMm;
 
-  const selectedBeadProfile = availableProfiles?.find(
-    (p) => p.id === sashConfig?.beadProfileId || p.id === frameConfig?.beadProfileId
+  const selectedBeadProfile = findStudioProfile(
+    availableProfiles,
+    sashConfig?.beadProfileId || frameConfig?.beadProfileId
   );
   const beadMm =
     selectedBeadProfile?.sectionHeightMm && selectedBeadProfile.sectionHeightMm > 0
@@ -721,19 +981,17 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
         : CAD_CONFIG.BEAD.DEFAULT_MM;
 
   const isMullionSeparate = frameConfig?.mullionMode === 'separate';
-  const vertMullionProfile = availableProfiles?.find(
-    (p) =>
-      p.id ===
-      (isMullionSeparate
-        ? frameConfig?.mullionVertProfileId || frameConfig?.mullionProfileId
-        : frameConfig?.mullionProfileId)
+  const vertMullionProfile = findStudioProfile(
+    availableProfiles,
+    isMullionSeparate
+      ? frameConfig?.mullionVertProfileId || frameConfig?.mullionProfileId
+      : frameConfig?.mullionProfileId
   );
-  const horizMullionProfile = availableProfiles?.find(
-    (p) =>
-      p.id ===
-      (isMullionSeparate
-        ? frameConfig?.mullionHorizProfileId || frameConfig?.mullionProfileId
-        : frameConfig?.mullionProfileId)
+  const horizMullionProfile = findStudioProfile(
+    availableProfiles,
+    isMullionSeparate
+      ? frameConfig?.mullionHorizProfileId || frameConfig?.mullionProfileId
+      : frameConfig?.mullionProfileId
   );
   const mullionMm =
     vertMullionProfile?.sectionHeightMm && vertMullionProfile.sectionHeightMm > 0
@@ -744,12 +1002,15 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
       ? horizMullionProfile.sectionHeightMm
       : mullionMm;
 
-  const isOpenBottom = Boolean(
+  const isGlobalOpenBottom = Boolean(
     (frameConfig?.isOpenBottom ?? false) ||
       sashConfig?.isHydraulic ||
       rootCell.isHydraulic ||
       isArchOpenBottomShape(frameShape)
   );
+  // Ghi đè Hở/Kín đáy theo từng ô (không có ghi đè => giữ nguyên giá trị toàn cục)
+  const bottomOpenPlan = resolveBottomOpenPlan(rootCell, isGlobalOpenBottom);
+  const isOpenBottom = bottomOpenPlan.isOpenBottom;
 
   const slidingOverlapMm =
     sashConfig?.slidingOverlapMm && sashConfig.slidingOverlapMm > 0
@@ -758,13 +1019,15 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
 
   // 2. Chạy thuật toán giải tích bố cục CAD 2D ngay trên miền đơn vị thực (mm)
   const layout = buildCadLayout(rootCell, 0, 0, safeW, safeH, frameMm, mullionMm, {
-    isOpenBottom,
+    isOpenBottom: isGlobalOpenBottom,
     isHydraulic: Boolean(sashConfig?.isHydraulic || rootCell.isHydraulic),
     vertMullionT: mullionMm,
     horizMullionT: horizMullionMm,
     frameConfig,
     sashConfig,
     slidingOverlapPx: slidingOverlapMm,
+    availableProfiles,
+    scale: 1,
   });
 
   const cfg: Door3DCustomSettings = customSettings ?? DEFAULT_DOOR_3D_SETTINGS;
@@ -895,20 +1158,33 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
 
   // 4. Dựng Khung bao ngoài (Outer Frame Boxes)
   const frameJoint = frameConfig?.cornerJoint ?? '45';
-  const isBot90 = frameJoint === '45_top_90_bot';
-  const botFrameMm = isOpenBottom ? 0 : isBot90 ? Math.max(24, Math.round(frameMm * 0.65)) : frameMm;
 
   for (const fBox of layout.frames) {
+    const fBoxJoint = fBox.cornerJoint ?? frameJoint;
+    const fBoxOpenBot = fBox.isOpenBottom ?? isOpenBottom;
+    const fBoxEdges = fBox.frameMmEdges ?? {
+      left: frameMm,
+      top: frameMm,
+      right: frameMm,
+      bottom: frameMm,
+    };
+    const isBot90 = fBoxJoint === '45_top_90_bot';
+    const fBoxBotMm = fBoxOpenBot
+      ? 0
+      : isBot90
+      ? Math.max(24, Math.round(fBoxEdges.bottom * 0.65))
+      : fBoxEdges.bottom;
+
     if (frameShape !== 'rect') {
       addArchedFrame3D(
         collector,
         to3D,
         frameShape,
         fBox,
-        frameMm,
+        fBoxEdges.top,
         frameZBack,
         frameZFront,
-        isOpenBottom,
+        fBoxOpenBot,
         frameConfig?.archConfig,
         aluRgb,
         aluMatId,
@@ -919,25 +1195,29 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
         collector,
         to3D,
         fBox,
-        { left: frameMm, top: frameMm, right: frameMm, bottom: botFrameMm },
+        { left: fBoxEdges.left, top: fBoxEdges.top, right: fBoxEdges.right, bottom: fBoxBotMm },
         frameZBack,
         frameZFront,
-        frameJoint,
+        fBoxJoint,
         aluRgb,
         aluMatId,
         aluEdgeRgb,
         {
-          isOpenBottom,
+          isOpenBottom: fBoxOpenBot,
+          isOpenBotLeft: fBox.isPartialBottomOpen ? fBox.isLeftBottomOpen : undefined,
+          isOpenBotRight: fBox.isPartialBottomOpen ? fBox.isRightBottomOpen : undefined,
+          bottomBarSegments: fBox.isPartialBottomOpen ? fBox.bottomBarSegments : undefined,
           hasInnerRebate: !hasSlidingLeaves,
           gapMm: 0.7,
+          mullions: layout.mullions,
         }
       );
 
       // Vẽ đủ số thanh Ray Inox trên khung dưới theo đúng số ray của bộ cửa (2 ray, 3 ray, 4 ray...)
-      if (hasSlidingLeaves && !isOpenBottom) {
+      if (hasSlidingLeaves && !fBoxOpenBot) {
         const railCol: Vec3 = [0.78, 0.82, 0.86];
-        const [rx1, ryBot] = to3D(fBox.x + frameMm, fBox.y + fBox.h - botFrameMm);
-        const [rx2] = to3D(fBox.x + fBox.w - frameMm, fBox.y + fBox.h - botFrameMm);
+        const [rx1, ryBot] = to3D(fBox.x + fBoxEdges.left, fBox.y + fBox.h - fBoxBotMm);
+        const [rx2] = to3D(fBox.x + fBox.w - fBoxEdges.right, fBox.y + fBox.h - fBoxBotMm);
         const railW = Math.max(0.05, Math.abs(rx2 - rx1));
         const railCx = (rx1 + rx2) / 2;
         for (let tIdx = 0; tIdx < numTracks; tIdx++) {
@@ -1005,16 +1285,46 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
     foldChainIndex?: number;
     foldChainAnchorXMm?: number;
     foldChainPrevWidthsMm?: number[];
+    sashMmEdges?: { left: number; top: number; right: number; bottom: number };
+    sashCornerJoint?: SashCornerJoint;
+    beadMm?: number;
   }
 
   const allSashes: FlattenedSashItem[] = [];
 
   for (const leaf of layout.leaves) {
-    const { node, x: lx, y: ly, w: lw, h: lh } = leaf;
+    const { node, x: leafX, y: leafY, w: leafW, h: leafH } = leaf;
+    // Ô ghi đè Đảo vách/Đảo cánh riêng: dựng 4 thanh REVERSAL quanh ô rồi thu nhỏ hộp ô vào trong
+    const hasCellReversal = leaf.effectiveReversalMode === 'wall' || leaf.effectiveReversalMode === 'sash';
+    const cellReversalMm = hasCellReversal
+      ? Math.min(
+          resolveReversalMm(availableProfiles, frameConfig, node.reversalProfileIdOverride),
+          Math.floor(Math.min(leafW, leafH) * 0.2)
+        )
+      : 0;
+    if (cellReversalMm > 0) {
+      addFourPerimeterBars3D(
+        collector,
+        to3D,
+        { x: leafX, y: leafY, w: leafW, h: leafH },
+        { left: cellReversalMm, top: cellReversalMm, right: cellReversalMm, bottom: cellReversalMm },
+        -sashDepthM / 2,
+        sashDepthM / 2,
+        '45',
+        aluRgb,
+        aluMatId,
+        aluEdgeRgb,
+        { gapMm: 0.4 }
+      );
+    }
+    const lx = leafX + cellReversalMm;
+    const ly = leafY + cellReversalMm;
+    const lw = leafW - 2 * cellReversalMm;
+    const lh = leafH - 2 * cellReversalMm;
     const st = String(node.sashType || 'fixed');
 
     if (st === 'fixed') {
-      const bW = Math.min(beadMm, Math.floor(Math.min(lw, lh) * 0.15));
+      const bW = Math.min(leaf.beadMm ?? beadMm, Math.floor(Math.min(lw, lh) * 0.15));
       const beadDepth = Math.max(0.018, (cfg.glassThicknessMm || 8) * 0.001 + 0.01);
       addFourPerimeterBars3D(
         collector,
@@ -1056,12 +1366,18 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
           box: { x: lx, y: ly, w: halfW, h: lh },
           sashType: 'swing_left',
           hasDynamicMullion: true,
+          sashMmEdges: leaf.sashMmEdges,
+          sashCornerJoint: leaf.sashCornerJoint,
+          beadMm: leaf.beadMm,
         },
         {
           node,
           box: { x: lx + halfW + gapMid, y: ly, w: halfW, h: lh },
           sashType: 'swing_right',
           hasDynamicMullion: false,
+          sashMmEdges: leaf.sashMmEdges,
+          sashCornerJoint: leaf.sashCornerJoint,
+          beadMm: leaf.beadMm,
         }
       );
     } else {
@@ -1071,6 +1387,9 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
         box: { x: lx, y: ly, w: lw, h: lh },
         sashType: st,
         slidingIndex: isSlidingSash ? slidingLeafCounter++ : undefined,
+        sashMmEdges: leaf.sashMmEdges,
+        sashCornerJoint: leaf.sashCornerJoint,
+        beadMm: leaf.beadMm,
       });
     }
   }
@@ -1203,8 +1522,8 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
     }
     const sashZCenter = (sZBack + sZFront) / 2;
 
-    let activeSashJoint: SashCornerJoint = sashConfig?.cornerJoint ?? '45';
-    if (isSliding && sashConfig?.slidingJoints) {
+    let activeSashJoint: SashCornerJoint = sub.sashCornerJoint ?? sashConfig?.cornerJoint ?? '45';
+    if (!sub.sashCornerJoint && isSliding && sashConfig?.slidingJoints) {
       const sIdx = sub.slidingIndex ?? 0;
       const isFirst = sIdx === 0;
       const isLast = sIdx === totalSlidingLeaves - 1 && totalSlidingLeaves > 1;
@@ -1241,12 +1560,21 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
         addHinges3D(collector, hingeX, sBox.y, sBox.h, hingeZFace, dirZ, to3D, effectiveHwRgb);
       }
     } else {
-      const dSash = Math.min(sashMm, Math.floor(Math.min(sBox.w, sBox.h) * 0.22));
+      const maxSashBar = Math.floor(Math.min(sBox.w, sBox.h) * 0.22);
+      const dSash = Math.min(sub.sashMmEdges?.left ?? sashMm, maxSashBar);
+      const sashBarW = sub.sashMmEdges
+        ? {
+            left: Math.min(sub.sashMmEdges.left, maxSashBar),
+            top: Math.min(sub.sashMmEdges.top, maxSashBar),
+            right: Math.min(sub.sashMmEdges.right, maxSashBar),
+            bottom: Math.min(sub.sashMmEdges.bottom, maxSashBar),
+          }
+        : { left: dSash, top: dSash, right: dSash, bottom: dSash };
       addFourPerimeterBars3D(
         collector,
         to3D,
         sBox,
-        { left: dSash, top: dSash, right: dSash, bottom: dSash },
+        sashBarW,
         sZBack,
         sZFront,
         activeSashJoint,
@@ -1350,7 +1678,7 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
     }
 
     // 4 Thanh Nẹp kính cánh + Tấm kính trong lòng cánh
-    const sbW = Math.min(beadMm, Math.floor(dSash * 0.42));
+    const sbW = Math.min(sub.beadMm ?? beadMm, Math.floor(dSash * 0.42));
     const innerBox = {
       x: sBox.x + dSash,
       y: sBox.y + dSash,

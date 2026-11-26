@@ -1,14 +1,24 @@
-import { Header, Footer } from '../_components';
+import type { Metadata } from 'next';
+import {
+  PAGE_SEO_META,
+  buildPageMetadata,
+  buildPricingJsonLd,
+  serializeJsonLd,
+} from '@/config';
 import PricingPageWrapper from './_components/pricing-page-wrapper';
 
+export const metadata: Metadata = buildPageMetadata(PAGE_SEO_META.pricing);
+
 export default function PricingPage() {
+  const jsonLd = buildPricingJsonLd();
+
   return (
-    <div className="min-h-screen bg-white font-sans text-gray-900 selection:bg-blue-100 selection:text-blue-900">
-      <Header />
-      <main>
-        <PricingPageWrapper />
-      </main>
-      <Footer />
-    </div>
+    <main>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
+      />
+      <PricingPageWrapper />
+    </main>
   );
 }

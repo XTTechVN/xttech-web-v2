@@ -70,6 +70,8 @@ function CompleteVisitForm({
     void queryClient.invalidateQueries({ queryKey: ['project_overview', projectId] });
     void queryClient.invalidateQueries({ queryKey: ['global_warranty_queue'] });
     void queryClient.invalidateQueries({ queryKey: ['global_warranty_badge'] });
+    void queryClient.invalidateQueries({ queryKey: ['staff-tasks'] });
+    void queryClient.invalidateQueries({ queryKey: ['staff-tasks-summary'] });
   };
 
   const saveDraft = useMutation({

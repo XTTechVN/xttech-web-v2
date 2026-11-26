@@ -1,0 +1,78 @@
+/* Bố cục ảnh / video trong bài viết tin tức (dùng chung: editor, preview, trang public).
+   Thuộc tính lưu trong HTML: <figure data-align="..." style="width: N%"> */
+.news-rich-media {
+  display: flow-root;
+}
+
+.news-rich-media figure {
+  margin: 1rem auto;
+  max-width: 100%;
+  clear: none;
+}
+
+.news-rich-media figure[style*='width'] img,
+.news-rich-media figure[style*='width'] video,
+.news-rich-media figure[style*='width'] iframe {
+  width: 100%;
+}
+
+.news-rich-media figure img,
+.news-rich-media figure video {
+  height: auto;
+  max-width: 100%;
+  display: block;
+  margin-inline: auto;
+}
+
+.news-rich-media figure iframe {
+  display: block;
+  aspect-ratio: 16 / 9;
+  height: auto;
+}
+
+.news-rich-media figure[data-align='left'] {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.news-rich-media figure[data-align='center'] {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.news-rich-media figure[data-align='right'] {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+@media (min-width: 640px) {
+  .news-rich-media figure[data-align='float-left'] {
+    float: left;
+    margin: 0.25rem 1.25rem 0.75rem 0;
+  }
+
+  .news-rich-media figure[data-align='float-right'] {
+    float: right;
+    margin: 0.25rem 0 0.75rem 1.25rem;
+  }
+}
+
+/* Chế độ soạn thảo: iframe/video không nuốt sự kiện chuột để có thể chọn khối media */
+.news-rich-media[contenteditable='true'] figure iframe,
+.news-rich-media[contenteditable='true'] figure video {
+  pointer-events: none;
+}
+
+.news-rich-media[contenteditable='true'] figure {
+  cursor: pointer;
+}
+
+.news-rich-media-drop-indicator {
+  position: absolute;
+  height: 3px;
+  border-radius: 2px;
+  background: #045863;
+  pointer-events: none;
+  z-index: 30;
+}
+

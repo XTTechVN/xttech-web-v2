@@ -1,24 +1,16 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
-import React, { useState, useMemo, useEffect, Suspense } from 'react';
+import React, { Suspense } from 'react';
 import dynamic from 'next/dynamic';
-import {
-  Columns,
-  ListChecks,
-  Building2,
-  ShieldCheck,
-  Layers,
-  Ruler,
-  PackageOpen,
-  LayoutGrid,
-} from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { Skeleton } from '@/components';
+import { AccessDenied } from '@/components/access-denied';
+import { PageHeading } from '@/components-remake';
+import { useCan } from '@/hooks';
 
 const ConfigTabFallback = () => (
   <div className="p-4">
-    <Skeleton className="h-96 w-full rounded-xl" />
+    <Skeleton className="h-96 w-full rounded-block" />
   </div>
 );
 
@@ -28,115 +20,52 @@ const ProfileBarsTab = dynamic(() => import('./profile-bars'), { loading: Config
 const GlassGasketsTab = dynamic(() => import('./glass-gaskets'), { loading: ConfigTabFallback });
 const DoorsTab = dynamic(() => import('./doors'), { loading: ConfigTabFallback });
 const DoorTemplatesTab = dynamic(() => import('./door-templates'), { loading: ConfigTabFallback });
+const SupplierDoorsTab = dynamic(() => import('./supplier-doors'), { loading: ConfigTabFallback });
 const AccessoriesTab = dynamic(() => import('./accessories'), { loading: ConfigTabFallback });
 const AccessoryCombosTab = dynamic(() => import('./accessory-combos'), { loading: ConfigTabFallback });
 
 interface ConfigTab {
   id: string;
-  label: string;
+  title: string;
+  description: string;
   component: React.ComponentType;
-  icon: React.ReactNode;
 }
 
-
+// Mục được chọn từ menu bên trái qua ?tab=; cổng quyền ở trang, mọi mục cùng nhóm quyền `catalog`
 const TABS: ConfigTab[] = [
-  {
-    id: 'brand',
-    label: 'Hãng cung cấp',
-    component: BrandTab,
-    icon: <Building2 size={16} />,
-  },
-  {
-    id: 'series',
-    label: 'Hệ nhôm',
-    component: SeriesTab,
-    icon: <Layers size={16} />,
-  },
-  {
-    id: 'profile-bars',
-    label: 'Thanh profile',
-    component: ProfileBarsTab,
-    icon: <Ruler size={16} />,
-  },
-  {
-    id: 'glass-gaskets',
-    label: 'Kính, Panel & Lưới muỗi',
-    component: GlassGasketsTab,
-    icon: <ShieldCheck size={16} />,
-  },
-  {
-    id: 'doors',
-    label: 'Biên dạng cửa',
-    component: DoorsTab,
-    icon: <Columns size={16} />,
-  },
-  {
-    id: 'door-templates',
-    label: 'Mẫu cửa',
-    component: DoorTemplatesTab,
-    icon: <LayoutGrid size={16} />,
-  },
-  {
-    id: 'accessories',
-    label: 'Phụ kiện',
-    component: AccessoriesTab,
-    icon: <ListChecks size={16} />,
-  },
-  {
-    id: 'accessory-combos',
-    label: 'Combo phụ kiện',
-    component: AccessoryCombosTab,
-    icon: <PackageOpen size={16} />,
-  },
+  { id: 'brand', title: 'Hãng cung cấp', description: 'Thương hiệu nhôm, phụ kiện và hệ màu.', component: BrandTab },
+  { id: 'series', title: 'Hệ nhôm', description: 'Các hệ nhôm theo từng hãng.', component: SeriesTab },
+  { id: 'profile-bars', title: 'Thanh profile', description: 'Thanh nhôm theo hệ và hãng.', component: ProfileBarsTab },
+  { id: 'glass-gaskets', title: 'Kính, panel và lưới muỗi', description: 'Quy cách kính, tấm và lưới.', component: GlassGasketsTab },
+  { id: 'doors', title: 'Biên dạng cửa', description: 'Biên dạng cửa và định mức vật tư.', component: DoorsTab },
+  { id: 'door-templates', title: 'Mẫu cửa', description: 'Mẫu cửa dựng sẵn.', component: DoorTemplatesTab },
+  { id: 'supplier-doors', title: 'Cửa nhập nhà cung cấp', description: 'Cửa mua nguyên bộ từ nhà cung cấp.', component: SupplierDoorsTab },
+  { id: 'accessories', title: 'Phụ kiện, roan và keo', description: 'Phụ kiện cửa, roan và keo.', component: AccessoriesTab },
+  { id: 'accessory-combos', title: 'Combo phụ kiện', description: 'Bộ phụ kiện đi cùng nhau.', component: AccessoryCombosTab },
 ];
 
 function ProjectConfigurationContent() {
-  const searchParams = useSearchParams();
-  const urlTab = searchParams.get('tab');
-  // Trang chỉ vào được khi có quyền xem cấu hình (cổng ở menu/route); mọi tab cùng nhóm quyền `catalog`
-  const availableTabs = TABS;
+  const { can, isReady } = useCan();
+  const urlTab = useSearchParams().get('tab');
+  const tab = TABS.find((t) => t.id === (urlTab === 'aluminum' ? 'brand' : urlTab)) ?? TABS[0];
+  const Active = tab.component;
 
-  const [activeTab, setActiveTab] = useState<string>(() => {
-    if (urlTab === 'aluminum') return 'brand';
-    if (urlTab && TABS.some((t) => t.id === urlTab)) {
-      return urlTab;
-    }
-    return 'brand';
-  });
-
-  useEffect(() => {
-    if (urlTab && availableTabs.some((t) => t.id === urlTab) && urlTab !== activeTab) {
-      setActiveTab(urlTab);
-    }
-  }, [urlTab, availableTabs, activeTab]);
-
-  useEffect(() => {
-    if (availableTabs.length > 0 && !availableTabs.some((t) => t.id === activeTab)) {
-      setActiveTab(availableTabs[0].id);
-    }
-  }, [availableTabs, activeTab]);
-
-  const currentTab = availableTabs.find((t) => t.id === activeTab) || availableTabs[0];
-  const ActiveComponent = currentTab?.component || BrandTab;
+  if (!isReady) return <ConfigTabFallback />;
+  if (!can('catalog:read')) return <AccessDenied />;
 
   return (
-    <div className="flex flex-col gap-4 text-black">
-      <div className="min-h-[400px]">
-        {ActiveComponent && <ActiveComponent />}
+    <div className="font-body [&_h1]:font-heading [&_h2]:font-heading [&_h3]:font-heading">
+      <div className="px-4 pt-4 md:px-6 md:pt-6">
+        <PageHeading title={tab.title} description={tab.description} />
       </div>
+      <Active key={tab.id} />
     </div>
   );
 }
 
 export default function ProjectConfigurationPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="p-8 text-center text-slate-500 font-medium">
-          Đang tải cấu hình dự án...
-        </div>
-      }
-    >
+    <Suspense fallback={<ConfigTabFallback />}>
       <ProjectConfigurationContent />
     </Suspense>
   );

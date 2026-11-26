@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import 'dayjs/locale/vi';
 import { getAttendances } from '@/actions';
+import { useCan } from '@/hooks';
 import { useAuthStore } from '@/stores';
 import { getAttendanceStatusInfo, Attendance } from '@/types';
 import {
@@ -19,6 +20,8 @@ import {
 
 export const PersonalAttendanceHistory: React.FC = () => {
   const user = useAuthStore((state) => state.user);
+  const { can } = useCan();
+  const allowed = can('attendance:read');
 
   const {
     data: attendancesRes,
@@ -34,7 +37,7 @@ export const PersonalAttendanceHistory: React.FC = () => {
         sortBy: 'workDate',
         sortOrder: 'desc',
       }),
-    enabled: Boolean(user?.id),
+    enabled: allowed && Boolean(user?.id),
     refetchInterval: 60000,
   });
 
@@ -53,12 +56,14 @@ export const PersonalAttendanceHistory: React.FC = () => {
     }
   };
 
+  if (!allowed) return null;
+
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col gap-3.5">
+    <div className="bg-white border border-gray-100 rounded-block p-4 sm:p-5 shadow-xs flex flex-col gap-3.5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <Link href="/app/attendances/payroll" className="flex items-center gap-2 group cursor-pointer">
-          <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-100 transition">
+          <div className="p-2 rounded-block bg-blue-50 text-blue-600 group-hover:bg-blue-100 transition">
             <CalendarCheck2 size={18} />
           </div>
           <div className="flex flex-col">
@@ -74,7 +79,7 @@ export const PersonalAttendanceHistory: React.FC = () => {
           onClick={() => refetch()}
           disabled={isRefetching}
           title="Làm mới lịch sử"
-          className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition cursor-pointer active:scale-95 disabled:opacity-50"
+          className="p-1.5 rounded-control text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition cursor-pointer active:scale-95 disabled:opacity-50"
         >
           <RotateCw size={15} className={isRefetching ? 'animate-spin text-primary' : ''} />
         </button>
@@ -86,12 +91,12 @@ export const PersonalAttendanceHistory: React.FC = () => {
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="h-14 rounded-xl bg-gray-50 animate-pulse border border-gray-100"
+              className="h-14 rounded-block bg-gray-50 animate-pulse border border-gray-100"
             />
           ))}
         </div>
       ) : attendances.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-6 text-center text-gray-400 gap-1.5 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+        <div className="flex flex-col items-center justify-center py-6 text-center text-gray-400 gap-1.5 bg-gray-50/50 rounded-block border border-dashed border-gray-200">
           <CalendarX size={24} className="text-gray-300" />
           <span className="text-xs font-medium text-gray-600">Chưa có lịch sử chấm công</span>
           <span className="text-[10px] text-gray-400">
@@ -110,11 +115,11 @@ export const PersonalAttendanceHistory: React.FC = () => {
               <Link
                 key={item.id}
                 href="/app/attendances/payroll"
-                className="flex items-center justify-between p-2.5 rounded-xl bg-gray-50/70 hover:bg-gray-100/70 border border-gray-100/80 transition cursor-pointer"
+                className="flex items-center justify-between p-2.5 rounded-block bg-gray-50/70 hover:bg-gray-100/70 border border-gray-100/80 transition cursor-pointer"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-white border border-gray-200/60 shadow-2xs flex flex-col items-center justify-center shrink-0">
-                    <span className="text-[9px] text-gray-400 font-semibold uppercase leading-none">
+                  <div className="w-10 h-10 rounded-block bg-white border border-gray-200/60 shadow-2xs flex flex-col items-center justify-center shrink-0">
+                    <span className="text-[9px] text-gray-400 font-semibold leading-none">
                       {dayjs(item.workDate).format('MM')}
                     </span>
                     <span className="text-sm font-bold text-gray-800 leading-tight">
@@ -147,7 +152,7 @@ export const PersonalAttendanceHistory: React.FC = () => {
 
                 <div className="flex flex-col items-end gap-1">
                   <span
-                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border ${getStatusBadgeClass(
+                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-control border ${getStatusBadgeClass(
                       statusInfo.variant
                     )}`}
                   >
@@ -168,7 +173,7 @@ export const PersonalAttendanceHistory: React.FC = () => {
       {/* Footer Link */}
       <Link
         href="/app/attendances/payroll"
-        className="flex items-center justify-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/80 transition py-2 bg-primary/5 hover:bg-primary/10 rounded-xl mt-0.5 active:scale-98 cursor-pointer"
+        className="flex items-center justify-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/80 transition py-2 bg-primary/5 hover:bg-primary/10 rounded-block mt-0.5 active:scale-98 cursor-pointer"
       >
         <span>Xem toàn bộ lịch sử chấm công</span>
         <ArrowRight size={13} />

@@ -25,6 +25,10 @@ const nextConfig: NextConfig = {
         source: '/app/:path*',
         headers: [
           {
+            key: 'X-Robots-Tag',
+            value: 'noindex, nofollow, noarchive',
+          },
+          {
             key: 'Cache-Control',
             value: 'private, no-cache, no-store, max-age=0, must-revalidate',
           },
@@ -39,6 +43,51 @@ const nextConfig: NextConfig = {
           {
             key: 'Vary',
             value: 'RSC, Next-Router-State-Tree, Next-Router-Prefetch, Accept',
+          },
+        ],
+      },
+      {
+        source: '/qr/:path*',
+        headers: [
+          {
+            key: 'X-Robots-Tag',
+            value: 'noindex, nofollow, noarchive',
+          },
+        ],
+      },
+      {
+        source: '/sign/:path*',
+        headers: [
+          {
+            key: 'X-Robots-Tag',
+            value: 'noindex, nofollow, noarchive',
+          },
+        ],
+      },
+      {
+        source: '/signin',
+        headers: [
+          {
+            key: 'X-Robots-Tag',
+            value: 'noindex, nofollow, noarchive',
+          },
+        ],
+      },
+      {
+        source: '/forgot-password',
+        headers: [
+          {
+            key: 'X-Robots-Tag',
+            value: 'noindex, nofollow, noarchive',
+          },
+        ],
+      },
+      {
+        source: '/components',
+        headers: [
+          {
+            key: 'X-Robots-Tag',
+            value: 'noindex, nofollow, noarchive',
           },
         ],
       },

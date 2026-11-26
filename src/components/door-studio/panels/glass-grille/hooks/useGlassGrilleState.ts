@@ -629,6 +629,20 @@ export function useGlassGrilleState({
     );
   };
 
+  const handleRotateSelectedMotif = (angle: number) => {
+    if (!selectedMotifId) return;
+    const normalized = ((angle % 360) + 360) % 360;
+    handleUpdateSelectedMotif({ rotation: normalized });
+  };
+
+  const handleCycleSelectedMotifRotation = () => {
+    if (!selectedMotifId) return;
+    const current = motifs.find((m) => m.id === selectedMotifId);
+    const curAngle = current?.rotation || 0;
+    const nextAngle = (curAngle + 90) % 360;
+    handleUpdateSelectedMotif({ rotation: nextAngle });
+  };
+
   const handleAssignAccessoryToMotif = (accessoryIdStr: string) => {
     if (!selectedMotifId) return;
     if (!accessoryIdStr) {
@@ -882,6 +896,8 @@ export function useGlassGrilleState({
     handleMouseDownOnBorder,
     handleMouseDownOnCorner,
     handleUpdateSelectedMotif,
+    handleRotateSelectedMotif,
+    handleCycleSelectedMotifRotation,
     handleAssignAccessoryToMotif,
     handleDeleteSelectedMotif,
     handleClearAll,

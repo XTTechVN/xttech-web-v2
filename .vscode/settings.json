@@ -1,0 +1,10 @@
+{
+  "java.import.gradle.enabled": false,
+  "java.import.gradle.wrapper.enabled": false,
+  "java.import.exclusions": [
+    "**/node_modules/**",
+    "**/.git/**",
+    "**/.next/**"
+  ]
+}
+

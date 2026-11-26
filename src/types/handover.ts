@@ -1,4 +1,5 @@
 import type { EvidenceMediaItem, ProgressStepCode } from './cutting-plan';
+import type { DoorFulfillmentType } from './supplier-door';
 
 // ---------- Chữ ký điện tử ----------
 export interface SignatureInput {
@@ -22,6 +23,7 @@ export interface SigningRequestPayload {
   recipientEmail?: string;
   expiresInDays?: number;
   companySignature?: SignatureInput;
+  sendEmail?: boolean;
 }
 
 export interface SigningRequestResult {
@@ -38,8 +40,109 @@ export interface SigningRequestResult {
 
 export type AcceptanceItemResult = 'passed' | 'failed';
 
+export type PublicSigningSubject = 'contract' | 'acceptance' | 'quotation';
+
+export interface PublicParty {
+  name?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+  representative?: string | null;
+  representativeRole?: string | null;
+  taxCode?: string | null;
+}
+
+export interface PublicParties {
+  partyA?: PublicParty | null;
+}
+
+export interface PublicMilestone {
+  name: string;
+  percentage?: number | null;
+  amount?: number | null;
+}
+
+export interface PublicDoorSpec {
+  width?: number | null;
+  height?: number | null;
+  areaM2?: number | null;
+  doorType?: string | null;
+  brandName?: string | null;
+  colorName?: string | null;
+  colorHex?: string | null;
+  supplierName?: string | null;
+  specification?: string | null;
+  glassName?: string | null;
+  note?: string | null;
+}
+
+export interface PublicDoorDrawing {
+  imagePath?: string | null;
+  systemConfig?: Record<string, unknown> | null;
+}
+
+export interface PublicAccessoryLine {
+  code?: string | null;
+  name: string;
+  category?: string | null;
+  brandName?: string | null;
+  comboName?: string | null;
+  unit?: string | null;
+  quantity: number;
+  note?: string | null;
+}
+
+export interface PublicExtraGlassLine {
+  code?: string | null;
+  name: string;
+  areaM2: number;
+  unitPrice: number;
+  amount: number;
+}
+
+export interface PublicDoorPricing {
+  unitPricePerM2: number;
+  unit?: 'm2' | 'set';
+  unitPrice?: number;
+  amount: number;
+  doorAmount: number;
+  extraGlassAmount?: number;
+  accessoryAmount: number;
+}
+
+export interface PublicSigningItem {
+  positionId: number;
+  code: string;
+  name: string;
+  floorId?: number | null;
+  floorName?: string | null;
+  sortIndex: number;
+  spec: PublicDoorSpec;
+  drawing?: PublicDoorDrawing | null;
+  extraGlasses?: PublicExtraGlassLine[];
+  accessories: PublicAccessoryLine[];
+  pricing?: PublicDoorPricing | null;
+  /** Chỉ có ở nghiệm thu */
+  result?: AcceptanceItemResult | null;
+  note?: string | null;
+}
+
+export interface PublicPricingSummary {
+  accessoryMode: string;
+  totalQuantity: number;
+  totalAreaM2: number;
+  subtotalAmount?: number | null;
+  otherAmount?: number | null;
+  discountPercent?: number | null;
+  discountAmount?: number | null;
+  amountBeforeVat?: number | null;
+  vatPercent?: number | null;
+  vatAmount?: number | null;
+  totalAmount?: number | null;
+}
+
 export interface PublicSigningView {
-  subjectType: 'contract' | 'acceptance' | 'quotation';
+  subjectType: PublicSigningSubject;
   /** Trạng thái chứng từ hoặc link: signed | revoked | expired | draft | sent | awaiting_customer... */
   status: string;
   expiresAt: string;
@@ -48,21 +151,10 @@ export interface PublicSigningView {
   documentCode: string;
   documentTitle: string;
   totalAmount?: number | null;
-  parties?: Record<string, Record<string, string>> | null;
-  milestones: { name: string; percentage: number; amount: number }[];
-  items: {
-    code?: string;
-    name?: string;
-    floor?: string;
-    width?: number;
-    height?: number;
-    areaM2?: number;
-    /** Chỉ có ở báo giá */
-    sellingPrice?: number;
-    /** Chỉ có ở nghiệm thu */
-    result?: AcceptanceItemResult;
-    note?: string | null;
-  }[];
+  parties?: PublicParties | null;
+  milestones: PublicMilestone[];
+  items: PublicSigningItem[];
+  pricing?: PublicPricingSummary | null;
   photos: EvidenceMediaItem[];
   signatures: ESignature[];
 }
@@ -141,6 +233,8 @@ export interface WarrantyVisitPositionItem {
   height: number;
   areaM2: number;
   designImage?: string | null;
+  fulfillmentType?: DoorFulfillmentType;
+  supplierName?: string | null;
 }
 
 export interface WarrantyVisit {
@@ -376,6 +470,8 @@ export interface QrProjectDoorItem {
   glassName?: string | null;
   designImage?: string | null;
   systemConfig?: Record<string, unknown> | null;
+  fulfillmentType?: DoorFulfillmentType;
+  supplierName?: string | null;
   qrToken: string;
 }
 
@@ -403,6 +499,8 @@ export interface PositionQrView {
   glassName?: string | null;
   designImage?: string | null;
   systemConfig?: Record<string, unknown> | null;
+  fulfillmentType?: DoorFulfillmentType;
+  supplierName?: string | null;
   bars: {
     name: string;
     length: number;

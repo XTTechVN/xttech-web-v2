@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Glass, ProfileBar } from '@/types';
+import { DoorSeries, Glass, ProfileBar } from '@/types';
 import {
   SceneCellNode,
   PaneType,
@@ -9,10 +9,16 @@ import {
   FrameShape,
   FrameConfig,
   ArchConfig,
+  SashConfig,
 } from '../studio-types';
+import { CellFrameOverrideSection } from './cell-frame-override-section';
+import { CellSeriesProfileOverrideSection } from './cell-series-profile-override-section';
+import { CellGlassConfigSection } from './cell-glass-config-section';
+import { EnclosingFrameUnitInfo } from '../utils/door-tree-utils';
 import { computeArchMetrics } from '../cad-engine/cad-geometry';
 import { Select } from '@/components/select';
-import { Grid, Sparkles, Layers, SlidersHorizontal, Check, Lock, Square, DoorClosed } from 'lucide-react';
+import { Grid, Sparkles, Layers, SlidersHorizontal, Check, Lock, DoorClosed } from 'lucide-react';
+import { parseStudioProfileId } from '../utils/profile-combine-utils';
 
 interface CellInspectorProps {
   selectedCell: SceneCellNode | null;
@@ -30,17 +36,18 @@ interface CellInspectorProps {
   doorW?: number;
   doorH?: number;
   onChangeFrameConfig?: (updates: Partial<FrameConfig>) => void;
+  /** Ô có chạm đáy cửa không (cho phép chọn Hở/Kín cạnh đáy riêng) */
+  isTouchingBottom?: boolean;
+  availableProfiles?: ProfileBar[];
+  sashConfig?: SashConfig;
+  /** Áp patch hiệu ứng kính cho mọi ô kính trong cửa */
+  onApplyGlassVisualToAll?: (patch: Partial<SceneCellNode>) => void;
+  frameUnitInfo?: EnclosingFrameUnitInfo | null;
+  onUpdateFrameUnit?: (updates: Partial<SceneCellNode>) => void;
+  globalSeriesId?: number;
+  availableSeries?: DoorSeries[];
+  allBrandProfiles?: ProfileBar[];
 }
-
-const GLASS_OPTIONS = [
-  'Kính dán an toàn 6.38mm',
-  'Kính dán an toàn 8.38mm',
-  'Kính dán an toàn 10.38mm',
-  'Kính cường lực 8mm',
-  'Kính cường lực 10mm',
-  'Kính cường lực 12mm',
-  'Kính hộp cách âm 5-9-5mm',
-];
 
 const LEGGED_ARCH_SHAPES: FrameShape[] = [
   'arch_semicircle',
@@ -66,34 +73,35 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
   doorW,
   doorH,
   onChangeFrameConfig,
+  isTouchingBottom = false,
+  availableProfiles,
+  sashConfig,
+  onApplyGlassVisualToAll,
+  frameUnitInfo,
+  onUpdateFrameUnit,
+  globalSeriesId,
+  availableSeries,
+  allBrandProfiles,
 }) => {
-  const [localW, setLocalW] = React.useState<number>(selectedCell?.w ?? 0);
-  const [localH, setLocalH] = React.useState<number>(selectedCell?.h ?? 0);
-
-  React.useEffect(() => {
-    if (selectedCell) {
-      setLocalW(selectedCell.w);
-      setLocalH(selectedCell.h);
-    }
-  }, [selectedCell?.id, selectedCell?.w, selectedCell?.h]);
+  const cellDimKey = selectedCell ? `${selectedCell.id}:${selectedCell.w}:${selectedCell.h}` : '';
+  const [dimDraft, setDimDraft] = React.useState<{ key: string; w: number; h: number } | null>(null);
+  const localW = dimDraft?.key === cellDimKey ? dimDraft.w : (selectedCell?.w ?? 0);
+  const localH = dimDraft?.key === cellDimKey ? dimDraft.h : (selectedCell?.h ?? 0);
 
   const handleApplyW = () => {
     if (onUpdateDimension && selectedCell && localW > 0 && localW !== selectedCell.w) {
       onUpdateDimension('cell-w', localW, selectedCell.id);
     }
+    setDimDraft(null);
   };
 
   const handleApplyH = () => {
     if (onUpdateDimension && selectedCell && localH > 0 && localH !== selectedCell.h) {
       onUpdateDimension('cell-h', localH, selectedCell.id);
     }
+    setDimDraft(null);
   };
 
-  // Ưu tiên dùng data từ DB, fallback về hardcode khi chưa fetch xong
-  const glassOptions =
-    availableGlasses && availableGlasses.length > 0
-      ? availableGlasses.map((g) => ({ key: String(g.id), label: g.name }))
-      : GLASS_OPTIONS.map((name, idx) => ({ key: `fallback-${idx}`, label: name }));
   const isArchShape = Boolean(
     frameShape &&
     frameShape !== 'rect' &&
@@ -290,7 +298,7 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
             <input
               type="number"
               value={localW}
-              onChange={(e) => setLocalW(Number(e.target.value))}
+              onChange={(e) => setDimDraft({ key: cellDimKey, w: Number(e.target.value), h: localH })}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleApplyW();
               }}
@@ -306,7 +314,7 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
             <input
               type="number"
               value={localH}
-              onChange={(e) => setLocalH(Number(e.target.value))}
+              onChange={(e) => setDimDraft({ key: cellDimKey, w: localW, h: Number(e.target.value) })}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleApplyH();
               }}
@@ -388,6 +396,27 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
           className="h-8 py-0 text-xs md:text-xs bg-white rounded-lg border-gray-300 font-medium"
         />
       </div>
+
+      <CellSeriesProfileOverrideSection
+        selectedCell={selectedCell}
+        onUpdateCell={onUpdateCell}
+        frameUnitInfo={frameUnitInfo}
+        onUpdateFrameUnit={onUpdateFrameUnit}
+        globalSeriesId={globalSeriesId}
+        availableSeries={availableSeries}
+        allBrandProfiles={allBrandProfiles ?? availableProfiles}
+        frameConfig={frameConfig}
+        sashConfig={sashConfig}
+      />
+
+      <CellFrameOverrideSection
+        selectedCell={selectedCell}
+        onUpdateCell={onUpdateCell}
+        isTouchingBottom={isTouchingBottom}
+        availableProfiles={allBrandProfiles ?? availableProfiles}
+        frameConfig={frameConfig}
+        sashConfig={sashConfig}
+      />
 
       {/* 3.1. Cấu hình Khóa & Cao độ tay nắm */}
       {selectedCell.sashType && selectedCell.sashType !== 'fixed' && (
@@ -475,7 +504,13 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
               <button
                 key={opt.id}
                 type="button"
-                onClick={() => onUpdateCell({ paneType: opt.id })}
+                onClick={() =>
+                  onUpdateCell(
+                    opt.id !== 'glass'
+                      ? { paneType: opt.id, extraGlasses: undefined }
+                      : { paneType: opt.id }
+                  )
+                }
                 className={`p-2 rounded-lg border text-left flex items-center justify-between transition-all cursor-pointer ${
                   isSelected
                     ? 'border-primary bg-primary/10 font-semibold text-primary shadow-2xs'
@@ -492,58 +527,13 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
 
       {/* 4. Kính (khi chọn Pane = Glass) */}
       {selectedCell.paneType === 'glass' && (
-        <div className="space-y-2 p-3 rounded-lg bg-slate-50 border border-slate-200">
-          <div className="flex items-center gap-1.5 text-slate-800 font-semibold text-xs">
-            <Square size={13} className="text-primary" />
-            <span>Kính ô cửa</span>
-          </div>
-
-          <div>
-            <label className="text-[11px] text-slate-600 font-medium block mb-1">
-              Loại kính cho ô này:
-            </label>
-            <Select
-              fullWidth
-              value={selectedCell.glassName || ''}
-              onChange={(e) => onUpdateCell({ glassName: e.target.value || undefined })}
-              options={[
-                {
-                  value: '',
-                  label: defaultGlass?.name ? `${defaultGlass.name} (Mặc định)` : 'Dùng kính mặc định',
-                },
-                ...glassOptions.map(({ label }) => ({
-                  value: label,
-                  label,
-                })),
-              ]}
-              placeholder={defaultGlass?.name ? `${defaultGlass.name} (Mặc định)` : 'Dùng kính mặc định'}
-              className="h-8 py-0 text-xs md:text-xs bg-white rounded-md border-slate-200 text-slate-800"
-            />
-            {defaultGlass?.name && (
-              <p className="text-[11px] text-gray-500 italic mt-1.5">
-                Mặc định: {defaultGlass.name}
-              </p>
-            )}
-          </div>
-
-          <div className="pt-1.5 border-t border-slate-200/60">
-            <div className="text-[11px] text-gray-700 font-semibold mb-0.5">Chia kính</div>
-            <div className="flex items-center justify-between text-[11px] text-gray-500 mb-1">
-              <span>Số tấm chia đều:</span>
-            </div>
-            <input
-              type="number"
-              min={1}
-              max={10}
-              value={selectedCell.glassSplitCount || 1}
-              onChange={(e) =>
-                onUpdateCell({ glassSplitCount: Math.max(1, Number(e.target.value)) })
-              }
-              className="w-full h-8 px-2.5 font-mono font-bold text-xs bg-white rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500 text-slate-800"
-              placeholder="1"
-            />
-          </div>
-        </div>
+        <CellGlassConfigSection
+          selectedCell={selectedCell}
+          availableGlasses={availableGlasses}
+          defaultGlass={defaultGlass}
+          onUpdateCell={onUpdateCell}
+          onApplyGlassVisualToAll={onApplyGlassVisualToAll}
+        />
       )}
 
       {/* 5. Tùy chỉnh nẹp (Custom Edge Beads) */}
@@ -566,7 +556,7 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
                 fullWidth
                 value={selectedCell.customBeads?.bottom || ''}
                 onChange={(e) => {
-                  const val = e.target.value ? Number(e.target.value) : null;
+                  const val = parseStudioProfileId(e.target.value) ?? null;
                   onUpdateCell({
                     customBeads: { ...selectedCell.customBeads, bottom: val },
                   });
@@ -588,7 +578,7 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
                 fullWidth
                 value={selectedCell.customBeads?.top || ''}
                 onChange={(e) => {
-                  const val = e.target.value ? Number(e.target.value) : null;
+                  const val = parseStudioProfileId(e.target.value) ?? null;
                   onUpdateCell({
                     customBeads: { ...selectedCell.customBeads, top: val },
                   });
@@ -617,7 +607,7 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
                 fullWidth
                 value={selectedCell.customBeads?.left || ''}
                 onChange={(e) => {
-                  const val = e.target.value ? Number(e.target.value) : null;
+                  const val = parseStudioProfileId(e.target.value) ?? null;
                   onUpdateCell({
                     customBeads: { ...selectedCell.customBeads, left: val },
                   });
@@ -639,7 +629,7 @@ export const CellInspector: React.FC<CellInspectorProps> = ({
                 fullWidth
                 value={selectedCell.customBeads?.right || ''}
                 onChange={(e) => {
-                  const val = e.target.value ? Number(e.target.value) : null;
+                  const val = parseStudioProfileId(e.target.value) ?? null;
                   onUpdateCell({
                     customBeads: { ...selectedCell.customBeads, right: val },
                   });

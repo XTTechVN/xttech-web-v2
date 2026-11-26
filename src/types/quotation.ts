@@ -1,4 +1,5 @@
 // Module 003: Step 2 Live Pricing Engine & Quotation
+import type { DoorFulfillmentType, PositionCostStatus } from './supplier-door';
 
 /**
  * Vòng duyệt báo giá: draft -> pending_approval (chờ admin) -> approved -> sent (chờ khách)
@@ -36,6 +37,20 @@ export interface ProjectQuotationPreviewRequest {
   customAccessoryPrices?: Record<number, number>;
 }
 
+export interface QuotationExtraGlassDetailSnapshot {
+  glassId: number | null;
+  glassCode: string | null;
+  glassName: string;
+  paneCount: number;
+  areaM2: number;
+  costUnitPrice: number;
+  rawCost: number;
+  costPrice: number;
+  suggestedPrice: number;
+  sellingPrice: number;
+  unitPrice: number;
+}
+
 export interface QuotationDoorItemSnapshot {
   positionId: number;
   positionCode: string;
@@ -63,6 +78,17 @@ export interface QuotationDoorItemSnapshot {
   doorOnlyCostPrice: number;
   doorOnlySuggestedPrice: number;
   doorOnlySellingPrice: number;
+  extraGlassCost?: number;
+  extraGlassSuggestedPrice?: number;
+  extraGlassSellingPrice?: number;
+  extraGlassesDetail?: QuotationExtraGlassDetailSnapshot[];
+  fulfillmentType: DoorFulfillmentType;
+  supplierId: number | null;
+  supplierName: string | null;
+  supplierDoorId: number | null;
+  costStatus: PositionCostStatus;
+  supplierCostPrice: number;
+  isInstallationIncluded: boolean;
 }
 
 export interface ProjectQuotationPreviewResponse {
@@ -188,7 +214,7 @@ export interface ProjectQuotationDetail extends ProjectQuotationItem {
 
 // Bảng báo giá theo tầng (xem trước / in / xuất Excel)
 export type QuotationAccessoryMode = 'combined' | 'separated';
-export type QuotationSheetRowType = 'door' | 'accessory' | 'extra';
+export type QuotationSheetRowType = 'door' | 'glass' | 'accessory' | 'extra';
 export type QuotationSheetUnit = 'm2' | 'set';
 
 export interface QuotationSheetRow {
@@ -324,6 +350,7 @@ export type QuotationBomUnit =
   | 'roll'
   | 'box'
   | 'bag'
+  | 'bottle'
   | 'tube'
   | 'sheet'
   | 'sqm'
@@ -332,7 +359,7 @@ export type QuotationBomUnit =
 
 export type QuotationAuxiliaryItemType = 'gasket' | 'accessory' | 'auxiliary';
 export type QuotationLaborRowCode = 'production' | 'install' | 'clean';
-export type QuotationMaterialRowCode = 'profile' | 'glass' | 'gasket' | 'accessory';
+export type QuotationMaterialRowCode = 'profile' | 'glass' | 'gasket' | 'accessory' | 'outsourced_door';
 
 export interface QuotationMaterialCostRow {
   code: QuotationMaterialRowCode;

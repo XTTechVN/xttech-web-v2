@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { DoorGasketConfigItem, GasketMeasureType } from '../../studio-types';
-import { getGaskets } from '@/actions/gasket';
-import { Gasket } from '@/types';
+import { getAccessories } from '@/actions';
+import { Accessory } from '@/types';
 import { Select } from '@/components/select';
 import { Plus, X } from 'lucide-react';
 
@@ -39,12 +39,12 @@ export const GasketConfigSection: React.FC<GasketConfigSectionProps> = ({
   onChangeItems,
   target,
 }) => {
-  const [gasketList, setGasketList] = useState<Gasket[]>([]);
+  const [gasketList, setGasketList] = useState<Accessory[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     let isMounted = true;
-    getGaskets({ limit: 100 })
+    getAccessories({ unit: 'meter', isActive: true, limit: 500 })
       .then((res) => {
         if (isMounted && res && res.items) {
           setGasketList(res.items);
@@ -63,12 +63,14 @@ export const GasketConfigSection: React.FC<GasketConfigSectionProps> = ({
 
   const handleAddItem = () => {
     const defaultGasket = gasketList[0];
+    const defaultMeasure: GasketMeasureType =
+      target === 'frame' ? 'frame_perimeter' : 'bead';
     const newItem: DoorGasketConfigItem = {
       id: `gasket_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
       gasketId: defaultGasket?.id,
-      gasketCode: defaultGasket?.code,
+      gasketCode: defaultGasket?.code || undefined,
       gasketName: defaultGasket?.name || '',
-      measure: 'bead',
+      measure: defaultMeasure,
       countPerCell: 1,
       target,
     };
@@ -88,7 +90,7 @@ export const GasketConfigSection: React.FC<GasketConfigSectionProps> = ({
     const selected = gasketList.find((g) => g.id === selectedGasketId);
     handleUpdateItem(id, {
       gasketId: selectedGasketId,
-      gasketCode: selected?.code,
+      gasketCode: selected?.code || undefined,
       gasketName: selected?.name || '',
     });
   };
@@ -101,7 +103,7 @@ export const GasketConfigSection: React.FC<GasketConfigSectionProps> = ({
     () =>
       gasketList.map((g) => ({
         value: g.id,
-        label: `${g.code} - ${g.name}`,
+        label: g.code ? `${g.code} - ${g.name}` : g.name,
       })),
     [gasketList]
   );
@@ -120,7 +122,9 @@ export const GasketConfigSection: React.FC<GasketConfigSectionProps> = ({
             Roan gắn kính — {targetTitle}
           </span>
           <span className="text-[11px] text-slate-400 font-normal">
-            tính theo nẹp hoặc chu vi kính
+            {target === 'frame'
+              ? 'tính theo chu vi khung bao hoặc ô kính fix'
+              : 'tính theo nẹp hoặc chu vi kính cánh'}
           </span>
         </div>
 

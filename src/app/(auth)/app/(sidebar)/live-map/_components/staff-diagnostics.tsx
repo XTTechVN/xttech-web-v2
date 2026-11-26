@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { AlertCircle, Info, Smartphone } from 'lucide-react';
+import { usePermission } from '@/hooks';
 import { StaffDeviceDiagnostics } from '@/types';
 import {
   buildDiagnosticSignals,
@@ -25,12 +26,13 @@ const SEVERITY_CLASS_MAP: Record<DiagnosticSeverity, string> = {
   info: 'bg-sky-50 text-sky-700 border-sky-200',
 };
 
-/** Hiển thị tín hiệu chẩn đoán thiết bị giúp admin xác định nguyên nhân nhân viên mất tín hiệu */
+/** Hiển thị tín hiệu chẩn đoán thiết bị giúp admin xác định nguyên nhân nhân viên mất tín hiệu. Chỉ role Admin/Super mới thấy. */
 export function StaffDiagnostics({ diagnostics, awaitingFirstPing = false, maxSignals, hideDeviceSummary = false }: StaffDiagnosticsProps) {
-  const signals = buildDiagnosticSignals(diagnostics, { awaitingFirstPing });
+  const { isAdmin } = usePermission();
+  const signals = isAdmin ? buildDiagnosticSignals(diagnostics, { awaitingFirstPing }) : [];
   const visibleSignals = maxSignals ? signals.slice(0, maxSignals) : signals;
   const hiddenCount = signals.length - visibleSignals.length;
-  const deviceSummary = hideDeviceSummary ? null : formatDeviceSummary(diagnostics);
+  const deviceSummary = !isAdmin || hideDeviceSummary ? null : formatDeviceSummary(diagnostics);
 
   if (visibleSignals.length === 0 && !deviceSummary) return null;
 

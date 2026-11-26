@@ -1,373 +1,129 @@
 'use client';
 
-import React from 'react';
-
-// Icons thư viện lucide-react
-import { Pencil, Trash2, UserCog, Briefcase } from 'lucide-react';
-
-// Thành phần dùng chung cho toàn bộ trang
-import { TableData } from '@/components/table';
-import { Modal, Button, Badge, Avatar } from '@/components';
+import { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
+import { Search } from 'lucide-react';
+import { Button, Skeleton } from '@/components';
+import { FilterDrawer, type FilterGroup } from '@/components-remake';
 import { useQueryParam } from '@/hooks';
+import { getEmployees } from '@/actions/employee';
+import type { Employee } from '@/types';
 
-// Kiểu dữ liệu NHÂN SỰ
-import { Employee } from '@/types';
-
-// toast
-import toast from 'react-hot-toast';
-
-// react query
-import { useMutation } from '@tanstack/react-query';
-
-// utils
-import queryClient from '@/utils/query';
-
-// actions
-import { getEmployees, deleteEmployee } from '@/actions/employee';
-
-// components dùng riêng cho trang nhân viên
 import EmployeeActionBar from './action-bar';
-import RowActions from '../row-actions';
-import EmployeeFormModal from './form-modal';
-import RoleModal from './role-modal';
-import PositionModal from './position-modal';
+import { EmployeeList } from './list';
+import { EmployeeStats } from './stats';
 
-import { getFileUrl } from '@/utils';
+// Ít nhân sự nên tải hết một lần, tìm kiếm lọc ngay trên máy, không phân trang
+const ALL = 1000;
 
-// Lấy màu theo từng vị trí
-const getRoleVariant = (roleCode: string): 'primary' | 'success' | 'warning' | 'danger' | 'info' | 'default' => {
-  const lowerName = roleCode.toLowerCase();
-  if (lowerName.includes('admin')) return 'danger';
-  if (lowerName.includes('hr')) return 'warning';
-  if (lowerName.includes('accountant')) return 'warning';
-  if (lowerName.includes('sale')) return 'primary';
-  if (lowerName.includes('technician')) return 'info';
-  if (lowerName.includes('super') || lowerName.includes('supper')) return 'success';
-  return 'default';
-};
+const searchText = (e: Employee) =>
+  [e.fullName, e.username, e.email, e.phoneNumber, ...(e.positions ?? []).map((p) => p.name)].filter(Boolean).join(' ').toLowerCase();
 
 const Table = () => {
-  const [search, setSearch] = useQueryParam('search');
+  const [urlSearch, setUrlSearch] = useQueryParam('search');
+  // Giữ chữ đang gõ trong state cục bộ: URL cập nhật trễ làm mất dấu tiếng Việt (bộ gõ) và nuốt dấu cách
+  const [search, setSearch] = useState(urlSearch ?? '');
+  const router = useRouter();
+  const [filters, setFilters] = useState<Record<string, string>>({});
 
-  // Trạng thái cho modal sửa nhân sự
-  const [isEditOpen, setIsEditOpen] = React.useState(false);
-  const [selectedEmp, setSelectedEmp] = React.useState<Employee | null>(null);
-
-  // Trạng thái cho modal gán vai trò nhân sự
-  const [isRoleModalOpen, setIsRoleModalOpen] = React.useState(false);
-  const [empToAssignRole, setEmpToAssignRole] = React.useState<Employee | null>(null);
-
-  // Trạng thái cho modal gán chức vụ / vị trí nhân sự
-  const [isPositionModalOpen, setIsPositionModalOpen] = React.useState(false);
-  const [empToAssignPos, setEmpToAssignPos] = React.useState<Employee | null>(null);
-
-  // Trạng thái cho modal xóa nhân sự
-  const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
-  const [empToDelete, setEmpToDelete] = React.useState<Employee | null>(null);
-
-  // Hàm fetcher gọi API thực tế qua React Query / TableData
-  const fetcher = async (params: { offset: number; limit: number }) => {
-    const res = await getEmployees({ ...params, search: search || undefined });
-    if (!res) {
-      toast.error('Lỗi khi tải danh sách nhân sự');
-      throw new Error('Lỗi khi tải danh sách nhân sự');
-    }
-    return res;
-  };
-
-  // Hàm xóa nhân sự dùng useMutation
-  const { mutate: handleDeleteEmployee, isPending } = useMutation({
-    mutationFn: (id: string) => deleteEmployee(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['employees'] });
-      toast.success('Xóa nhân sự thành công');
-      setIsDeleteOpen(false);
-      setEmpToDelete(null);
-    },
-    onError: (error: any) => {
-      toast.error(error?.message || 'Lỗi hệ thống khi xóa nhân sự');
-    },
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ['employees', 'all'],
+    queryFn: () => getEmployees({ limit: ALL }),
   });
 
-  // Cấu hình các cột cho Desktop
-  const columns = [
-    {
-      key: 'fullName',
-      label: 'Tên nhân sự',
-      minWidth: '220px',
-      cell: (row: Employee) => (
-        <div className="flex items-center gap-3">
-          <Avatar 
-            src={getFileUrl(row.avatar) || undefined} 
-            name={row.fullName || row.username} 
-            size="sm" 
-          />
-          <div className="flex flex-col min-w-0">
-            <span className="font-semibold text-gray-900 text-sm truncate">{row.fullName || row.username}</span>
-            <span className="text-gray-500 text-xs">{row.phoneNumber || '---'}</span>
-          </div>
-        </div>
-      ),
-    },
-    {
-      key: 'roles',
-      label: 'Vai trò',
-      minWidth: '150px',
-      cell: (row: Employee) => {
-        const primaryRole = row.roles && row.roles.length > 0 ? row.roles[0] : null;
-        return (
-          <div className="flex flex-wrap gap-1">
-            {primaryRole ? (
-              <Badge variant={getRoleVariant(primaryRole.code)} size="sm" pill>
-                {primaryRole.name}
-              </Badge>
-            ) : (
-              <Badge variant="default" size="sm" pill>
-                Nhân viên
-              </Badge>
-            )}
-          </div>
-        );
-      },
-    },
-    {
-      key: 'positions',
-      label: 'Chức vụ & Phòng ban',
-      minWidth: '180px',
-      cell: (row: Employee) => (
-        <div className="flex flex-wrap gap-1">
-          {row.positions && row.positions.length > 0 ? (
-            row.positions.map((pos: any) => (
-              <Badge key={pos.id} variant="info" size="sm" pill>
-                {pos.name+" - "+pos?.department?.name}
-              </Badge>
-            ))
-          ) : (
-            <span className="text-gray-400 text-xs italic">Chưa gán</span>
-          )}
-        </div>
-      ),
-    },
-    {
-      key: 'createdAt',
-      label: 'Ngày tạo',
-      minWidth: '130px',
-      cell: (row: Employee) => (
-        <span className="text-gray-600 text-sm">
-          {row.createdAt
-            ? new Date(row.createdAt).toLocaleDateString('vi-VN', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-              })
-            : '---'}
-        </span>
-      ),
-    },
-    {
-      key: 'actions',
-      label: 'Hành động',
-      minWidth: '140px',
-      cell: (row: Employee) => (
-        <RowActions
-          items={[
-            {
-              label: 'Chỉnh sửa',
-              icon: Pencil,
-              onClick: () => {
-                setSelectedEmp(row);
-                setIsEditOpen(true);
-              },
-            },
-            {
-              label: 'Gán vai trò',
-              icon: UserCog,
-              onClick: () => {
-                setEmpToAssignRole(row);
-                setIsRoleModalOpen(true);
-              },
-            },
-            {
-              label: 'Gán chức vụ / vị trí',
-              icon: Briefcase,
-              onClick: () => {
-                setEmpToAssignPos(row);
-                setIsPositionModalOpen(true);
-              },
-            },
-            {
-              label: 'Xóa',
-              danger: true,
-              icon: Trash2,
-              disabled: isPending,
-              onClick: () => {
-                setEmpToDelete(row);
-                setIsDeleteOpen(true);
-              },
-            },
-          ]}
-        />
-      ),
-    },
-  ];
+  const all = useMemo(() => data?.items ?? [], [data]);
+  const keyword = search.trim().toLowerCase();
 
-  // Cấu hình Card hiển thị trên thiết bị di động
-  const renderCard = (row: Employee, index: number) => (
-    <div
-      key={row.id || index}
-      className="p-4 rounded-2xl border border-gray-100 bg-white flex flex-col gap-3 hover:border-gray-200 transition-colors"
-    >
-      <div className="flex items-start gap-3">
-        <Avatar 
-          src={getFileUrl(row.avatar) || undefined} 
-          name={row.fullName || row.username} 
-          size="md" 
-        />
-        <div className="flex flex-col flex-1 min-w-0">
-          <span className="font-semibold text-gray-900 truncate text-sm sm:text-base leading-snug">{row.fullName || row.username}</span>
-          <div className="flex items-center gap-2 mt-1 flex-wrap">
-            {row.roles && row.roles.length > 0 && (
-              <Badge variant={getRoleVariant(row.roles[0].code)} size="sm" pill>
-                {row.roles[0].name}
-              </Badge>
-            )}
-          </div>
-        </div>
-      </div>
-      <div className="flex items-center justify-end gap-2 border-t border-gray-100/50 pt-2.5">
-        <button
-          type="button"
-          onClick={() => {
-            setSelectedEmp(row);
-            setIsEditOpen(true);
-          }}
-          className="px-2.5 py-1.5 text-xs font-semibold rounded-full bg-primary/5 text-primary border border-primary/10 hover:bg-primary/10 transition-colors flex items-center gap-1 cursor-pointer"
-        >
-          <Pencil size={12} />
-          Sửa
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            setEmpToAssignRole(row);
-            setIsRoleModalOpen(true);
-          }}
-          className="px-2.5 py-1.5 text-xs font-semibold rounded-full bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100 transition-colors flex items-center gap-1 cursor-pointer"
-        >
-          <UserCog size={12} />
-          Vai trò
-        </button>
-        <button
-          type="button"
-          disabled={isPending}
-          onClick={() => {
-            setEmpToDelete(row);
-            setIsDeleteOpen(true);
-          }}
-          className="px-2.5 py-1.5 text-xs font-semibold rounded-full bg-red-50/50 text-red-600 border border-red-100 hover:bg-red-50 hover:text-red-700 transition-colors flex items-center gap-1 cursor-pointer"
-        >
-          <Trash2 size={12} />
-          Xóa
-        </button>
-      </div>
-    </div>
+  const groups = useMemo<FilterGroup[]>(() => {
+    const roles = new Map<string, string>();
+    const depts = new Set<string>();
+    all.forEach((e) => {
+      e.roles?.forEach((r) => roles.set(r.code, r.name));
+      e.positions?.forEach((p) => p.department?.name && depts.add(p.department.name));
+    });
+    return [
+      { key: 'role', label: 'Vai trò', options: [...roles].map(([value, label]) => ({ value, label })) },
+      { key: 'dept', label: 'Phòng ban', options: [...depts].sort().map((d) => ({ value: d, label: d })) },
+      {
+        key: 'pos',
+        label: 'Chức vụ',
+        options: [
+          { value: 'has', label: 'Đã có chức vụ' },
+          { value: 'none', label: 'Chưa có chức vụ' },
+        ],
+      },
+    ].filter((g) => g.options.length > 0);
+  }, [all]);
+
+  const rows = useMemo(
+    () =>
+      all.filter((e) => {
+        if (keyword && !searchText(e).includes(keyword)) return false;
+        if (filters.role && !e.roles?.some((r) => r.code === filters.role)) return false;
+        if (filters.dept && !e.positions?.some((p) => p.department?.name === filters.dept)) return false;
+        if (filters.pos === 'has' && !e.positions?.length) return false;
+        if (filters.pos === 'none' && e.positions?.length) return false;
+        return true;
+      }),
+    [all, keyword, filters],
   );
+  const filtered = !!keyword || Object.values(filters).some(Boolean);
+
+  let body;
+  if (isLoading) {
+    body = (
+      <div className="flex flex-col gap-2" aria-busy="true">
+        {[0, 1, 2, 3, 4].map((i) => (
+          <Skeleton key={i} className="h-16 w-full rounded-block" />
+        ))}
+      </div>
+    );
+  } else if (isError) {
+    body = (
+      <div className="flex flex-col items-center gap-3 rounded-block border border-slate-200/80 bg-white py-12 text-center">
+        <p className="text-sm text-slate-600">Không tải được danh sách nhân sự.</p>
+        <Button variant="outline" size="sm" onClick={() => refetch()}>
+          Thử lại
+        </Button>
+      </div>
+    );
+  } else if (rows.length === 0) {
+    body = (
+      <p className="rounded-block border border-slate-200/80 bg-white py-12 text-center text-sm text-slate-500">
+        {filtered ? 'Không có nhân sự khớp với tìm kiếm và bộ lọc.' : 'Chưa có nhân sự nào.'}
+      </p>
+    );
+  } else {
+    body = <EmployeeList rows={rows} onOpen={(e) => router.push(`/app/employees/${e.id}`)} />;
+  }
 
   return (
-    <div className="flex flex-col gap-2">
-      <TableData<Employee>
-        queryKey={['employees', search]}
-        fetcher={fetcher}
-        columns={columns}
-        renderCard={renderCard}
-        select={false}
-        actions={<EmployeeActionBar />}
-        mobileActions={{ primary: <EmployeeActionBar /> }}
-        search={{
-          placeholder: 'Tìm kiếm nhân sự...',
-          value: search,
-          onChange: setSearch,
-          className: 'w-80',
-        }}
-      />
+    <div className="flex flex-col gap-3 md:gap-4">
+      {!isError && <EmployeeStats rows={all} />}
 
-      {/* Modal Gán vai trò nhân sự */}
-      <RoleModal
-        isOpen={isRoleModalOpen}
-        onClose={() => {
-          setIsRoleModalOpen(false);
-          setEmpToAssignRole(null);
-        }}
-        employee={empToAssignRole}
-      />
-
-      {/* Modal Gán chức vụ / vị trí nhân sự */}
-      <PositionModal
-        isOpen={isPositionModalOpen}
-        onClose={() => {
-          setIsPositionModalOpen(false);
-          setEmpToAssignPos(null);
-        }}
-        employee={empToAssignPos}
-      />
-
-      {/* Modal Sửa nhân sự */}
-      <EmployeeFormModal
-        isOpen={isEditOpen}
-        onClose={() => {
-          setIsEditOpen(false);
-          setSelectedEmp(null);
-        }}
-        title="Sửa thông tin nhân sự"
-        submitText="Xác nhận lưu"
-        initialData={selectedEmp}
-      />
-
-      {/* Modal Xác nhận xóa nhân sự */}
-      <Modal
-        isOpen={isDeleteOpen}
-        onClose={() => {
-          setIsDeleteOpen(false);
-          setEmpToDelete(null);
-        }}
-        title="Xác nhận xóa nhân sự"
-        className="m-2 max-w-md w-full"
-      >
-        <div className="flex gap-4 items-center py-2">
-          <div className="flex flex-col gap-1.5">
-            <p className="text-gray-600 text-sm leading-relaxed">
-              Bạn có chắc chắn muốn xóa NHÂN SỰ{' '}
-              <strong className="text-gray-900 font-semibold">{empToDelete?.fullName || empToDelete?.username}</strong>? Hành động này không thể hoàn
-              tác.
-            </p>
-          </div>
-        </div>
-        <div className="flex gap-3 justify-end w-full mt-6">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setIsDeleteOpen(false);
-              setEmpToDelete(null);
+      <div className="flex items-center gap-2">
+        <div className="relative min-w-0 flex-1 md:max-w-sm">
+          <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setUrlSearch(e.target.value);
             }}
-            disabled={isPending}
-          >
-            Hủy
-          </Button>
-          <Button
-            variant="danger"
-            size="sm"
-            onClick={() => {
-              if (empToDelete) {
-                handleDeleteEmployee(empToDelete.id);
-              }
-            }}
-            loading={isPending}
-          >
-            Xác nhận xóa
-          </Button>
+            placeholder="Tìm nhân sự..."
+            aria-label="Tìm nhân sự"
+            className="h-11 w-full rounded-control border border-slate-200 bg-white pl-9 pr-3 text-base text-slate-900 placeholder:text-slate-500 outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 md:h-10 md:text-sm"
+          />
         </div>
-      </Modal>
+        <div className="ml-auto flex flex-none items-center gap-2">
+          {groups.length > 0 && <FilterDrawer groups={groups} value={filters} onChange={setFilters} />}
+          <EmployeeActionBar />
+        </div>
+      </div>
+
+      {body}
     </div>
   );
 };

@@ -5,6 +5,11 @@ import { DoorCustomExtraItem } from '../../studio-types';
 import { ProfileBar } from '@/types';
 import { Select } from '@/components/select';
 import { Plus, X } from 'lucide-react';
+import {
+  findStudioProfile,
+  parseStudioProfileId,
+  type StudioProfileId,
+} from '../../utils/profile-combine-utils';
 
 interface CustomExtraConfigSectionProps {
   items?: DoorCustomExtraItem[];
@@ -46,8 +51,8 @@ export const CustomExtraConfigSection: React.FC<CustomExtraConfigSectionProps> =
     );
   };
 
-  const handleProfileSelect = (id: string, profileId: number) => {
-    const selected = profiles.find((p) => p.id === profileId);
+  const handleProfileSelect = (id: string, profileId?: StudioProfileId) => {
+    const selected = findStudioProfile(profiles, profileId);
     handleUpdateItem(id, {
       profileId,
       profileCode: selected?.code,
@@ -120,7 +125,7 @@ export const CustomExtraConfigSection: React.FC<CustomExtraConfigSectionProps> =
                     options={profileOptions}
                     value={row.profileId || ''}
                     placeholder="Chọn profile thanh phụ..."
-                    onChange={(e) => handleProfileSelect(row.id, Number(e.target.value))}
+                    onChange={(e) => handleProfileSelect(row.id, parseStudioProfileId(e.target.value))}
                     className="h-7 text-xs md:text-xs py-0 pl-2 pr-7 border-slate-300 focus:border-amber-500"
                   />
                 </div>

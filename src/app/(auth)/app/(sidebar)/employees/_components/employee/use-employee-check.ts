@@ -17,14 +17,7 @@ interface UseEmployeeCheckProps {
   clearErrors: UseFormClearErrors<any>;
 }
 
-export function useEmployeeCheck({
-  emailValue,
-  identifyCodeValue,
-  isEditMode,
-  isOpen,
-  setError,
-  clearErrors,
-}: UseEmployeeCheckProps) {
+export function useEmployeeCheck({ emailValue, identifyCodeValue, isEditMode, isOpen, setError, clearErrors }: UseEmployeeCheckProps) {
   const [emailStatus, setEmailStatus] = useState<'idle' | 'checking' | 'valid' | 'duplicate'>('idle');
   const [cccdStatus, setCccdStatus] = useState<'idle' | 'checking' | 'valid' | 'duplicate'>('idle');
   const [existingUser, setExistingUser] = useState<Employee | null>(null);
@@ -71,7 +64,7 @@ export function useEmployeeCheck({
         setEmailStatus('duplicate');
         setExistingUser(user);
         setDuplicateField('email');
-        
+
         // Nếu tài khoản đã bị xóa -> Mở modal cho phép khôi phục
         if (user.deletedAt) {
           setIsDuplicateModalOpen(true);

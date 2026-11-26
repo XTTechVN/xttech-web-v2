@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Download, Printer, ExternalLink, X, FileText, AlertCircle } from 'lucide-react';
 import type { DocumentItem } from '@/types';
 import { getFileUrl, formatBytes, getFileVisualInfo, getFileExtension, api } from '@/utils';
+import { cn } from '@/utils/cn';
 import { markDocumentAsRead } from '@/actions/document';
 import { WordViewer } from './preview-viewers/word-viewer';
 import { ExcelViewer } from './preview-viewers/excel-viewer';
@@ -18,6 +19,9 @@ export interface DocumentPreviewModalProps {
   onClose: () => void;
   document: DocumentItem | null;
 }
+
+const ICON_BTN =
+  'flex size-11 flex-none cursor-pointer items-center justify-center rounded-control text-slate-300 transition-colors focus-visible:outline-2 focus-visible:outline-white sm:size-9 md:hover:bg-slate-800 md:hover:text-white active:bg-slate-800';
 
 const IMAGE_EXTS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'];
 const EXCEL_EXTS = ['xlsx', 'xls', 'csv'];
@@ -134,20 +138,15 @@ export default function DocumentPreviewModalBody({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex flex-col bg-slate-950/95 text-white backdrop-blur-sm select-none animate-in fade-in duration-150"
+      className="fixed inset-0 z-50 flex flex-col bg-slate-950 text-white select-none animate-in fade-in duration-150"
     >
-      <div className="h-14 px-3 sm:px-4 bg-slate-900/90 border-b border-slate-800/80 flex items-center justify-between gap-3 shrink-0 z-20 shadow-md">
-        <div className="flex items-center gap-3 min-w-0 flex-1">
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-2 rounded-full text-slate-300 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
-            title="Đóng (ESC)"
-          >
-            <ArrowLeft size={19} />
+      <div className="flex h-14 flex-none items-center justify-between gap-3 border-b border-slate-800 bg-slate-950 px-3 sm:px-4">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <button type="button" onClick={onClose} className={cn(ICON_BTN, 'sm:hidden')} title="Đóng (ESC)" aria-label="Đóng">
+            <ArrowLeft size={18} />
           </button>
 
-          <div className="shrink-0 flex items-center justify-center">
+          <div className="flex flex-none items-center justify-center">
             {visualInfo?.icon ? (
               React.cloneElement(visualInfo.icon as React.ReactElement<{ size?: number }>, { size: 20 })
             ) : (
@@ -155,59 +154,31 @@ export default function DocumentPreviewModalBody({
             )}
           </div>
 
-          <div className="flex items-center gap-2 min-w-0">
-            <h1 className="text-xs sm:text-sm font-semibold text-white truncate leading-tight" title={doc.title}>
+          <div className="min-w-0">
+            <h1 className="truncate text-sm font-semibold leading-tight text-white" title={doc.title}>
               {doc.title}
             </h1>
-            {doc.code && (
-              <span className="hidden md:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 shrink-0 border border-slate-700">
-                {doc.code}
-              </span>
-            )}
-            {currentVersion?.fileSize && (
-              <span className="hidden lg:inline-block text-[11px] text-slate-400 shrink-0">
-                • {formatBytes(currentVersion.fileSize)}
-              </span>
-            )}
+            <p className="mt-0.5 truncate text-xs tabular-nums text-slate-400">
+              {[doc.code, currentVersion?.fileSize ? formatBytes(currentVersion.fileSize) : null].filter(Boolean).join(' · ')}
+            </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+        <div className="flex flex-none items-center gap-1">
           {downloadUrl && (
             <>
-              <button
-                type="button"
-                onClick={handlePrint}
-                className="p-2 rounded-full text-slate-300 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
-                title="In tài liệu"
-              >
+              <button type="button" onClick={handlePrint} className={ICON_BTN} title="In tài liệu" aria-label="In tài liệu">
                 <Printer size={18} />
               </button>
-              <button
-                type="button"
-                onClick={handleDownload}
-                className="p-2 rounded-full text-slate-300 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
-                title="Tải xuống"
-              >
+              <button type="button" onClick={handleDownload} className={ICON_BTN} title="Tải xuống" aria-label="Tải xuống">
                 <Download size={18} />
               </button>
-              <a
-                href={downloadUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 rounded-full text-slate-300 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
-                title="Mở tab mới"
-              >
+              <a href={downloadUrl} target="_blank" rel="noopener noreferrer" className={cn(ICON_BTN, 'hidden sm:flex')} title="Mở tab mới" aria-label="Mở tab mới">
                 <ExternalLink size={18} />
               </a>
             </>
           )}
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-2 rounded-full text-slate-300 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer ml-1"
-            title="Đóng (ESC)"
-          >
+          <button type="button" onClick={onClose} className={ICON_BTN} title="Đóng (ESC)" aria-label="Đóng">
             <X size={20} />
           </button>
         </div>

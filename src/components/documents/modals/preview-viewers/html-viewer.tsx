@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useRef, useState } from 'react';
-import { Printer, ZoomIn, ZoomOut, RotateCcw, Download } from 'lucide-react';
+import { ZoomIn, ZoomOut, RotateCcw, Download } from 'lucide-react';
 
 interface HtmlViewerProps {
   buffer: ArrayBuffer | null;
@@ -30,19 +30,11 @@ export const HtmlViewer: React.FC<HtmlViewerProps> = ({
     }
   }, [buffer]);
 
-  const handlePrint = () => {
-    const win = iframeRef.current?.contentWindow;
-    if (win) {
-      win.focus();
-      win.print();
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center w-full h-full min-h-[320px] text-slate-400 gap-2">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-        <span className="text-xs">Đang tải văn bản chuẩn A4...</span>
+        <span className="text-sm">Đang tải văn bản</span>
       </div>
     );
   }
@@ -50,7 +42,7 @@ export const HtmlViewer: React.FC<HtmlViewerProps> = ({
   if (error || !htmlContent) {
     return (
       <div className="flex flex-col items-center justify-center w-full h-full min-h-[320px] text-slate-400 gap-3 p-6 text-center">
-        <p className="text-xs text-rose-400">{error || 'Không thể hiển thị nội dung văn bản HTML.'}</p>
+        <p className="text-sm text-red-300">{error || 'Không thể hiển thị nội dung văn bản HTML.'}</p>
         <button
           type="button"
           onClick={onDownload}
@@ -63,29 +55,27 @@ export const HtmlViewer: React.FC<HtmlViewerProps> = ({
   }
 
   return (
-    <div className="flex flex-col w-full h-full bg-slate-200/80 rounded-xl overflow-hidden border border-slate-300/80">
+    <div className="flex flex-col w-full h-full bg-slate-200/80 rounded-block overflow-hidden border border-slate-300">
       <div className="flex items-center justify-between px-3 py-2 bg-white border-b border-slate-200 text-xs text-slate-700 shrink-0">
         <div className="flex items-center gap-1.5">
-          <span className="px-2 py-0.5 rounded bg-primary/10 text-primary font-semibold text-[11px]">
-            Văn bản Hành chính A4
-          </span>
+          <span className="text-xs text-slate-600">Văn bản hành chính A4</span>
         </div>
         <div className="flex items-center gap-1">
           <button
             type="button"
             onClick={() => setZoom((z) => Math.max(70, z - 10))}
-            className="p-1.5 rounded hover:bg-slate-100 text-slate-600 cursor-pointer"
+            className="flex size-9 items-center justify-center rounded-control text-slate-600 cursor-pointer md:hover:bg-slate-100 active:bg-slate-100"
             title="Thu nhỏ"
           >
             <ZoomOut size={14} />
           </button>
-          <span className="font-mono tabular-nums text-[11px] w-11 text-center font-semibold">
+          <span className="tabular-nums text-xs w-12 text-center text-slate-700">
             {zoom}%
           </span>
           <button
             type="button"
             onClick={() => setZoom((z) => Math.min(140, z + 10))}
-            className="p-1.5 rounded hover:bg-slate-100 text-slate-600 cursor-pointer"
+            className="flex size-9 items-center justify-center rounded-control text-slate-600 cursor-pointer md:hover:bg-slate-100 active:bg-slate-100"
             title="Phóng to"
           >
             <ZoomIn size={14} />
@@ -93,20 +83,10 @@ export const HtmlViewer: React.FC<HtmlViewerProps> = ({
           <button
             type="button"
             onClick={() => setZoom(100)}
-            className="p-1.5 rounded hover:bg-slate-100 text-slate-600 cursor-pointer"
+            className="flex size-9 items-center justify-center rounded-control text-slate-600 cursor-pointer md:hover:bg-slate-100 active:bg-slate-100"
             title="Mặc định 100%"
           >
             <RotateCcw size={13} />
-          </button>
-          <div className="h-4 w-px bg-slate-200 mx-1" />
-          <button
-            type="button"
-            onClick={handlePrint}
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-primary text-white hover:bg-primary/90 font-medium text-[11px] cursor-pointer"
-            title="In văn bản khổ A4"
-          >
-            <Printer size={13} />
-            <span>In A4</span>
           </button>
         </div>
       </div>
@@ -117,7 +97,7 @@ export const HtmlViewer: React.FC<HtmlViewerProps> = ({
             width: compact ? '100%' : `${Math.round((794 * zoom) / 100)}px`,
             minHeight: compact ? '520px' : `${Math.round((1123 * zoom) / 100)}px`,
           }}
-          className="bg-white shadow-lg rounded-xs overflow-hidden transition-all duration-150"
+          className="bg-white overflow-hidden"
         >
           <iframe
             ref={iframeRef}

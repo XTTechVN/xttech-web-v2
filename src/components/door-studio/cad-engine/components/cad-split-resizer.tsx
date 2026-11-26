@@ -1,16 +1,35 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MullionBar, CouplingSeamBar, ResizeSplitParams, LeafCell } from '../cad-types';
+import { MullionBar, CouplingSeamBar, ResizeSplitParams, LeafCell, CadMetrics } from '../cad-types';
 import { MullionInfo, SashConfig } from '../../studio-types';
+import { CAD_CONFIG } from '../cad-config';
+import { hasDefaultLeafHandle, resolveHandleHeightMm, resolveHandleY, resolveLeafGeometry } from '../cad-leaf-geometry';
+
+/** Vùng bắt chuột tối thiểu (px) của đố & vách ghép — tách khỏi hình vẽ để đố mảnh (cửa lớn) vẫn kéo thả dễ */
+const MULLION_HIT_MIN_PX = 10;
+/** Lề bắt chuột thêm mỗi bên (px) quanh thanh đố */
+const MULLION_HIT_PADDING_PX = 7;
+const HANDLE_HIT_WIDTH_PX = 28;
+const DOUBLE_HANDLE_HIT_WIDTH_PX = 36;
+const HANDLE_HIT_HEIGHT_PX = 34;
+
+/** Hitbox thanh đố / vách ghép: căn giữa theo tim thanh, bề dày = max(bề dày thanh + 2 × lề, tối thiểu) */
+const getMullionHitbox = (m: { x: number; y: number; w: number; h: number }, isVert: boolean) => {
+  const thickness = isVert ? m.w : m.h;
+  const hitThickness = Math.max(thickness + 2 * MULLION_HIT_PADDING_PX, MULLION_HIT_MIN_PX);
+  const offset = (hitThickness - thickness) / 2;
+  return isVert
+    ? { x: m.x - offset, y: m.y, w: hitThickness, h: m.h }
+    : { x: m.x, y: m.y - offset, w: m.w, h: hitThickness };
+};
 
 interface CadSplitResizerProps {
   mullions: MullionBar[];
   couplingSeams: CouplingSeamBar[];
   leaves?: LeafCell[];
-  scale: number;
+  metrics: CadMetrics;
   h?: number;
   oy?: number;
   fh?: number;
-  sashD?: number;
   sashConfig?: SashConfig;
   selectedMullionId?: string | null;
   aluminumColor: string;
@@ -69,11 +88,10 @@ export const CadSplitResizer: React.FC<CadSplitResizerProps> = ({
   mullions,
   couplingSeams,
   leaves = [],
-  scale,
+  metrics,
   h = 2200,
   oy = 0,
   fh = 400,
-  sashD = 12,
   sashConfig,
   selectedMullionId,
   aluminumColor,
@@ -82,6 +100,7 @@ export const CadSplitResizer: React.FC<CadSplitResizerProps> = ({
   onResizeSplit,
   onUpdateDimension,
 }) => {
+  const scale = metrics.scale;
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [activeDrag, setActiveDrag] = useState<ActiveDragInfo | null>(null);
 
@@ -105,7 +124,7 @@ export const CadSplitResizer: React.FC<CadSplitResizerProps> = ({
     if (isVoCucMode) return [];
     const zones: HandleDragZone[] = [];
     for (const leaf of leaves) {
-      const { node, x: cx, y: cy, w: cw, h: ch } = leaf;
+      const { node, y: cy, h: ch } = leaf;
       if (node.sashType === 'fixed') continue;
 
       const isBottomOrTopHandle =
@@ -127,38 +146,23 @@ export const CadSplitResizer: React.FC<CadSplitResizerProps> = ({
         );
       if (isSecondaryOfPair) continue;
 
-      const sashHasHandle = [
-        'swing_double',
-        'swing_left',
-        'swing_right',
-        'tilt_turn',
-        'le-trai-mo-ra',
-        'le-trai-mo-vao',
-        'le-phai-mo-ra',
-        'le-phai-mo-vao',
-        'gap-xep-le-trai',
-        'gap-xep-le-phai',
-        'lua-trai',
-        'lua-phai',
-        'canh-truot',
-        'sliding',
-      ].includes(node.sashType || '');
+      const sashHasHandle = hasDefaultLeafHandle(node.sashType);
 
       const shouldRenderHandle = (node.hasLock ?? sashHasHandle) && node.hasLock !== false;
       if (!shouldRenderHandle) continue;
 
+      // Cùng hình học với hình vẽ cánh (resolveLeafGeometry) để vùng kéo khớp tuyệt đối với tay nắm đang vẽ
+      const geometry = resolveLeafGeometry(leaf, leaves, metrics, sashConfig);
+      const { sashBox, thickness } = geometry;
       const isHydraulic = Boolean(sashConfig?.isHydraulic || node.isHydraulic);
-      const handleHVal = node.handleHeight || (isHydraulic ? 1050 : Math.round(node.h / 2));
-      const lockYCalc = oy + fh - Math.round((handleHVal / (h || 1)) * fh);
-      const bottomBound = cy + ch - sashD - 10;
-      const topBound = cy + sashD + 20;
-      const handleY = Math.max(topBound, Math.min(bottomBound, lockYCalc));
+      const handleHVal = resolveHandleHeightMm(node, Boolean(sashConfig?.isHydraulic));
+      const handleY = resolveHandleY(geometry, handleHVal, { doorHeightMm: h, originY: oy, frameHeightPx: fh });
 
-      let centerX = cx + cw / 2;
-      let hitW = 28;
+      let centerX = sashBox.x + sashBox.w / 2;
+      let hitW = HANDLE_HIT_WIDTH_PX;
       if (node.sashType === 'swing_double') {
-        centerX = cx + cw / 2 + (isHydraulic ? 0 : 6);
-        hitW = 36;
+        centerX += isHydraulic ? 0 : 6;
+        hitW = DOUBLE_HANDLE_HIT_WIDTH_PX;
       } else {
         const isRightHandle =
           node.sashType === 'swing_left' ||
@@ -169,12 +173,13 @@ export const CadSplitResizer: React.FC<CadSplitResizerProps> = ({
           node.sashType === 'lua-trai' ||
           Boolean(node.sashJoiner) ||
           node.handleType === 'd-trai';
-        centerX = isRightHandle ? cx + cw - sashD / 2 : cx + sashD / 2;
+        centerX = isRightHandle
+          ? sashBox.x + sashBox.w - thickness.right / 2
+          : sashBox.x + thickness.left / 2;
       }
 
-      const hitH = isHydraulic
-        ? Math.max(48, Math.round(Math.min(ch - 40, Math.max(70, 750 * scale))))
-        : 34;
+      const pullLengthPx = Math.min(sashBox.h - 40, CAD_CONFIG.HARDWARE.PULL_BAR.LENGTH_MM * scale);
+      const hitH = isHydraulic ? Math.max(48, Math.round(pullLengthPx)) : HANDLE_HIT_HEIGHT_PX;
 
       const leafBottomMm = Math.max(0, Math.round(((oy + fh - (cy + ch)) / (fh || 1)) * h));
       const leafTopMm = Math.min(h, Math.round(((oy + fh - cy) / (fh || 1)) * h));
@@ -196,7 +201,7 @@ export const CadSplitResizer: React.FC<CadSplitResizerProps> = ({
       });
     }
     return zones;
-  }, [leaves, oy, fh, h, sashD, sashConfig, scale]);
+  }, [leaves, oy, fh, h, metrics, scale, sashConfig]);
 
   // Global mousemove / touchmove và mouseup / touchend khi đang kéo
   useEffect(() => {
@@ -431,10 +436,7 @@ export const CadSplitResizer: React.FC<CadSplitResizerProps> = ({
         const isDragging = activeDrag?.id === m.info.id;
         const isVert = m.info.direction === 'vertical';
 
-        const hitboxX = isVert ? m.x - 7 : m.x;
-        const hitboxY = isVert ? m.y : m.y - 7;
-        const hitboxW = isVert ? m.w + 14 : m.w;
-        const hitboxH = isVert ? m.h : m.h + 14;
+        const hitbox = getMullionHitbox(m, isVert);
 
         return (
           <g
@@ -462,7 +464,7 @@ export const CadSplitResizer: React.FC<CadSplitResizerProps> = ({
               })
             }
           >
-            <rect x={hitboxX} y={hitboxY} width={hitboxW} height={hitboxH} fill="transparent" />
+            <rect x={hitbox.x} y={hitbox.y} width={hitbox.w} height={hitbox.h} fill="transparent" />
 
             <rect
               x={m.x}
@@ -495,6 +497,7 @@ export const CadSplitResizer: React.FC<CadSplitResizerProps> = ({
         const isHovered = hoveredId === cs.id;
         const isDragging = activeDrag?.id === cs.id;
         const isVert = cs.direction === 'vertical';
+        const seamHitbox = getMullionHitbox(cs, isVert);
 
         return (
           <g
@@ -520,7 +523,7 @@ export const CadSplitResizer: React.FC<CadSplitResizerProps> = ({
               })
             }
           >
-            <rect x={cs.x} y={cs.y} width={cs.w} height={cs.h} fill="transparent" />
+            <rect x={seamHitbox.x} y={seamHitbox.y} width={seamHitbox.w} height={seamHitbox.h} fill="transparent" />
 
             {(isHovered || isDragging) && (
               <line

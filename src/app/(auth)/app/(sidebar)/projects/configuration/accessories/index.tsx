@@ -1,247 +1,240 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import {
-  getBrands,
-  getAccessories,
-  deleteAccessory,
-  bulkDeleteAccessories,
-  getAccessoryCategories,
-  exportAccessoriesExcel,
-} from '@/actions';
-import { ConfirmActionModal } from '@/components';
-import { useBulkDeleteSelection } from '@/hooks';
-import { getDefaultBrandId, type Accessory } from '@/types';
+import { useMemo, useState } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { CheckCircle2, Download, Layers, PauseCircle, Plus, Settings2, Upload, Wrench } from 'lucide-react';
 import toast from 'react-hot-toast';
-import queryClient from '@/utils/query';
-import { showErrorToast } from '@/utils';
-import { BrandSidebar } from '../../_components';
 import {
-  AccessoryToolbar,
-  AccessoryTable,
-  AccessoryModal,
-  AccessorySkeleton,
-  AccessoryEmptyState,
-  AccessoryCategoryManagerModal,
-  AccessoryExcelModal,
-} from './_components';
+  deleteAccessory,
+  deleteAccessoryCategory,
+  exportAccessoriesExcel,
+  getAccessories,
+  getAccessoryCategories,
+  getBrands,
+} from '@/actions';
+import { Button, ConfirmDelete, FilterDrawer, SearchField, StatGrid, TabState } from '@/components-remake';
+import { useCan, useDebounce } from '@/hooks';
+import { getDefaultBrandId, type Accessory, type AccessoryCategory } from '@/types';
+import { showErrorToast } from '@/utils';
+import queryClient from '@/utils/query';
+import { BrandSidebar } from '../../_components';
+import { AccessoryCategoryManagerDrawer } from './_components/accessory-category-manager-drawer';
+import { AccessoryDeleteConfirm } from './_components/accessory-delete-confirm';
+import { AccessoryDrawer } from './_components/accessory-drawer';
+import { AccessoryFormDrawer } from './_components/accessory-form-drawer';
+import { AccessoryList } from './_components/accessory-list';
+import { CategoryFormDrawer } from './_components/category-form-drawer';
+import { AccessoryExcelDrawer } from './_components/modals/accessory-excel-drawer';
 
+const refreshAccessories = () => {
+  ['accessories', 'accessories-list', 'accessory-combos', 'accessory-combos-list', 'all-accessories-dropdown'].forEach((k) =>
+    queryClient.invalidateQueries({ queryKey: [k] }),
+  );
+};
+
+// Phụ kiện, roan và keo theo hãng; cột hãng bên trái giữ nguyên
 export default function AccessoriesTab() {
+  const { can } = useCan();
   const [search, setSearch] = useState('');
-  const [selectedBrandId, setSelectedBrandId] = useState<number | null>(null);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+  const [pickedBrandId, setPickedBrandId] = useState<number | null>(null);
+  const [filter, setFilter] = useState<Record<string, string>>({});
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [form, setForm] = useState<{ accessory: Accessory | null } | null>(null);
+  const [deleting, setDeleting] = useState<Accessory | null>(null);
+  const [managing, setManaging] = useState(false);
+  const [categoryForm, setCategoryForm] = useState<{ category: AccessoryCategory | null } | null>(null);
+  const [deletingCategory, setDeletingCategory] = useState<AccessoryCategory | null>(null);
+  const [excelOpen, setExcelOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const kw = useDebounce(search.trim(), 300);
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedAccessory, setSelectedAccessory] = useState<Accessory | null>(null);
-  const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false);
-  const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
-
-  // Queries danh sách thương hiệu phụ kiện
-  const { data: accessoryBrandsData, isLoading: isBrandsLoading } = useQuery({
+  const brandsQuery = useQuery({
     queryKey: ['brands', 'accessory'],
     queryFn: async () => {
-      const res = await getBrands({
-        limit: 9999,
-        offset: 0,
-        allowDeleted: false,
-        brandType: 'accessory',
-      });
-      if (res.items && res.items.length > 0) {
-        return res.items;
-      }
-      const allRes = await getBrands({ limit: 9999, offset: 0, allowDeleted: false });
-      return allRes.items || [];
+      const res = await getBrands({ limit: 9999, offset: 0, allowDeleted: false, brandType: 'accessory' });
+      if (res.items?.length) return res.items;
+      return (await getBrands({ limit: 9999, offset: 0, allowDeleted: false })).items || [];
     },
   });
+  const brands = useMemo(() => brandsQuery.data ?? [], [brandsQuery.data]);
+  const sortedBrands = useMemo(() => [...brands].sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' })), [brands]);
+  const brandId = pickedBrandId ?? getDefaultBrandId(sortedBrands);
+  const categoryId = filter.category ? Number(filter.category) : null;
 
-  const brandsList = useMemo(() => accessoryBrandsData ?? [], [accessoryBrandsData]);
-
-  const sortedBrands = useMemo(() => {
-    return [...brandsList].sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' }));
-  }, [brandsList]);
-
-  // Tự động lấy hãng đầu tiên nếu chưa chọn (Derived State - tránh setState trong useEffect)
-  const activeBrandId = selectedBrandId ?? getDefaultBrandId(sortedBrands);
-
-  // Queries danh sách phân loại phụ kiện
-  const { data: categoriesData } = useQuery({
+  const categoriesQuery = useQuery({
     queryKey: ['accessory-categories'],
     queryFn: async () => (await getAccessoryCategories({ offset: 0, limit: 9999 })).items,
   });
+  const categories = useMemo(() => categoriesQuery.data ?? [], [categoriesQuery.data]);
 
-  const categoryList = categoriesData || [];
-
-  // Queries danh sách phụ kiện theo Hãng + Phân loại đang chọn
-  const { data: accessoriesData, isLoading: isAccessoriesLoading } = useQuery({
-    queryKey: ['accessories', activeBrandId, selectedCategoryId, search],
-    queryFn: async () => {
-      if (!activeBrandId) return [];
-      const res = await getAccessories({
-        brandId: activeBrandId,
-        categoryId: selectedCategoryId || undefined,
-        limit: 1000,
-        offset: 0,
-        allowDeleted: false,
-        search: search.trim() || undefined,
-      });
-      return res.items;
-    },
-    enabled: activeBrandId !== null,
+  const accessoriesQuery = useQuery({
+    queryKey: ['accessories', brandId, categoryId, kw],
+    queryFn: async () =>
+      (await getAccessories({ brandId: brandId!, categoryId: categoryId || undefined, limit: 1000, offset: 0, allowDeleted: false, search: kw || undefined })).items,
+    enabled: brandId !== null,
   });
+  const rows = useMemo(() => accessoriesQuery.data ?? [], [accessoriesQuery.data]);
+  const selected = useMemo(() => rows.find((a) => a.id === selectedId) ?? null, [rows, selectedId]);
+  const brandName = brands.find((b) => b.id === brandId)?.name;
 
-  const accessories = useMemo(() => accessoriesData || [], [accessoriesData]);
-
-  const bulkSelection = useBulkDeleteSelection(accessories);
-
-  // Mutations xóa phụ kiện đơn lẻ
-  const { mutate: deleteAccessoryMutate } = useMutation({
+  const remove = useMutation({
     mutationFn: (id: number) => deleteAccessory(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['accessories'] });
-      toast.success('Xóa phụ kiện thành công');
+      refreshAccessories();
+      toast.success('Đã xóa phụ kiện và các combo liên quan');
+      setDeleting(null);
     },
-    onError: (err) => showErrorToast(err, 'Lỗi khi xóa phụ kiện'),
+    onError: (e) => showErrorToast(e, 'Không thể xóa phụ kiện'),
+  });
+  const removeCategory = useMutation({
+    mutationFn: (id: number) => deleteAccessoryCategory(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['accessory-categories'] });
+      toast.success('Đã xóa danh mục');
+      setDeletingCategory(null);
+    },
+    onError: (e) => showErrorToast(e, 'Không thể xóa danh mục'),
   });
 
-  // Mutations xóa hàng loạt phụ kiện
-  const { mutate: bulkDeleteMutate, isPending: isBulkDeleting } = useMutation({
-    mutationFn: (ids: number[]) => bulkDeleteAccessories({ ids }),
-    onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: ['accessories'] });
-      toast.success(`Đã xóa hàng loạt ${res.deletedCount} phụ kiện`);
-      bulkSelection.exitBulkMode();
-    },
-    onError: (err) => showErrorToast(err, 'Lỗi khi xóa hàng loạt phụ kiện'),
-  });
-
-  const selectedBrand = useMemo(() => {
-    return activeBrandId ? brandsList.find((b) => b.id === activeBrandId) : null;
-  }, [brandsList, activeBrandId]);
-
-  const handleOpenCreateModal = () => {
-    setSelectedAccessory(null);
-    setIsModalOpen(true);
-  };
-
-  const handleOpenEditModal = (acc: Accessory) => {
-    setSelectedAccessory(acc);
-    setIsModalOpen(true);
-  };
-
-  const handleDeleteAccessory = (acc: Accessory) => {
-    if (confirm(`Xác nhận xóa phụ kiện "${acc.name}" (${acc.code || ''})?`)) {
-      deleteAccessoryMutate(acc.id);
-    }
-  };
-
-  const handleExportExcel = async () => {
+  const exportExcel = async () => {
     try {
-      setIsExporting(true);
-      await exportAccessoriesExcel({
-        brandId: activeBrandId,
-        categoryId: selectedCategoryId,
-      });
+      setExporting(true);
+      await exportAccessoriesExcel({ brandId, categoryId });
       toast.success('Đã xuất file Excel danh sách phụ kiện');
-    } catch (err) {
-      showErrorToast(err, 'Lỗi khi xuất file Excel');
+    } catch (e) {
+      showErrorToast(e, 'Lỗi khi xuất file Excel');
     } finally {
-      setIsExporting(false);
+      setExporting(false);
     }
   };
 
-  const isLoading = isBrandsLoading || isAccessoriesLoading;
+  const onImported = (brandIds: number[], categoryIds: Array<number | null>) => {
+    if (brandIds.length > 0 && (!brandId || !brandIds.includes(brandId))) setPickedBrandId(brandIds[0]);
+    if (categoryId !== null && categoryIds.some((c) => c !== categoryId)) setFilter({});
+    setSearch('');
+  };
+
+  const openForm = (accessory: Accessory | null) => {
+    setSelectedId(null);
+    setForm({ accessory });
+  };
+
+  const stats = [
+    { label: 'Phụ kiện của hãng', value: rows.length, icon: Wrench },
+    { label: 'Đang hoạt động', value: rows.filter((a) => a.isActive !== false).length, icon: CheckCircle2 },
+    { label: 'Tạm ngưng', value: rows.filter((a) => a.isActive === false).length, icon: PauseCircle },
+    { label: 'Danh mục', value: categories.length, icon: Layers },
+  ];
 
   return (
-    <div className="flex flex-col md:flex-row items-start min-h-[calc(100vh-105px)]">
-      <BrandSidebar
-        brands={brandsList}
-        selectedBrandId={activeBrandId}
-        onSelectBrand={setSelectedBrandId}
-      />
-
-      <div className="flex-1 flex flex-col gap-4 min-w-0 w-full p-4">
-        <AccessoryToolbar
-          search={search}
-          onSearchChange={setSearch}
-          onAddClick={handleOpenCreateModal}
-          onManageCategoriesClick={() => setIsCategoryManagerOpen(true)}
-          onExportExcelClick={handleExportExcel}
-          onImportExcelClick={() => setIsExcelModalOpen(true)}
-          isExporting={isExporting}
-          categoryList={categoryList}
-          selectedCategoryId={selectedCategoryId}
-          onCategoryChange={setSelectedCategoryId}
-          isBulkMode={bulkSelection.isBulkMode}
-          selectedCount={bulkSelection.selectedCount}
-          totalCount={bulkSelection.totalCount}
-          isAllSelected={bulkSelection.isAllSelected}
-          isBulkDeleting={isBulkDeleting}
-          onEnterBulkMode={bulkSelection.enterBulkMode}
-          onExitBulkMode={bulkSelection.exitBulkMode}
-          onToggleSelectAll={bulkSelection.toggleSelectAll}
-          onConfirmBulkDelete={() => bulkSelection.setIsConfirmOpen(true)}
+    <div className="flex flex-col gap-4 px-4 pb-4 md:px-6 md:pb-6">
+      <StatGrid items={stats} />
+      <div className="flex items-center gap-2">
+        <SearchField value={search} onChange={setSearch} label="Tìm phụ kiện" placeholder="Tìm theo mã hoặc tên phụ kiện..." />
+        <FilterDrawer
+          groups={[{ key: 'category', label: 'Danh mục', options: categories.map((c) => ({ value: String(c.id), label: c.name })) }]}
+          value={filter}
+          onChange={setFilter}
         />
-
-        {isLoading ? (
-          <AccessorySkeleton count={6} />
-        ) : accessories.length === 0 ? (
-          <AccessoryEmptyState selectedBrandName={selectedBrand?.name} />
-        ) : (
-          <AccessoryTable
-            accessories={accessories}
-            onEdit={handleOpenEditModal}
-            onDelete={handleDeleteAccessory}
-            isBulkMode={bulkSelection.isBulkMode}
-            selectedIdSet={bulkSelection.selectedIdSet}
-            isAllSelected={bulkSelection.isAllSelected}
-            isPartiallySelected={bulkSelection.isPartiallySelected}
-            onToggleSelect={bulkSelection.toggleSelect}
-            onToggleSelectAll={bulkSelection.toggleSelectAll}
-          />
-        )}
+        <div className="ml-auto flex flex-none items-center gap-2">
+          <Button variant="outline" icon={<Download size={16} />} iconOnly="mobile" loading={exporting} onClick={exportExcel}>
+            Xuất Excel
+          </Button>
+          {can('catalog:create') && (
+            <Button variant="outline" icon={<Upload size={16} />} iconOnly="mobile" onClick={() => setExcelOpen(true)}>
+              Nhập Excel
+            </Button>
+          )}
+          {can('catalog:update') && (
+            <Button variant="outline" icon={<Settings2 size={16} />} iconOnly="mobile" onClick={() => setManaging(true)}>
+              Danh mục
+            </Button>
+          )}
+          {can('catalog:create') && (
+            <Button icon={<Plus size={18} />} iconOnly="mobile" onClick={() => openForm(null)}>
+              Thêm phụ kiện
+            </Button>
+          )}
+        </div>
       </div>
 
-      <AccessoryModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setSelectedAccessory(null);
+      <div className="flex flex-col gap-4 md:flex-row">
+        <BrandSidebar
+          brands={brands}
+          selectedBrandId={brandId}
+          onSelectBrand={(id) => {
+            setPickedBrandId(id);
+            setFilter({});
+          }}
+        />
+        <div className="w-full min-w-0 flex-1">
+          <TabState
+            loading={brandsQuery.isLoading || accessoriesQuery.isLoading}
+            error={brandsQuery.isError || accessoriesQuery.isError}
+            onRetry={() => {
+              brandsQuery.refetch();
+              accessoriesQuery.refetch();
+            }}
+            empty={rows.length === 0}
+            emptyText={kw || categoryId ? 'Không có phụ kiện khớp bộ lọc.' : `${brandName ? `Hãng ${brandName}` : 'Hãng này'} chưa có phụ kiện.`}
+            emptyAction={
+              !kw &&
+              !categoryId &&
+              can('catalog:create') && (
+                <Button icon={<Plus size={18} />} onClick={() => openForm(null)}>
+                  Thêm phụ kiện
+                </Button>
+              )
+            }
+          >
+            <AccessoryList rows={rows} onOpen={(a) => setSelectedId(a.id)} />
+          </TabState>
+        </div>
+      </div>
+
+      <AccessoryDrawer
+        accessory={selected}
+        brands={brands}
+        canEdit={can('catalog:update')}
+        canDelete={can('catalog:delete')}
+        onClose={() => setSelectedId(null)}
+        onEdit={openForm}
+        onDelete={(a) => {
+          setSelectedId(null);
+          setDeleting(a);
         }}
-        accessory={selectedAccessory}
-        brands={brandsList}
-        defaultBrandId={activeBrandId}
       />
-
-      <AccessoryCategoryManagerModal
-        isOpen={isCategoryManagerOpen}
-        onClose={() => setIsCategoryManagerOpen(false)}
+      <AccessoryFormDrawer isOpen={!!form} onClose={() => setForm(null)} accessory={form?.accessory ?? null} brands={brands} defaultBrandId={brandId} />
+      <AccessoryCategoryManagerDrawer
+        isOpen={managing}
+        onClose={() => setManaging(false)}
+        categories={categories}
+        canCreate={can('catalog:create')}
+        canUpdate={can('catalog:update')}
+        canDelete={can('catalog:delete')}
+        onAdd={() => setCategoryForm({ category: null })}
+        onEdit={(category) => setCategoryForm({ category })}
+        onDelete={setDeletingCategory}
       />
-
-      <AccessoryExcelModal
-        isOpen={isExcelModalOpen}
-        onClose={() => setIsExcelModalOpen(false)}
-        brands={brandsList}
-        categories={categoryList}
+      <CategoryFormDrawer isOpen={!!categoryForm} onClose={() => setCategoryForm(null)} category={categoryForm?.category ?? null} />
+      <AccessoryExcelDrawer
+        isOpen={excelOpen}
+        onClose={() => setExcelOpen(false)}
+        brands={brands}
+        categories={categories}
+        defaultBrandId={brandId}
+        onImportSuccess={onImported}
       />
-
-      <ConfirmActionModal
-        isOpen={bulkSelection.isConfirmOpen}
-        onClose={() => bulkSelection.setIsConfirmOpen(false)}
-        onConfirm={() => bulkDeleteMutate(bulkSelection.selectedIds)}
-        title="Xác nhận xóa hàng loạt phụ kiện"
-        description={
-          <>
-            Bạn có chắc chắn muốn xóa <strong>{bulkSelection.selectedCount}</strong> phụ kiện đã chọn thuộc hãng{' '}
-            <strong>{selectedBrand?.name || ''}</strong> không?
-          </>
-        }
-        warningNote="Các phụ kiện đã chọn sẽ bị đưa vào trạng thái xóa và ẩn khỏi danh sách cấu hình."
-        confirmText={`Xóa ${bulkSelection.selectedCount} phụ kiện`}
-        variant="danger"
-        loading={isBulkDeleting}
-      />
+      <AccessoryDeleteConfirm accessory={deleting} pending={remove.isPending} onClose={() => setDeleting(null)} onConfirm={() => deleting && remove.mutate(deleting.id)} />
+      <ConfirmDelete
+        isOpen={!!deletingCategory}
+        title="Xác nhận xóa danh mục"
+        pending={removeCategory.isPending}
+        onClose={() => setDeletingCategory(null)}
+        onConfirm={() => deletingCategory && removeCategory.mutate(deletingCategory.id)}
+      >
+        Xóa danh mục <strong className="font-semibold text-slate-900 [overflow-wrap:anywhere]">{deletingCategory?.name}</strong>?
+      </ConfirmDelete>
     </div>
   );
 }

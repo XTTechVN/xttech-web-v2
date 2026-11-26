@@ -1,4 +1,6 @@
 import React from 'react';
+import type { Metadata } from 'next';
+import { NO_INDEX_METADATA } from '@/config';
 import { InteractiveButtons } from './_components/interactive-buttons';
 import { InteractiveSelects } from './_components/interactive-selects';
 import { InteractiveDropdowns } from './_components/interactive-dropdowns';
@@ -15,6 +17,11 @@ import { Heading, Breadcrumb, Avatar } from '@/components';
 import { Home, Folder, FileText, Slash } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  ...NO_INDEX_METADATA,
+  title: 'Thư viện UI Components nội bộ',
+};
 
 export default function ComponentsPage() {
   const breadcrumbItems = [

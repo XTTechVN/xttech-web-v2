@@ -2,6 +2,16 @@ import { AccessoryCombo, Brand } from '@/types';
 
 export type ComboCategoryTab = 'frame' | 'sash' | 'opening' | 'all' | 'individual';
 
+export function getEffectiveComboPrice(combo: AccessoryCombo): number {
+  if ((combo.totalComboPrice || 0) > 0) {
+    return combo.totalComboPrice;
+  }
+  return (combo.comboItems || []).reduce(
+    (sum, item) => sum + (item.unitPrice || 0) * (item.quantity || 0),
+    0
+  );
+}
+
 /**
  * Phân loại combo phụ kiện dựa trên trường `applyFor`, `description` trong CSDL
  * hoặc fallback tên/mã
@@ -72,19 +82,24 @@ export function detectComboCategory(combo: AccessoryCombo): 'frame' | 'sash' | '
  * 3. Tìm kiếm tên thương hiệu từ CSDL trong mã/tên combo
  */
 export function detectComboBrand(combo: AccessoryCombo, brands: Brand[] = []): string {
+  // 0. Kiểm tra trực tiếp object brand trả kèm từ Backend
+  if (combo.brand?.name) {
+    return combo.brand.name.trim();
+  }
+
   // 1. Kiểm tra trực tiếp brandId từ CSDL
   if (combo.brandId) {
     const matched = brands.find((b) => b.id === combo.brandId);
-    if (matched) return matched.name;
+    if (matched?.name) return matched.name.trim();
   }
 
   // 2. Kiểm tra comboItems
   if (combo.comboItems && Array.isArray(combo.comboItems)) {
     for (const item of combo.comboItems) {
-      if (item.brandName) return item.brandName;
+      if (item.brandName) return item.brandName.trim();
       if (item.brandId) {
         const matched = brands.find((b) => b.id === item.brandId);
-        if (matched) return matched.name;
+        if (matched?.name) return matched.name.trim();
       }
     }
   }
@@ -93,7 +108,7 @@ export function detectComboBrand(combo: AccessoryCombo, brands: Brand[] = []): s
   const text = `${combo.code || ''} ${combo.name || ''}`.toUpperCase();
   for (const b of brands) {
     if (b.name && b.name.length >= 2 && text.includes(b.name.toUpperCase())) {
-      return b.name;
+      return b.name.trim();
     }
   }
 

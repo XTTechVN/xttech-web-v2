@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Gate from '../_components/gate';
 import { useQuery } from '@tanstack/react-query';
 import { getDashboardSummary } from '@/actions';
 import StatCard from '../_components/stats-card';
@@ -13,6 +14,8 @@ import LiveStaffWidget from '../_components/live-staff-widget';
 import ProjectReportCard from '../_components/project-report-card';
 import { Users, CheckCircle2, FolderGit2, ClockAlert } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { MyTasksReminderWidget } from '../_components/my-tasks-reminder-widget';
+import { LatestRulesWidget } from '../_components/latest-rules-widget';
 
 export const AccountantDashboard = () => {
   const router = useRouter();
@@ -34,24 +37,28 @@ export const AccountantDashboard = () => {
       value: `${totalEmployees} người`,
       icon: <Users size={18} />,
       onClick: () => router.push('/app/employees'),
+      requires: 'user:read',
     },
     {
       title: 'Đã điểm danh hôm nay',
       value: `${todayAttendances} lượt`,
       icon: <CheckCircle2 size={18} />,
       onClick: () => router.push('/app/attendances'),
+      requires: 'attendance_report:read',
     },
     {
       title: 'Khiếu nại công chờ duyệt',
       value: `${totalAdjustments} đơn`,
       icon: <ClockAlert size={18} />,
       onClick: () => router.push('/app/attendances/adjustments'),
+      requires: 'attendance_request:read',
     },
     {
       title: 'Dự án kinh doanh',
       value: `${totalProjects} dự án`,
       icon: <FolderGit2 size={18} />,
       onClick: () => router.push('/app/projects'),
+      requires: 'project:read',
     },
   ];
 
@@ -65,6 +72,12 @@ export const AccountantDashboard = () => {
           pendingLeavesCount={data?.pendingLeavesCount}
           pendingAdjustmentsCount={data?.pendingAdjustmentsCount}
         />
+        <Gate any={['staff_task:read']}>
+          <MyTasksReminderWidget />
+        </Gate>
+        <Gate any={['rule:read']}>
+          <LatestRulesWidget />
+        </Gate>
         <PersonalAttendanceHistory />
       </div>
 
@@ -79,13 +92,22 @@ export const AccountantDashboard = () => {
               icon={stat.icon}
               trend={0}
               onClick={stat.onClick}
+              requires={stat.requires}
             />
           ))}
         </div>
 
         <div className="grid grid-cols-12 gap-4 min-w-0">
           <div className="col-span-8 flex flex-col gap-4 min-w-0">
-            <ProjectReportCard />
+            <Gate any={['staff_task:read']}>
+              <MyTasksReminderWidget />
+            </Gate>
+            <Gate any={['rule:read']}>
+              <LatestRulesWidget />
+            </Gate>
+            <Gate any={['project:view_stats']}>
+              <ProjectReportCard />
+            </Gate>
             <QuickAttendanceCard attendance={data?.myAttendance} />
             <WeeklyAttendanceChart
               data={data?.weeklyStats}
@@ -94,7 +116,9 @@ export const AccountantDashboard = () => {
           </div>
 
           <div className="col-span-4 flex flex-col gap-4 min-w-0">
-            <LiveStaffWidget />
+            <Gate any={['live_map:read']}>
+              <LiveStaffWidget />
+            </Gate>
             <PersonalAttendanceHistory />
           </div>
         </div>

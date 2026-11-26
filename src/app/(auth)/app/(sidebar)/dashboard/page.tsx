@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { AccessDenied } from '@/components/access-denied';
 import { useCan } from '@/hooks';
 import {
   AdminDashboard,
@@ -13,7 +14,7 @@ import {
 } from './_pages';
 
 const Dashboard = () => {
-  const { can } = useCan();
+  const { can, isReady } = useCan();
 
   // Trang tổng quan theo nhóm việc của người dùng (suy từ quyền, không so tên role)
   const renderDashboard = () => {
@@ -25,7 +26,13 @@ const Dashboard = () => {
     return <EmployeeDashboard />;
   };
 
-  return <div className="p-4">{renderDashboard()}</div>;
+  // Chờ quyền tải xong để không nháy sai giao diện (menu đã chặn người thiếu dashboard:read)
+  if (!isReady) return null;
+  if (!can('dashboard:read')) return <AccessDenied />;
+
+  return <div className="p-4 font-body [&_h1]:font-heading [&_h2]:font-heading [&_h3]:font-heading [&_h4]:font-heading">
+      {renderDashboard()}
+    </div>;
 };
 
 export default Dashboard;

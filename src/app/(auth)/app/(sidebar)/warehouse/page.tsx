@@ -1,293 +1,142 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import toast from 'react-hot-toast';
-import {
-  Package,
-  Layers,
-  Sparkles,
-  Building2,
-  FileSpreadsheet,
-  RefreshCw,
-} from 'lucide-react';
-import { Button, Heading, Tabs, type TabItem } from '@/components';
-import { showErrorToast } from '@/utils';
-import {
-  WarehouseItem, WarehouseReceipt, WarehouseOffcut, WarehouseSupplier,
-  WarehouseReceiptItemCreatePayload,
-} from '@/types';
-import {
-  getWarehouseItems, getWarehouseReceipts, getWarehouseOffcuts, getWarehouseSuppliers,
-  approveWarehouseReceipt, cancelWarehouseReceipt, deleteWarehouseSupplier, deleteWarehouseItem,
-} from '@/actions';
-import {
-  WarehouseKpiCards, StockTab, ReceiptsTab, OffcutsTab, SuppliersTab, GlassOrdersTab,
-  ItemFormModal, ReceiptDetailModal, SupplierFormModal, SupplierDetailModal,
-  OffcutFormModal, ReceiptFormModal, ShortageCheckerModal, DeleteItemModal,
-} from './_components';
-import { CancelReceiptModal } from './_components/modals/cancel-receipt-modal';
+import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { AlertTriangle, Layers, Package, RefreshCw, Sparkles } from 'lucide-react';
+import { getWarehouseItems, getWarehouseOffcuts, getWarehouseReceipts, getWarehouseSuppliers } from '@/actions';
+import { AccessDenied } from '@/components/access-denied';
+import { Button, PageHeading, StatGrid, Tabs } from '@/components-remake';
+import { useCan } from '@/hooks';
+import type { WarehouseReceiptItemCreatePayload } from '@/types';
+import { GlassOrdersTab } from './_components/glass-orders-tab';
+import { refreshWarehouse } from './_components/format';
+import { OffcutsTab } from './_components/offcuts/offcuts-tab';
+import ReceiptFormDrawer from './_components/receipts/receipt-form-drawer';
+import { ReceiptsTab } from './_components/receipts/receipts-tab';
+import { isLow } from './_components/stock/stock-list';
+import { StockTab } from './_components/stock/stock-tab';
+import { SuppliersTab } from './_components/suppliers/suppliers-tab';
 
-const WAREHOUSE_TABS: TabItem[] = [
-  { value: 'stock', label: '1. Tồn kho & Định mức', icon: <Package size={15} /> },
-  { value: 'receipts', label: '2. Phiếu Nhập / Xuất kho', icon: <Layers size={15} /> },
-  { value: 'offcuts', label: '3. Kho Nhôm Thừa Tái Sử Dụng (≥ 1.0m)', icon: <Sparkles size={15} /> },
-  { value: 'suppliers', label: '4. Danh bạ Nhà cung cấp', icon: <Building2 size={15} /> },
-  { value: 'glass', label: '5. Đặt kính nhà máy', icon: <FileSpreadsheet size={15} /> },
+const WAREHOUSE_TABS = [
+  { value: 'stock', label: 'Tồn kho & định mức' },
+  { value: 'receipts', label: 'Phiếu nhập / xuất' },
+  { value: 'offcuts', label: 'Nhôm thừa' },
+  { value: 'suppliers', label: 'Nhà cung cấp' },
+  { value: 'glass', label: 'Đặt kính nhà máy' },
 ];
 
+// Mỗi tab cần quyền xem riêng của nhóm dữ liệu đó
+const TAB_PERMISSION: Record<string, string> = {
+  stock: 'warehouse_item:read',
+  receipts: 'warehouse_receipt:read',
+  offcuts: 'offcut:read',
+  suppliers: 'warehouse_supplier:read',
+  glass: 'glass_order:read',
+};
+
 export default function WarehouseManagementPage() {
-  const [activeTab, setActiveTab] = useState<string>('stock');
-  const [loading, setLoading] = useState<boolean>(true);
+  const { can, isReady } = useCan();
+  const tabs = WAREHOUSE_TABS.filter((t) => can(TAB_PERMISSION[t.value]));
+  const [requestedTab, setActiveTab] = useState<string>('stock');
+  const activeTab = tabs.some((t) => t.value === requestedTab) ? requestedTab : (tabs[0]?.value ?? requestedTab);
+  const [receiptForm, setReceiptForm] = useState<{ open: boolean; items?: WarehouseReceiptItemCreatePayload[] }>({ open: false });
 
-  // Core collections
-  const [items, setItems] = useState<WarehouseItem[]>([]);
-  const [receipts, setReceipts] = useState<WarehouseReceipt[]>([]);
-  const [offcuts, setOffcuts] = useState<WarehouseOffcut[]>([]);
-  const [suppliers, setSuppliers] = useState<WarehouseSupplier[]>([]);
+  const items = useQuery({
+    queryKey: ['warehouse', 'items'],
+    queryFn: () => getWarehouseItems({ limit: 200 }),
+    enabled: isReady && can('warehouse_item:read'),
+  });
+  const receipts = useQuery({
+    queryKey: ['warehouse', 'receipts'],
+    queryFn: () => getWarehouseReceipts({ limit: 100 }),
+    enabled: isReady && can('warehouse_receipt:read'),
+  });
+  const offcuts = useQuery({
+    queryKey: ['warehouse', 'offcuts'],
+    queryFn: () => getWarehouseOffcuts({ limit: 100 }),
+    enabled: isReady && can('offcut:read'),
+  });
+  const suppliers = useQuery({
+    queryKey: ['warehouse', 'suppliers'],
+    queryFn: () => getWarehouseSuppliers({ limit: 100 }),
+    enabled: isReady && can('warehouse_supplier:read'),
+  });
 
-  // Modals state
-  const [showItemModal, setShowItemModal] = useState(false);
-  const [editingItem, setEditingItem] = useState<WarehouseItem | null>(null);
-  const [deletingItem, setDeletingItem] = useState<WarehouseItem | null>(null);
-  const [isDeletingItem, setIsDeletingItem] = useState(false);
-  const [showReceiptModal, setShowReceiptModal] = useState(false);
-  const [showOffcutModal, setShowOffcutModal] = useState(false);
-  const [showSupplierModal, setShowSupplierModal] = useState(false);
-  const [editingSupplier, setEditingSupplier] = useState<WarehouseSupplier | null>(null);
-  const [viewingSupplier, setViewingSupplier] = useState<WarehouseSupplier | null>(null);
-  const [showShortageModal, setShowShortageModal] = useState(false);
-  const [selectedReceipt, setSelectedReceipt] = useState<WarehouseReceipt | null>(null);
-  const [prefilledReceiptItems, setPrefilledReceiptItems] = useState<
-    WarehouseReceiptItemCreatePayload[] | undefined
-  >();
+  const itemList = useMemo(() => items.data?.items ?? [], [items.data]);
+  const receiptList = useMemo(() => receipts.data?.items ?? [], [receipts.data]);
+  const offcutList = useMemo(() => offcuts.data?.items ?? [], [offcuts.data]);
+  const supplierList = useMemo(() => suppliers.data?.items ?? [], [suppliers.data]);
+  const profileItems = useMemo(() => itemList.filter((i) => i.itemType === 'profile'), [itemList]);
 
-  const loadAll = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [itemsRes, receiptsRes, offcutsRes, suppliersRes] = await Promise.all([
-        getWarehouseItems({ limit: 200 }),
-        getWarehouseReceipts({ limit: 100 }),
-        getWarehouseOffcuts({ limit: 100 }),
-        getWarehouseSuppliers({ limit: 100 }),
-      ]);
-      setItems(itemsRes.items || []);
-      setReceipts(receiptsRes.items || []);
-      setOffcuts(offcutsRes.items || []);
-      setSuppliers(suppliersRes.items || []);
-    } catch (err: any) {
-      showErrorToast(err, 'Lỗi khi tải dữ liệu kho vật tư');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  if (!isReady) return null;
+  if (tabs.length === 0) return <AccessDenied />;
 
-  useEffect(() => {
-    loadAll();
-  }, [loadAll]);
-
-  const handleApproveReceipt = async (receiptId: number) => {
-    try {
-      await approveWarehouseReceipt(receiptId);
-      toast.success('Duyệt phiếu kho thành công! Tồn kho đã được cập nhật nguyên tử.');
-      loadAll();
-    } catch (err: any) {
-      showErrorToast(err, 'Lỗi duyệt phiếu kho');
-    }
-  };
-
-  const [cancelReceiptId, setCancelReceiptId] = useState<number | null>(null);
-  const handleCancelReceipt = async (receiptId: number) => setCancelReceiptId(receiptId);
-  const confirmCancelReceipt = async (receiptId: number, reason: string) => {
-    try {
-      await cancelWarehouseReceipt(receiptId, reason);
-      toast.success('Đã hủy phiếu kho và giải phóng vật tư giữ chỗ.');
-      setCancelReceiptId(null);
-      loadAll();
-    } catch (err: any) {
-      showErrorToast(err, 'Lỗi hủy phiếu kho');
-    }
-  };
-
-  const handleDeleteSupplier = async (supplier: WarehouseSupplier) => {
-    try {
-      await deleteWarehouseSupplier(supplier.id);
-      toast.success(`Đã xóa nhà cung cấp "${supplier.name}" thành công.`);
-      loadAll();
-    } catch (err: any) {
-      showErrorToast(err, 'Lỗi xóa nhà cung cấp');
-    }
-  };
-
-  const handleConfirmDeleteItem = async () => {
-    if (!deletingItem) return;
-    setIsDeletingItem(true);
-    try {
-      await deleteWarehouseItem(deletingItem.id);
-      toast.success(`Đã xóa mặt hàng "${deletingItem.itemName}" khỏi kho.`);
-      setDeletingItem(null);
-      loadAll();
-    } catch (err: any) {
-      showErrorToast(err, 'Lỗi xóa mặt hàng kho');
-    } finally {
-      setIsDeletingItem(false);
-    }
-  };
-
-  // KPI calculations
-  const kpiData = useMemo(() => ({
-    totalItems: items.length,
-    lowStockItems: items.filter(
-      (i) => i.isLowStock || i.availableStock <= i.minStockLevel
-    ).length,
-    pendingReceipts: receipts.filter((r) => r.status === 'draft').length,
-    availableOffcuts: offcuts.filter((o) => o.status === 'available').length,
-  }), [items, receipts, offcuts]);
-
-  const profileItems = useMemo(
-    () => items.filter((i) => i.itemType === 'profile'),
-    [items]
-  );
+  const stats = [
+    { label: 'Mặt hàng trong kho', value: itemList.length, icon: Package },
+    { label: 'Cảnh báo thiếu hụt', value: itemList.filter(isLow).length, icon: AlertTriangle },
+    { label: 'Phiếu chờ duyệt', value: receiptList.filter((r) => r.status === 'draft').length, icon: Layers },
+    { label: 'Nhôm thừa tái dùng', value: offcutList.filter((o) => o.status === 'available').length, icon: Sparkles },
+  ];
+  const busy = items.isFetching || receipts.isFetching || offcuts.isFetching || suppliers.isFetching;
 
   return (
-    <div className="p-4 flex flex-col gap-4 text-slate-800 w-full">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
-        <div>
-          <Heading size="h1" className="text-2xl font-bold tracking-tight text-slate-900">
-            Quản Lý Kho Vật Tư & Chuỗi Cung Ứng
-          </Heading>
-          <p className="text-sm text-slate-500 mt-1">
-            Kiểm soát tồn kho nhôm phụ kiện, giữ chỗ xuất kho theo lệnh SX, thu hồi nhôm thừa tái sử dụng và đặt kính nhà máy tôi
-          </p>
+    <div className="w-full p-4 font-body md:p-6 [&_h1]:font-heading [&_h2]:font-heading [&_h3]:font-heading">
+      <PageHeading title="Quản lý kho" description="Tồn kho, nhập xuất và vật tư." />
+      <div className="flex flex-col gap-4 text-slate-800">
+        <StatGrid items={stats} />
+
+        <div className="flex items-center gap-2">
+          <Tabs tabs={tabs} value={activeTab} onChange={setActiveTab} label="Nhóm kho vật tư" className="min-w-0 flex-1 px-0" />
+          <Button
+            variant="outline"
+            icon={<RefreshCw size={16} className={busy ? 'animate-spin' : ''} />}
+            iconOnly="mobile"
+            onClick={refreshWarehouse}
+          >
+            Làm mới
+          </Button>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={loadAll}
-          leftIcon={<RefreshCw size={14} className={loading ? 'animate-spin' : ''} />}
-          className="shrink-0"
-        >
-          Làm mới dữ liệu
-        </Button>
-      </div>
 
-      {/* KPI Cards */}
-      <WarehouseKpiCards
-        totalItems={kpiData.totalItems}
-        lowStockItems={kpiData.lowStockItems}
-        pendingReceipts={kpiData.pendingReceipts}
-        availableOffcuts={kpiData.availableOffcuts}
-      />
-
-      {/* Tabs */}
-      <div className="border-b border-slate-200">
-        <Tabs tabs={WAREHOUSE_TABS} activeTab={activeTab} onChange={setActiveTab} />
-      </div>
-
-      {/* Tab Panels */}
-      <div className="min-h-[400px]">
         {activeTab === 'stock' && (
           <StockTab
-            items={items}
-            loading={loading}
-            onOpenAddItem={() => { setEditingItem(null); setShowItemModal(true); }}
-            onOpenShortageChecker={() => setShowShortageModal(true)}
-            onEditItem={(item) => { setEditingItem(item); setShowItemModal(true); }}
-            onDeleteItem={(item) => setDeletingItem(item)}
+            items={itemList}
+            loading={items.isLoading}
+            error={items.isError}
+            onRetry={() => items.refetch()}
+            onCreateReceipt={(rows) => setReceiptForm({ open: true, items: rows })}
           />
         )}
         {activeTab === 'receipts' && (
           <ReceiptsTab
-            receipts={receipts}
-            loading={loading}
-            onOpenCreateReceipt={() => {
-              setPrefilledReceiptItems(undefined);
-              setShowReceiptModal(true);
-            }}
-            onSelectReceiptDetail={setSelectedReceipt}
-            onApproveReceipt={handleApproveReceipt}
-            onCancelReceipt={handleCancelReceipt}
+            receipts={receiptList}
+            loading={receipts.isLoading}
+            error={receipts.isError}
+            onRetry={() => receipts.refetch()}
+            onCreate={() => setReceiptForm({ open: true })}
           />
         )}
         {activeTab === 'offcuts' && (
           <OffcutsTab
-            offcuts={offcuts}
-            loading={loading}
-            onOpenAddOffcut={() => setShowOffcutModal(true)}
+            offcuts={offcutList}
+            profileItems={profileItems}
+            loading={offcuts.isLoading}
+            error={offcuts.isError}
+            onRetry={() => offcuts.refetch()}
           />
         )}
         {activeTab === 'suppliers' && (
-          <SuppliersTab
-            suppliers={suppliers}
-            loading={loading}
-            onOpenAddSupplier={() => { setEditingSupplier(null); setShowSupplierModal(true); }}
-            onEditSupplier={(s) => { setEditingSupplier(s); setShowSupplierModal(true); }}
-            onDeleteSupplier={handleDeleteSupplier}
-            onViewSupplierDetail={(s) => setViewingSupplier(s)}
-          />
+          <SuppliersTab suppliers={supplierList} loading={suppliers.isLoading} error={suppliers.isError} onRetry={() => suppliers.refetch()} />
         )}
-        {activeTab === 'glass' && <GlassOrdersTab suppliers={suppliers} />}
-      </div>
+        {activeTab === 'glass' && <GlassOrdersTab suppliers={supplierList} />}
 
-      {/* Modals */}
-      <ItemFormModal
-        isOpen={showItemModal}
-        onClose={() => { setShowItemModal(false); setEditingItem(null); }}
-        onSuccess={loadAll}
-        initialData={editingItem}
-      />
-      <DeleteItemModal
-        isOpen={Boolean(deletingItem)}
-        item={deletingItem}
-        onClose={() => setDeletingItem(null)}
-        onConfirm={handleConfirmDeleteItem}
-        isDeleting={isDeletingItem}
-      />
-      <ReceiptFormModal
-        isOpen={showReceiptModal}
-        onClose={() => { setShowReceiptModal(false); setPrefilledReceiptItems(undefined); }}
-        onSuccess={loadAll}
-        itemsList={items}
-        suppliersList={suppliers}
-        initialItems={prefilledReceiptItems}
-        onSupplierCreated={(newSup) => setSuppliers((prev) => [newSup, ...prev])}
-      />
-      <OffcutFormModal
-        isOpen={showOffcutModal}
-        onClose={() => setShowOffcutModal(false)}
-        onSuccess={loadAll}
-        profileItems={profileItems}
-      />
-      <SupplierFormModal
-        isOpen={showSupplierModal}
-        onClose={() => { setShowSupplierModal(false); setEditingSupplier(null); }}
-        onSuccess={loadAll}
-        initialData={editingSupplier}
-      />
-      <SupplierDetailModal
-        isOpen={Boolean(viewingSupplier)}
-        onClose={() => setViewingSupplier(null)}
-        supplier={viewingSupplier}
-        itemsList={items}
-        receiptsList={receipts}
-      />
-      <ShortageCheckerModal
-        isOpen={showShortageModal}
-        onClose={() => setShowShortageModal(false)}
-        onOpenReceiptWithShortages={(jitItems) => { setPrefilledReceiptItems(jitItems); setShowReceiptModal(true); }}
-      />
-      {cancelReceiptId !== null && (
-        <CancelReceiptModal receiptId={cancelReceiptId} onClose={() => setCancelReceiptId(null)} onConfirm={confirmCancelReceipt} />
-      )}
-      {selectedReceipt && (
-        <ReceiptDetailModal
-          isOpen={Boolean(selectedReceipt)}
-          receipt={selectedReceipt}
-          onClose={() => setSelectedReceipt(null)}
-          onApprove={() => { const id = selectedReceipt.id; setSelectedReceipt(null); handleApproveReceipt(id); }}
-          onCancel={() => { const id = selectedReceipt.id; setSelectedReceipt(null); handleCancelReceipt(id); }}
+        <ReceiptFormDrawer
+          isOpen={receiptForm.open}
+          onClose={() => setReceiptForm((s) => ({ ...s, open: false }))}
+          items={itemList}
+          suppliers={supplierList}
+          initialItems={receiptForm.items}
         />
-      )}
+      </div>
     </div>
   );
 }

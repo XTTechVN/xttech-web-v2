@@ -9,7 +9,7 @@ import {
   SCOPE_TYPE_OPTIONS,
 } from '@/config';
 import type { ProjectFloor, ProjectQuotationPreviewRequest } from '@/types';
-import { Hint, PriceBlock } from './quotation-primitives';
+import { Hint, PriceBlock, PricingModeHelpTooltip } from './quotation-primitives';
 
 interface QuotationConfigFormProps {
   config: ProjectQuotationPreviewRequest;
@@ -158,7 +158,7 @@ export function QuotationConfigForm({
               value={config.otherCost}
               onChange={(v) => patchConfig({ otherCost: v })}
             />
-            <Hint>Ví dụ: thuê xe cẩu, tiền vận chuyển đến công trình.</Hint>
+            <Hint>Ví dụ: thuê xe cẩu, xăng xe, tiền vận chuyển đến công trình.</Hint>
           </div>
           <div className="space-y-2">
             <CurrencyInput
@@ -192,8 +192,11 @@ export function QuotationConfigForm({
       >
         <div className="grid grid-cols-1 gap-4">
           <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-gray-700 select-none">Cách tính giá bán</span>
+              <PricingModeHelpTooltip />
+            </div>
             <Select
-              label="Cách tính giá bán"
               fullWidth
               disabled={isReadOnly}
               value={config.pricingMode}

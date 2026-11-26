@@ -1,143 +1,175 @@
 'use client';
 
-import React, { useState, useMemo, useRef } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { getAccessoryCombos, deleteAccessoryCombo, getBrands } from '@/actions';
-import { getDefaultBrandId, type AccessoryCombo } from '@/types';
+import { useMemo, useState } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { CheckCircle2, Layers, PauseCircle, Plus, Star } from 'lucide-react';
 import toast from 'react-hot-toast';
-import queryClient from '@/utils/query';
-import { showErrorToast } from '@/utils';
+import { deleteAccessoryCombo, getAccessoryCombos, getBrands, updateAccessoryCombo } from '@/actions';
 import { ComboModal } from '@/components';
+import { Button, ConfirmDelete, FilterDrawer, SearchField, StatGrid, TabState } from '@/components-remake';
+import { useCan } from '@/hooks';
+import { COMBO_APPLY_FOR_OPTIONS, COMBO_DOOR_TYPE_OPTIONS, getDefaultBrandId, type AccessoryCombo } from '@/types';
+import { includesSearchText, showErrorToast } from '@/utils';
+import queryClient from '@/utils/query';
 import { BrandSidebar } from '../../_components';
-import { ComboToolbar, ComboTable } from './_components';
+import { ComboDrawer } from './_components/combo-drawer';
+import { ComboList } from './_components/combo-list';
 
-const PAGE_SIZE = 20;
+const refreshCombos = () => {
+  queryClient.invalidateQueries({ queryKey: ['accessory-combos'] });
+  queryClient.invalidateQueries({ queryKey: ['accessory-combos-list'] });
+};
 
+// Combo phụ kiện theo hãng; cột hãng bên trái giữ nguyên
 export default function AccessoryCombosTab() {
-  const [selectedBrandId, setSelectedBrandId] = useState<number | null>(null);
+  const { can } = useCan();
   const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [offset, setOffset] = useState(0);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedCombo, setSelectedCombo] = useState<AccessoryCombo | null>(null);
+  const [pickedBrandId, setPickedBrandId] = useState<number | null>(null);
+  const [filter, setFilter] = useState<Record<string, string>>({});
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [form, setForm] = useState<{ combo: AccessoryCombo | null; copy: boolean } | null>(null);
+  const [deleting, setDeleting] = useState<AccessoryCombo | null>(null);
 
-  // Query danh sách hãng phụ kiện
-  const { data: brandsData } = useQuery({
+  const brandsQuery = useQuery({
     queryKey: ['brands', 'accessory'],
     queryFn: async () => {
       const res = await getBrands({ limit: 9999, offset: 0, allowDeleted: false, brandType: 'accessory' });
-      if (res.items && res.items.length > 0) return res.items;
-      const allRes = await getBrands({ limit: 9999, offset: 0, allowDeleted: false });
-      return allRes.items || [];
+      if (res.items?.length) return res.items;
+      return (await getBrands({ limit: 9999, offset: 0, allowDeleted: false })).items || [];
     },
   });
+  const brands = useMemo(() => brandsQuery.data ?? [], [brandsQuery.data]);
+  const sortedBrands = useMemo(() => [...brands].sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' })), [brands]);
+  const brandId = pickedBrandId ?? getDefaultBrandId(sortedBrands);
 
-  const brandsList = useMemo(() => brandsData ?? [], [brandsData]);
-  const sortedBrands = useMemo(
-    () => [...brandsList].sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' })),
-    [brandsList],
-  );
-
-  // Tự động chọn hãng đầu tiên (Derived State - tránh setState trong useEffect)
-  const activeBrandId = selectedBrandId ?? getDefaultBrandId(sortedBrands);
-
-  // Debounce search
-  const searchTimer = useRef<NodeJS.Timeout | null>(null);
-  const handleSearchChange = (val: string) => {
-    setSearch(val);
-    if (searchTimer.current) clearTimeout(searchTimer.current);
-    searchTimer.current = setTimeout(() => {
-      setDebouncedSearch(val);
-      setOffset(0);
-    }, 350);
-  };
-
-  const handleSelectBrand = (brandId: number) => {
-    setSelectedBrandId(brandId);
-    setOffset(0);
-  };
-
-  const { data, isLoading } = useQuery({
-    queryKey: ['accessory-combos', activeBrandId, debouncedSearch, offset],
-    queryFn: () =>
-      getAccessoryCombos({
-        brandId: activeBrandId || undefined,
-        search: debouncedSearch.trim() || undefined,
-        limit: PAGE_SIZE,
-        offset,
-      }),
-    enabled: activeBrandId !== null,
+  const combosQuery = useQuery({
+    queryKey: ['accessory-combos', brandId],
+    queryFn: async () => (await getAccessoryCombos({ brandId: brandId || undefined, limit: 9999, offset: 0 })).items || [],
+    enabled: brandId !== null,
   });
+  const all = useMemo(() => combosQuery.data ?? [], [combosQuery.data]);
 
-  const combos = data?.items || [];
-  const total = data?.meta?.total ?? 0;
+  const kw = search.trim();
+  const rows = useMemo(
+    () =>
+      all.filter(
+        (c) =>
+          (!filter.applyFor || (c.applyFor || 'khung') === filter.applyFor) &&
+          (!filter.doorType || (c.doorTypes ?? []).includes(filter.doorType)) &&
+          (!kw || includesSearchText(c.name, kw) || includesSearchText(c.code, kw)),
+      ),
+    [all, filter, kw],
+  );
+  const selected = useMemo(() => all.find((c) => c.id === selectedId) ?? null, [all, selectedId]);
+  const brandName = brands.find((b) => b.id === brandId)?.name;
+  const filtered = !!kw || !!filter.applyFor || !!filter.doorType;
 
-  const { mutate: deleteMutate } = useMutation({
+  const remove = useMutation({
     mutationFn: (id: number) => deleteAccessoryCombo(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['accessory-combos'] });
-      queryClient.invalidateQueries({ queryKey: ['accessory-combos-list'] });
-      toast.success('Xóa gói combo thành công');
+      refreshCombos();
+      toast.success('Đã xóa gói combo');
+      setDeleting(null);
     },
-    onError: (err) => showErrorToast(err, 'Lỗi khi xóa gói combo'),
+    onError: (e) => showErrorToast(e, 'Không thể xóa gói combo'),
+  });
+  const toggleDefault = useMutation({
+    mutationFn: (c: AccessoryCombo) => updateAccessoryCombo(c.id, { isDefault: !c.isDefault }),
+    onSuccess: refreshCombos,
+    onError: (e) => showErrorToast(e, 'Không thể cập nhật mặc định'),
   });
 
-  const handleOpenCreate = () => {
-    setSelectedCombo(null);
-    setIsModalOpen(true);
+  const openForm = (combo: AccessoryCombo | null, copy = false) => {
+    setSelectedId(null);
+    setForm({ combo, copy });
   };
 
-  const handleOpenEdit = (combo: AccessoryCombo) => {
-    setSelectedCombo(combo);
-    setIsModalOpen(true);
-  };
-
-  const handleDelete = (combo: AccessoryCombo) => {
-    if (confirm(`Xác nhận xóa gói combo "${combo.name}" (${combo.code})?`)) {
-      deleteMutate(combo.id);
-    }
-  };
+  const stats = [
+    { label: 'Gói của hãng', value: all.length, icon: Layers },
+    { label: 'Đang hoạt động', value: all.filter((c) => c.isActive).length, icon: CheckCircle2 },
+    { label: 'Tạm ngưng', value: all.filter((c) => !c.isActive).length, icon: PauseCircle },
+    { label: 'Mặc định', value: all.filter((c) => c.isDefault).length, icon: Star },
+  ];
 
   return (
-    <div className="flex flex-col md:flex-row items-start min-h-[calc(100vh-105px)]">
-      {/* Sidebar lọc theo Hãng */}
-      <BrandSidebar
-        brands={brandsList}
-        selectedBrandId={activeBrandId}
-        onSelectBrand={handleSelectBrand}
-      />
-
-      {/* Nội dung bên phải */}
-      <div className="flex-1 flex flex-col gap-4 min-w-0 w-full p-4">
-        <ComboToolbar
-          search={search}
-          onSearchChange={handleSearchChange}
-          onAddClick={handleOpenCreate}
-          total={total}
+    <div className="flex flex-col gap-4 px-4 pb-4 md:px-6 md:pb-6">
+      <StatGrid items={stats} />
+      <div className="flex items-center gap-2">
+        <SearchField value={search} onChange={setSearch} label="Tìm gói combo" placeholder="Tìm theo mã hoặc tên combo..." />
+        <FilterDrawer
+          groups={[
+            { key: 'applyFor', label: 'Dành cho', options: COMBO_APPLY_FOR_OPTIONS },
+            { key: 'doorType', label: 'Loại cửa áp dụng', options: COMBO_DOOR_TYPE_OPTIONS },
+          ]}
+          value={filter}
+          onChange={setFilter}
         />
-
-        <ComboTable
-          combos={combos}
-          isLoading={isLoading}
-          search={debouncedSearch}
-          total={total}
-          offset={offset}
-          pageSize={PAGE_SIZE}
-          onEdit={handleOpenEdit}
-          onDelete={handleDelete}
-          onPageChange={setOffset}
-        />
+        {can('catalog:create') && (
+          <Button className="ml-auto" icon={<Plus size={18} />} iconOnly="mobile" onClick={() => openForm(null)}>
+            Thêm combo
+          </Button>
+        )}
       </div>
 
-      <ComboModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setSelectedCombo(null);
+      <div className="flex flex-col gap-4 md:flex-row">
+        <BrandSidebar brands={brands} selectedBrandId={brandId} onSelectBrand={setPickedBrandId} />
+        <div className="w-full min-w-0 flex-1">
+          <TabState
+            loading={brandsQuery.isLoading || combosQuery.isLoading}
+            error={brandsQuery.isError || combosQuery.isError}
+            onRetry={() => {
+              brandsQuery.refetch();
+              combosQuery.refetch();
+            }}
+            empty={rows.length === 0}
+            emptyText={filtered ? 'Không có gói combo khớp bộ lọc.' : `${brandName ? `Hãng ${brandName}` : 'Hãng này'} chưa có gói combo.`}
+            emptyAction={
+              !filtered &&
+              can('catalog:create') && (
+                <Button icon={<Plus size={18} />} onClick={() => openForm(null)}>
+                  Thêm combo
+                </Button>
+              )
+            }
+          >
+            <ComboList rows={rows} onOpen={(c) => setSelectedId(c.id)} />
+          </TabState>
+        </div>
+      </div>
+
+      <ComboDrawer
+        combo={selected}
+        canCreate={can('catalog:create')}
+        canEdit={can('catalog:update')}
+        canDelete={can('catalog:delete')}
+        togglingDefault={toggleDefault.isPending}
+        onClose={() => setSelectedId(null)}
+        onCopy={(c) => openForm(c, true)}
+        onEdit={(c) => openForm(c)}
+        onDelete={(c) => {
+          setSelectedId(null);
+          setDeleting(c);
         }}
-        combo={selectedCombo}
-        brandId={activeBrandId}
+        onToggleDefault={(c) => toggleDefault.mutate(c)}
       />
+      <ComboModal
+        asDrawer
+        isOpen={!!form}
+        onClose={() => setForm(null)}
+        combo={form?.combo ?? null}
+        isCopy={form?.copy ?? false}
+        brandId={brandId}
+        defaultApplyFor={(filter.applyFor as 'khung' | 'canh' | 'huong_mo' | 'khac') || 'khung'}
+      />
+      <ConfirmDelete
+        isOpen={!!deleting}
+        title="Xác nhận xóa gói combo"
+        pending={remove.isPending}
+        onClose={() => setDeleting(null)}
+        onConfirm={() => deleting && remove.mutate(deleting.id)}
+      >
+        Xóa gói combo <strong className="font-semibold text-slate-900 [overflow-wrap:anywhere]">{deleting?.name}</strong> ({deleting?.code})?
+      </ConfirmDelete>
     </div>
   );
 }

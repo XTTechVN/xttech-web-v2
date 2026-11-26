@@ -1,173 +1,79 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { Trash2, ExternalLink, Star } from 'lucide-react';
-import { isBrandFavorite, type Brand } from '@/types';
-import { BASE_MINIO_URL } from '@/config';
+import { ExternalLink, Star, Trash2 } from 'lucide-react';
+import { Tag } from '@/components-remake';
+import type { Brand } from '@/types';
+import { cn } from '@/utils/cn';
+import { BrandLogo } from './brand-logo';
+import { useBrandFavorite } from './brand-favorite';
 
-interface BrandCardProps {
+interface Props {
   brand: Brand;
-  onClick?: (brand: Brand) => void;
-  onEdit: (brand: Brand) => void;
-  onDelete: (brand: Brand) => void;
-  onToggleFavorite?: (brand: Brand) => void;
+  brands: Brand[];
+  canFavorite: boolean;
+  /** Có = hiện nút xóa */
+  onDelete?: (b: Brand) => void;
+  onOpen: (b: Brand) => void;
 }
 
-function BrandLogo({
-  logoPath,
-  name,
-  code,
-  updatedAt,
-}: {
-  logoPath?: string | null;
-  name: string;
-  code: string;
-  updatedAt?: string;
-}) {
-  const [hasError, setHasError] = useState(false);
+const ACTION =
+  'flex size-11 flex-none cursor-pointer items-center justify-center rounded-control text-slate-400 transition active:scale-95 disabled:cursor-default md:size-9 md:hover:bg-slate-100';
 
-  const logoUrl = useMemo(() => {
-    if (!logoPath) return null;
-    const base = logoPath.startsWith('http')
-      ? logoPath
-      : `${BASE_MINIO_URL}/${logoPath.startsWith('/') ? logoPath.slice(1) : logoPath}`;
-
-    if (!updatedAt) return base;
-    const timestamp = new Date(updatedAt).getTime();
-    const separator = base.includes('?') ? '&' : '?';
-    return `${base}${separator}t=${timestamp}`;
-  }, [logoPath, updatedAt]);
-
-  if (logoUrl && !hasError) {
-    return (
-      <img
-        src={logoUrl}
-        alt={name}
-        className="w-full h-full object-contain p-2 transition-transform duration-300 group-hover:scale-105"
-        onError={() => setHasError(true)}
-      />
-    );
-  }
+// Thẻ hãng: logo lớn, bấm vào thẻ mở chi tiết; sao đặt hãng mặc định, thùng rác xóa
+export function BrandCard({ brand: b, brands, canFavorite, onDelete, onOpen }: Props) {
+  const fav = useBrandFavorite(b, brands);
 
   return (
-    <div className="flex flex-col items-center justify-center text-slate-400 gap-1">
-      <div className="w-11 h-11 rounded-xl bg-slate-100 flex items-center justify-center font-bold text-sm text-primary shadow-2xs">
-        {code ? code.slice(0, 2).toUpperCase() : 'XT'}
-      </div>
-    </div>
-  );
-}
-
-export function BrandCard({ brand, onClick, onDelete, onToggleFavorite }: BrandCardProps) {
-  const isFavorite = isBrandFavorite(brand);
-
-  return (
-    <div
-      onClick={() => onClick?.(brand)}
-      className="group bg-white border border-slate-200 hover:border-primary hover:shadow-md rounded-lg p-2.5 flex flex-col justify-between transition-all duration-200 relative overflow-hidden cursor-pointer select-none"
-    >
-      {/* Card Header: Brand Logo & Status indicator */}
-      <div>
-        <div className="relative aspect-square w-full bg-slate-50/80 border border-slate-100 rounded-md flex items-center justify-center overflow-hidden mb-2">
-          {/* Nút ngôi sao Yêu thích góc trên bên trái */}
-          {onToggleFavorite && (
+    <div className="relative flex h-full flex-col rounded-block border border-slate-200 bg-white transition md:hover:border-primary">
+      <button type="button" onClick={() => onOpen(b)} className="flex min-w-0 cursor-pointer flex-col gap-2 p-2.5 text-left">
+        <span className="relative">
+          <BrandLogo brand={b} className="aspect-square w-full bg-slate-50" />
+          <span
+            title={b.isActive ? 'Đang hoạt động' : 'Tạm ngưng'}
+            className={cn(
+              'absolute right-1.5 top-1.5 size-2 rounded-full ring-2',
+              b.isActive ? 'bg-emerald-500 ring-emerald-50' : 'bg-rose-400 ring-rose-50',
+            )}
+          />
+        </span>
+        <span className="block truncate text-sm font-semibold text-slate-900" title={b.name}>
+          {b.name}
+        </span>
+        <span className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1">
+          <Tag tone="blue">{b.code}</Tag>
+          {b.originCountry && <span className="min-w-0 truncate text-xs text-slate-500">{b.originCountry}</span>}
+        </span>
+        {!!b.barLengthMm && <span className="text-xs text-slate-500">Cây {b.barLengthMm.toLocaleString('vi-VN')} mm</span>}
+      </button>
+      <div className="flex items-center justify-between border-t border-slate-100 px-1">
+        <button
+          type="button"
+          disabled={!canFavorite || fav.pending}
+          onClick={fav.toggle}
+          aria-label={fav.on ? `Bỏ hãng mặc định ${b.name}` : `Đặt ${b.name} làm hãng mặc định`}
+          title={fav.on ? 'Hãng mặc định khi vào trang. Bấm để bỏ.' : 'Đặt làm hãng mặc định khi vào trang'}
+          className={ACTION}
+        >
+          <Star size={16} className={cn(fav.on && 'fill-amber-400 text-amber-400')} />
+        </button>
+        <span className="flex items-center">
+          {b.website && (
+            <a href={b.website} target="_blank" rel="noreferrer" aria-label={`Website ${b.name}`} title={b.website} className={ACTION}>
+              <ExternalLink size={14} />
+            </a>
+          )}
+          {onDelete && (
             <button
               type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleFavorite(brand);
-              }}
-              title={isFavorite ? 'Bỏ đánh dấu hãng yêu thích' : 'Đặt làm hãng yêu thích (chọn đầu tiên)'}
-              className="absolute top-1.5 left-1.5 z-10 p-0.5 rounded-full transition-transform hover:scale-110 cursor-pointer"
+              aria-label={`Xóa ${b.name}`}
+              title="Xóa thương hiệu"
+              onClick={() => onDelete(b)}
+              className={cn(ACTION, 'md:hover:text-red-600')}
             >
-              <Star
-                size={14}
-                className={
-                  isFavorite
-                    ? 'fill-amber-400 text-amber-400 drop-shadow-2xs'
-                    : 'text-slate-300 hover:text-amber-400 transition-colors'
-                }
-              />
+              <Trash2 size={14} />
             </button>
           )}
-
-          <BrandLogo
-            key={`${brand.logoPath ?? ''}-${brand.updatedAt ?? ''}`}
-            logoPath={brand.logoPath}
-            name={brand.name}
-            code={brand.code}
-            updatedAt={brand.updatedAt}
-          />
-
-          {/* Active dot badge */}
-          <span
-            className={`absolute top-1.5 right-1.5 w-2 h-2 rounded-full ${
-              brand.isActive ? 'bg-emerald-500 ring-2 ring-emerald-50' : 'bg-rose-400 ring-2 ring-rose-50'
-            }`}
-            title={brand.isActive ? 'Đang hoạt động' : 'Tạm ngưng'}
-          />
-        </div>
-
-        {/* Brand Name & Code */}
-        <div className="flex flex-col gap-0.5">
-          <h3
-            className="font-bold text-xs text-slate-900 truncate group-hover:text-primary transition-colors"
-            title={brand.name}
-          >
-            {brand.name}
-          </h3>
-
-          <div className="flex items-center gap-1 flex-wrap mt-0.5">
-            <span className="font-mono text-[10px] font-semibold text-primary bg-primary/10 px-1 py-0.2 rounded">
-              {brand.code}
-            </span>
-            {brand.originCountry && (
-              <span className="text-[10px] text-slate-500 truncate" title={`Xuất xứ: ${brand.originCountry}`}>
-                • {brand.originCountry}
-              </span>
-            )}
-          </div>
-
-          {Boolean(brand.barLengthMm) && (
-            <span className="text-[10px] text-slate-400 mt-0.5 truncate">
-              Cây: <strong className="text-slate-600 font-medium">{brand.barLengthMm}mm</strong>
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Card Footer: Action buttons & link */}
-      <div className="pt-2 mt-2 border-t border-slate-100 flex items-center justify-between">
-        <div>
-          {brand.website ? (
-            <a
-              href={brand.website}
-              target="_blank"
-              rel="noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="p-1 text-slate-400 hover:text-primary transition inline-flex"
-              title={brand.website}
-            >
-              <ExternalLink size={12} />
-            </a>
-          ) : (
-            <span className="text-[9px] text-slate-300 font-mono">#{brand.id}</span>
-          )}
-        </div>
-
-        <div className="flex items-center gap-0.5">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(brand);
-            }}
-            className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition cursor-pointer"
-            title="Xóa thương hiệu"
-          >
-            <Trash2 size={13} />
-          </button>
-        </div>
+        </span>
       </div>
     </div>
   );

@@ -6,77 +6,58 @@ import { Modal } from '@/components/modal';
 import { Input } from '@/components/input';
 import { Button } from '@/components/button';
 import { Select } from '@/components/select';
-import { Plus, Trash2, Layers, Calculator, Check } from 'lucide-react';
-import { SearchableSelect } from './searchable-select';
+import { Calculator, Check } from 'lucide-react';
+import { Button as DrawerButton, Drawer, DrawerBody, DrawerFooter, DrawerHeader } from '@/components-remake';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import queryClient from '@/utils/query';
 import toast from 'react-hot-toast';
 import { showErrorToast, formatCurrency } from '@/utils';
 import { createAccessoryCombo, updateAccessoryCombo, getAccessories, getBrands } from '@/actions';
-import { normalizeDoorType, type Accessory, type AccessoryCombo, type AccessoryComboCreate } from '@/types';
+import {
+  normalizeDoorType,
+  type Accessory,
+  type AccessoryCombo,
+  type AccessoryComboCreate,
+} from '@/types';
+import {
+  APPLY_FOR_OPTIONS,
+  DEFAULT_VALUES,
+  DOOR_TYPE_OPTIONS,
+  OPENING_TYPE_OPTIONS,
+  buildAccessoryOptions,
+  buildAccessoryPriceMap,
+  buildComboSubmitPayload,
+  resolveComboItemsForForm,
+} from './combo-modal.constants';
+import { ComboItemsEditor } from './combo-items-editor';
 
 export interface ComboModalProps {
   isOpen: boolean;
   onClose: () => void;
   combo?: AccessoryCombo | null;
+  isCopy?: boolean;
   accessories?: Accessory[];
   brandId?: number | null;
   defaultApplyFor?: 'khung' | 'canh' | 'huong_mo' | 'khac';
   onCreated?: (combo: AccessoryCombo) => void;
+  /** Hiện trong ngăn kéo bên phải thay cho hộp thoại (trang cấu hình) */
+  asDrawer?: boolean;
 }
 
-const DEFAULT_VALUES: AccessoryComboCreate = {
-  code: '',
-  name: '',
-  doorTypeId: null,
-  doorTypes: [],
-  applyFor: 'khung',
-  openingType: null,
-  description: '',
-  brandId: null,
-  comboItems: [],
-  totalComboPrice: 0,
-  isDefault: false,
-  isActive: true,
-};
-
-const DOOR_TYPE_OPTIONS: { value: string; label: string }[] = [
-  { value: 'casement_door', label: 'Cửa đi mở quay' },
-  { value: 'sliding_door', label: 'Cửa đi lùa' },
-  { value: 'casement_window', label: 'Cửa sổ mở quay' },
-  { value: 'sliding_window', label: 'Cửa sổ lùa' },
-  { value: 'folding_door', label: 'Cửa gấp xếp' },
-  { value: 'sliding_casement_door', label: 'Cửa trượt quay' },
-  { value: 'glass_wall', label: 'Vách kính' },
-  { value: 'curtain_wall', label: 'Mặt dựng' },
-  { value: 'composite', label: 'Tổng hợp' },
-];
-
-const OPENING_TYPE_OPTIONS = [
-  { value: '', label: '-- Chọn kiểu mở --' },
-  { value: 'vach_co_dinh', label: 'Vách cố định' },
-  { value: '2_canh_mo', label: '2 cánh mở' },
-  { value: '1_canh_quay_trai', label: '1 cánh quay (trái)' },
-  { value: '1_canh_quay_phai', label: '1 cánh quay (phải)' },
-  { value: 'mo_hat_khong_song', label: 'Mở hất (không song)' },
-  { value: 'mo_lat_khong_song', label: 'Mở lật (không song)' },
-  { value: 'lat_xuong', label: 'Lật xuống' },
-  { value: 'quay_va_lat', label: 'Quay & Lật' },
-  { value: 'canh_truot_luoi', label: 'Cánh trượt lưới' },
-  { value: 'canh_truot_ngang', label: 'Cánh trượt ngang' },
-];
+const COMBO_FORM_ID = 'combo-form';
 
 export function ComboModal({
   isOpen,
   onClose,
   combo,
+  isCopy = false,
   accessories: initialAccessories,
   brandId,
   defaultApplyFor = 'khung',
   onCreated,
+  asDrawer = false,
 }: ComboModalProps) {
-  const isEdit = Boolean(combo);
-
+  const isEdit = Boolean(combo && !isCopy);
   const { register, control, handleSubmit, reset, setValue, watch } = useForm<AccessoryComboCreate>({
     defaultValues: DEFAULT_VALUES,
   });
@@ -85,16 +66,19 @@ export function ComboModal({
   const openingType = watch('openingType');
   const formBrandId = watch('brandId');
   const selectedDoorTypes = watch('doorTypes') || [];
-  const effectiveBrandId = formBrandId ? Number(formBrandId) : brandId || null;
+  const effectiveBrandId =
+    formBrandId !== undefined
+      ? (formBrandId ? Number(formBrandId) : null)
+      : (brandId || null);
 
   const handleToggleDoorType = (doorTypeVal: string) => {
     const current = Array.isArray(selectedDoorTypes) ? selectedDoorTypes : [];
-    const exists = current.includes(doorTypeVal);
-    const next = exists ? current.filter((item) => item !== doorTypeVal) : [...current, doorTypeVal];
+    const next = current.includes(doorTypeVal)
+      ? current.filter((item) => item !== doorTypeVal)
+      : [...current, doorTypeVal];
     setValue('doorTypes', next, { shouldDirty: true });
   };
 
-  // Query danh sách hãng phụ kiện để cho phép chọn hãng ngay trong modal
   const { data: accessoryBrandsData } = useQuery({
     queryKey: ['brands', 'accessory'],
     queryFn: async () => {
@@ -118,9 +102,7 @@ export function ComboModal({
   });
 
   const accessories = useMemo(() => {
-    if (fetchedAccessories && fetchedAccessories.length > 0) {
-      return fetchedAccessories;
-    }
+    if (fetchedAccessories && fetchedAccessories.length > 0) return fetchedAccessories;
     if (initialAccessories && initialAccessories.length > 0) {
       if (effectiveBrandId) {
         const byBrand = initialAccessories.filter((a) => a.brandId === effectiveBrandId);
@@ -131,20 +113,8 @@ export function ComboModal({
     return [];
   }, [initialAccessories, fetchedAccessories, effectiveBrandId]);
 
-  const accessoryPriceMap = useMemo(() => {
-    const map = new Map<number, number>();
-    for (const acc of accessories) map.set(acc.id, acc.costPrice || 0);
-    return map;
-  }, [accessories]);
-
-  const accessoryOptions = useMemo(
-    () =>
-      accessories.map((a) => ({
-        value: a.id,
-        label: `${a.name} (${a.code || 'N/A'}) - ${formatCurrency(a.costPrice || 0)}`,
-      })),
-    [accessories],
-  );
+  const accessoryPriceMap = useMemo(() => buildAccessoryPriceMap(accessories, combo), [accessories, combo]);
+  const accessoryOptions = useMemo(() => buildAccessoryOptions(accessories, combo), [accessories, combo]);
 
   const { fields, append, remove } = useFieldArray({ control, name: 'comboItems' });
   const comboItems = useWatch({ control, name: 'comboItems' });
@@ -160,29 +130,21 @@ export function ComboModal({
   useEffect(() => {
     if (!isOpen) return;
     if (combo) {
-      const items = combo.comboItems || [];
       const normalizedTypes = Array.from(
         new Set((combo.doorTypes || []).map((t) => normalizeDoorType(t)).filter(Boolean)),
       );
       reset({
-        code: combo.code,
-        name: combo.name,
+        code: isCopy ? `${combo.code}_COPY` : combo.code,
+        name: isCopy ? `${combo.name} (Bản sao)` : combo.name,
         doorTypeId: combo.doorTypeId ?? null,
         doorTypes: normalizedTypes,
         applyFor: combo.applyFor ?? 'khung',
         openingType: combo.openingType ?? null,
         description: combo.description ?? '',
         brandId: combo.brandId ?? brandId ?? null,
-        comboItems:
-          items.length > 0
-            ? items.map((item) => ({
-                accessoryId: Number(item.accessoryId) || 0,
-                quantity: item.quantity || 1,
-                note: item.note || '',
-              }))
-            : [{ accessoryId: 0, quantity: 1, note: '' }],
+        comboItems: resolveComboItemsForForm(combo.comboItems, accessories),
         totalComboPrice: Number(combo.totalComboPrice) || 0,
-        isDefault: combo.isDefault ?? false,
+        isDefault: isCopy ? false : (combo.isDefault ?? false),
         isActive: combo.isActive ?? true,
       });
     } else {
@@ -193,55 +155,28 @@ export function ComboModal({
         comboItems: [{ accessoryId: 0, quantity: 1, note: '' }],
       });
     }
-    // Chỉ khởi tạo lại form khi mở modal hoặc chuyển đổi đối tượng combo đang sửa
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [combo, isOpen, reset, defaultApplyFor, brandId]);
+  }, [combo, isCopy, isOpen, reset, defaultApplyFor, brandId]);
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: AccessoryComboCreate) => {
-      let finalPrice = Number(data.totalComboPrice);
-      if ((!finalPrice || finalPrice <= 0) && suggestedTotal > 0) finalPrice = suggestedTotal;
-      data.totalComboPrice = finalPrice;
-      data.comboItems = (data.comboItems || [])
-        .filter((item) => Number(item.accessoryId) > 0)
-        .map((item) => ({
-          accessoryId: Number(item.accessoryId),
-          quantity: Number(item.quantity || 1),
-          note: item.note || '',
-        }));
-      const doorTypeId = data.doorTypeId ? Number(data.doorTypeId) : null;
-      const resolvedBrandId = data.brandId ? Number(data.brandId) : brandId || combo?.brandId || null;
-      const cleanedDoorTypes = Array.isArray(data.doorTypes) ? data.doorTypes.filter(Boolean) : [];
-      const cleanedDescription = data.description?.trim() ? data.description.trim() : null;
-
-      const payload = {
-        ...data,
-        doorTypeId,
-        doorTypes: cleanedDoorTypes,
-        description: cleanedDescription,
-        brandId: resolvedBrandId,
-      };
-
-      if (isEdit && combo) {
-        return updateAccessoryCombo(combo.id, payload);
-      }
-      return createAccessoryCombo(payload);
+      const payload = buildComboSubmitPayload(data, suggestedTotal, accessories, combo, brandId);
+      return isEdit && combo ? updateAccessoryCombo(combo.id, payload) : createAccessoryCombo(payload);
     },
     onSuccess: (savedCombo) => {
       queryClient.invalidateQueries({ queryKey: ['accessory-combos'] });
       queryClient.invalidateQueries({ queryKey: ['accessory-combos-list'] });
-      toast.success(isEdit ? 'Cập nhật gói combo thành công' : 'Thêm gói combo thành công');
-      if (!isEdit && savedCombo) {
-        onCreated?.(savedCombo);
-      }
+      toast.success(isEdit ? 'Cập nhật gói combo thành công' : isCopy ? 'Sao chép gói combo thành công' : 'Thêm gói combo thành công');
+      if (!isEdit && savedCombo) onCreated?.(savedCombo);
       onClose();
     },
     onError: (err) => showErrorToast(err, isEdit ? 'Lỗi khi cập nhật' : 'Lỗi khi tạo mới'),
   });
 
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} title={isEdit ? 'Sửa gói combo phụ kiện' : 'Tạo gói combo phụ kiện mới'} size="lg">
-      <form onSubmit={handleSubmit((d) => mutate(d))} className="flex flex-col gap-4">
+  const modalTitle = isEdit ? 'Sửa gói combo phụ kiện' : isCopy ? 'Sao chép gói combo phụ kiện' : 'Tạo gói combo phụ kiện mới';
+
+  const form = (
+      <form id={COMBO_FORM_ID} onSubmit={handleSubmit((d) => mutate(d))} className={asDrawer ? 'flex flex-col gap-4 py-4' : 'flex flex-col gap-4'}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <Input label="Mã gói combo *" placeholder="VD: COMBO_CD_1C_KL" {...register('code', { required: true })} />
           <Input label="Tên thương mại gói *" placeholder="VD: Combo Cửa đi 1 cánh Kinlong" {...register('name', { required: true })} />
@@ -253,17 +188,10 @@ export function ComboModal({
             <Select
               fullWidth
               value={formBrandId != null ? String(formBrandId) : ''}
-              onChange={(e) =>
-                setValue('brandId', e.target.value ? Number(e.target.value) : null, {
-                  shouldDirty: true,
-                })
-              }
+              onChange={(e) => setValue('brandId', e.target.value ? Number(e.target.value) : null, { shouldDirty: true })}
               options={[
                 { value: '', label: '-- Tất cả / Chưa chọn hãng --' },
-                ...brandOptions.map((b) => ({
-                  value: String(b.id),
-                  label: `${b.name} (${b.code})`,
-                })),
+                ...brandOptions.map((b) => ({ value: String(b.id), label: `${b.name} (${b.code})` })),
               ]}
               placeholder="-- Tất cả / Chưa chọn hãng --"
               className="h-9 text-xs md:text-xs bg-slate-50 border-slate-200"
@@ -275,19 +203,8 @@ export function ComboModal({
             <Select
               fullWidth
               value={applyFor || 'khung'}
-              onChange={(e) =>
-                setValue(
-                  'applyFor',
-                  e.target.value as 'khung' | 'canh' | 'huong_mo' | 'khac',
-                  { shouldDirty: true }
-                )
-              }
-              options={[
-                { value: 'khung', label: 'Khung cửa' },
-                { value: 'canh', label: 'Cánh cửa' },
-                { value: 'huong_mo', label: 'Hướng mở' },
-                { value: 'khac', label: 'Khác' },
-              ]}
+              onChange={(e) => setValue('applyFor', e.target.value as 'khung' | 'canh' | 'huong_mo' | 'khac', { shouldDirty: true })}
+              options={APPLY_FOR_OPTIONS}
               className="h-9 text-xs md:text-xs bg-slate-50 border-slate-200"
             />
           </div>
@@ -298,9 +215,7 @@ export function ComboModal({
               <Select
                 fullWidth
                 value={openingType || ''}
-                onChange={(e) =>
-                  setValue('openingType', e.target.value || null, { shouldDirty: true })
-                }
+                onChange={(e) => setValue('openingType', e.target.value || null, { shouldDirty: true })}
                 options={OPENING_TYPE_OPTIONS}
                 placeholder="-- Chọn kiểu mở --"
                 className="h-9 text-xs md:text-xs bg-slate-50 border-slate-200"
@@ -309,18 +224,13 @@ export function ComboModal({
           )}
         </div>
 
-        {/* Loại cửa áp dụng */}
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <label className="block text-xs font-semibold text-slate-700">
               Loại cửa áp dụng <span className="font-normal text-slate-400">(có thể chọn nhiều loại cửa)</span>
             </label>
             {selectedDoorTypes.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setValue('doorTypes', [], { shouldDirty: true })}
-                className="text-[11px] text-rose-500 hover:underline cursor-pointer"
-              >
+              <button type="button" onClick={() => setValue('doorTypes', [], { shouldDirty: true })} className="text-[11px] text-rose-500 hover:underline cursor-pointer">
                 Bỏ chọn tất cả ({selectedDoorTypes.length})
               </button>
             )}
@@ -334,9 +244,7 @@ export function ComboModal({
                   type="button"
                   onClick={() => handleToggleDoorType(opt.value)}
                   className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border transition-all cursor-pointer ${
-                    isSelected
-                      ? 'bg-primary/10 text-primary border-primary font-semibold shadow-2xs'
-                      : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-800'
+                    isSelected ? 'bg-primary/10 text-primary border-primary font-semibold shadow-2xs' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-800'
                   }`}
                 >
                   {isSelected && <Check size={12} className="shrink-0" />}
@@ -347,7 +255,6 @@ export function ComboModal({
           </div>
         </div>
 
-        {/* Mô tả combo phụ kiện */}
         <div>
           <label className="block text-xs font-semibold text-slate-700 mb-1">Mô tả gói combo</label>
           <textarea
@@ -358,56 +265,15 @@ export function ComboModal({
           />
         </div>
 
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-              <Layers size={15} />
-              Chi tiết các món phụ kiện trong gói
-            </span>
-            <Button
-              variant="outline"
-              size="xs"
-              leftIcon={<Plus size={13} />}
-              onClick={() => append({ accessoryId: 0, quantity: 1, note: '' })}
-              type="button"
-            >
-              Thêm món
-            </Button>
-          </div>
-
-          <div className="flex flex-col gap-2 max-h-64 overflow-y-auto pr-1">
-            {fields.map((field, idx) => (
-              <div key={field.id} className="flex items-center gap-2 border border-slate-200 rounded-lg p-2 bg-slate-50/50">
-                <SearchableSelect
-                  options={accessoryOptions}
-                  value={Number(comboItems?.[idx]?.accessoryId) || 0}
-                  onChange={(val) => setValue(`comboItems.${idx}.accessoryId`, Number(val), { shouldDirty: true })}
-                  placeholder="Chọn phụ kiện..."
-                  className="min-w-0 flex-1"
-                />
-                <div className="w-16 shrink-0">
-                  <Input type="number" min={1} placeholder="SL" {...register(`comboItems.${idx}.quantity`, { required: true })} />
-                </div>
-                <div className="w-32 shrink-0">
-                  <Input placeholder="Vị trí lắp" title="VD: Bản lề trên, Tay nắm, Khóa sàn..." {...register(`comboItems.${idx}.note`)} />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => remove(idx)}
-                  className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-md transition cursor-pointer shrink-0"
-                  title="Xóa món"
-                >
-                  <Trash2 size={15} />
-                </button>
-              </div>
-            ))}
-            {fields.length === 0 && (
-              <p className="text-xs text-gray-400 italic text-center py-3 border border-dashed border-slate-200 rounded-lg">
-                Chưa có món phụ kiện nào. Nhấn &quot;Thêm món&quot; để bắt đầu.
-              </p>
-            )}
-          </div>
-        </div>
+        <ComboItemsEditor
+          fields={fields}
+          comboItems={comboItems}
+          accessoryOptions={accessoryOptions}
+          register={register}
+          setValue={setValue}
+          onAppend={() => append({ accessoryId: 0, quantity: 1, note: '' })}
+          onRemove={remove}
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
           <div className="flex flex-col gap-1">
@@ -433,11 +299,37 @@ export function ComboModal({
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 pt-4 border-t border-gray-100">
-          <Button variant="outline" onClick={onClose} type="button">Hủy</Button>
-          <Button variant="primary" type="submit" loading={isPending}>{isEdit ? 'Lưu thay đổi' : 'Tạo mới combo'}</Button>
-        </div>
+        {!asDrawer && (
+          <div className="flex justify-end gap-2 pt-4 border-t border-gray-100">
+            <Button variant="outline" onClick={onClose} type="button">Hủy</Button>
+            <Button variant="primary" type="submit" loading={isPending}>{isEdit ? 'Lưu thay đổi' : 'Tạo mới combo'}</Button>
+          </div>
+        )}
       </form>
+  );
+
+  if (asDrawer) {
+    return (
+      <Drawer isOpen={isOpen} onClose={onClose} label={modalTitle} width={640}>
+        <DrawerHeader compact title={modalTitle} onClose={onClose} />
+        <DrawerBody>{form}</DrawerBody>
+        <DrawerFooter>
+          <div className="flex justify-end gap-2">
+            <DrawerButton variant="outline" className="flex-1 md:flex-none" disabled={isPending} onClick={onClose}>
+              Hủy
+            </DrawerButton>
+            <DrawerButton type="submit" form={COMBO_FORM_ID} className="flex-1 md:flex-none" loading={isPending}>
+              {isEdit ? 'Lưu thay đổi' : 'Tạo mới combo'}
+            </DrawerButton>
+          </div>
+        </DrawerFooter>
+      </Drawer>
+    );
+  }
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title={modalTitle} size="lg">
+      {form}
     </Modal>
   );
 }

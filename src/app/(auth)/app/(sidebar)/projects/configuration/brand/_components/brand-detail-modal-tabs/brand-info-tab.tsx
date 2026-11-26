@@ -89,6 +89,8 @@ export function BrandInfoTab({ brand }: BrandInfoTabProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['brands'] });
+      queryClient.invalidateQueries({ queryKey: ['brands-picker'] });
+      queryClient.invalidateQueries({ queryKey: ['brands-list'] });
       toast.success('Cập nhật thông tin thương hiệu thành công');
     },
     onError: (err) => {

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Gate from '../_components/gate';
 import { useQuery } from '@tanstack/react-query';
 import { getDashboardSummary } from '@/actions';
 import StatCard from '../_components/stats-card';
@@ -13,6 +14,8 @@ import LiveStaffWidget from '../_components/live-staff-widget';
 import { Clock, Navigation, FolderGit2, CheckCircle2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { DepartmentRosterWidget } from '../_components/department-roster-widget';
+import { MyTasksReminderWidget } from '../_components/my-tasks-reminder-widget';
+import { LatestRulesWidget } from '../_components/latest-rules-widget';
 
 export const TechnicianDashboard = () => {
   const router = useRouter();
@@ -44,12 +47,14 @@ export const TechnicianDashboard = () => {
       value: isLoading ? '...' : `${data?.onlineStaffCount ?? 0} người`,
       icon: <Navigation size={18} />,
       onClick: () => router.push('/app/live-map'),
+      requires: 'live_map:read',
     },
     {
       title: 'Dự án công trình',
       value: isLoading ? '...' : `${data?.activeProjectsCount ?? 0} dự án`,
       icon: <FolderGit2 size={18} />,
       onClick: () => router.push('/app/projects'),
+      requires: 'project:read',
     },
   ];
 
@@ -60,8 +65,18 @@ export const TechnicianDashboard = () => {
         <MobileHeader onRefresh={() => refetch()} isRefreshing={isRefetching} />
         <QuickAttendanceCard attendance={data?.myAttendance} />
         <QuickActionsGrid pendingLeavesCount={data?.pendingLeavesCount} pendingAdjustmentsCount={data?.pendingAdjustmentsCount} />
-        <LiveStaffWidget />
-        <DepartmentRosterWidget />
+        <Gate any={['staff_task:read']}>
+          <MyTasksReminderWidget />
+        </Gate>
+        <Gate any={['rule:read']}>
+          <LatestRulesWidget />
+        </Gate>
+        <Gate any={['live_map:read']}>
+          <LiveStaffWidget />
+        </Gate>
+        <Gate any={['attendance_report:read']}>
+          <DepartmentRosterWidget />
+        </Gate>
         <PersonalAttendanceHistory />
       </div>
 
@@ -69,18 +84,27 @@ export const TechnicianDashboard = () => {
       <div className="hidden md:flex flex-col gap-4">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {statsData.map((stat, index) => (
-            <StatCard key={index} title={stat.title} value={stat.value} icon={stat.icon} trend={0} onClick={stat.onClick} />
+            <StatCard key={index} title={stat.title} value={stat.value} icon={stat.icon} trend={0} onClick={stat.onClick}
+              requires={stat.requires} />
           ))}
         </div>
 
         <div className="grid grid-cols-12 gap-4 min-w-0">
           <div className="col-span-8 flex flex-col gap-4 min-w-0">
+            <Gate any={['staff_task:read']}>
+              <MyTasksReminderWidget />
+            </Gate>
+            <Gate any={['rule:read']}>
+              <LatestRulesWidget />
+            </Gate>
             <QuickAttendanceCard attendance={data?.myAttendance} />
             <WeeklyAttendanceChart data={data?.weeklyStats} todayCount={data?.todayAttendancesCount} />
           </div>
 
           <div className="col-span-4 flex flex-col gap-4 min-w-0">
-            <LiveStaffWidget />
+            <Gate any={['live_map:read']}>
+              <LiveStaffWidget />
+            </Gate>
             <PersonalAttendanceHistory />
           </div>
         </div>

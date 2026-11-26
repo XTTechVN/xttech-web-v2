@@ -1,5 +1,6 @@
 export * from './table-data';
 export * from './table-search';
+export * from './table-filters';
 export * from './table-action';
 export * from './table-header';
 export * from './table-body';

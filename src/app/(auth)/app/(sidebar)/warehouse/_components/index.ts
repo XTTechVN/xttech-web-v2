@@ -4,5 +4,5 @@ export * from './receipts-tab';
 export * from './offcuts-tab';
 export * from './suppliers-tab';
 export * from './glass-orders-tab';
-export * from './glass-panes-detail-table';
+export { GlassPanesDetailTable } from '@/components/warehouse';
 export * from './modals';

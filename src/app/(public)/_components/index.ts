@@ -1,4 +1,6 @@
 export * from './header';
 export * from './hero';
 export * from './footer';
-export * from './pricing';
+export * from './legal';
+export * from './public-layout-shell';
+export * from './floating-contact-dock';

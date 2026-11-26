@@ -8,6 +8,7 @@ import type {
   ProjectQuotationDetail,
   ProjectQuotationPreviewRequest,
   ProjectQuotationPreviewResponse,
+  ProjectQuotationUpdatePayload,
 } from '@/types';
 import {
   buildConfigFromQuotation,
@@ -25,6 +26,7 @@ export function useQuotationForm(
   projectId: number,
   quotation: ProjectQuotationDetail | null,
   designOptionId: number | null = null,
+  manualOverrides?: ProjectQuotationUpdatePayload,
 ) {
   const [config, setConfig] = useState<ProjectQuotationPreviewRequest>(DEFAULT_PRICING_CONFIG);
   const [name, setName] = useState(DEFAULT_QUOTATION_NAME);
@@ -55,7 +57,13 @@ export function useQuotationForm(
   };
 
   const isMissingFloors = config.scopeType === 'by_floor' && !config.floorIds?.length;
-  const { previewResult, isCalculating } = usePricePreview(projectId, config, isMissingFloors, designOptionId);
+  const { previewResult, isCalculating } = usePricePreview(
+    projectId,
+    config,
+    isMissingFloors,
+    designOptionId,
+    manualOverrides,
+  );
 
   return {
     config,
@@ -76,6 +84,7 @@ function usePricePreview(
   config: ProjectQuotationPreviewRequest,
   isMissingFloors: boolean,
   designOptionId: number | null,
+  manualOverrides?: ProjectQuotationUpdatePayload,
 ) {
   const {
     mutate: calculatePreview,
@@ -90,9 +99,12 @@ function usePricePreview(
   useEffect(() => {
     if (isMissingFloors || !projectId) return;
     // Báo giá phương án tính trên cửa chính thức + cửa của phương án đó
-    const timer = setTimeout(() => calculatePreview({ ...config, designOptionId }), PREVIEW_DEBOUNCE_MS);
+    const timer = setTimeout(
+      () => calculatePreview({ ...config, ...manualOverrides, designOptionId }),
+      PREVIEW_DEBOUNCE_MS,
+    );
     return () => clearTimeout(timer);
-  }, [config, isMissingFloors, projectId, designOptionId, calculatePreview]);
+  }, [config, manualOverrides, isMissingFloors, projectId, designOptionId, calculatePreview]);
 
   return { previewResult, isCalculating };
 }

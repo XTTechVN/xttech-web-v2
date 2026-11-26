@@ -24,26 +24,20 @@ import {
 import type {
   Glass,
   GlassCategory,
-  Gasket,
   GlassExcelItemData,
   GlassExcelPreviewRow,
-  GasketExcelItemData,
-  GasketExcelPreviewRow,
 } from '@/types';
 import { getCategoryMaterialType } from '../glass-category-sidebar';
 import { GlassExcelTable } from './glass-gasket-excel-tables';
-import { GasketExcelTable } from './gasket-excel-table';
-import { validateGlassRow, validateGasketRow } from './glass-gasket-excel-utils';
+import { validateGlassRow } from './glass-gasket-excel-utils';
 
 interface GlassGasketExcelModalProps {
   isOpen: boolean;
   onClose: () => void;
   categories: GlassCategory[];
   existingGlasses: Glass[];
-  existingGaskets: Gasket[];
 }
 
-type SheetTab = 'GLASS' | 'GASKET';
 type FilterTab = 'ALL' | 'CREATE' | 'UPDATE' | 'ERROR';
 
 export function GlassGasketExcelModal({
@@ -51,12 +45,9 @@ export function GlassGasketExcelModal({
   onClose,
   categories,
   existingGlasses,
-  existingGaskets,
 }: GlassGasketExcelModalProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [glassRows, setGlassRows] = useState<GlassExcelPreviewRow[]>([]);
-  const [gasketRows, setGasketRows] = useState<GasketExcelPreviewRow[]>([]);
-  const [sheetTab, setSheetTab] = useState<SheetTab>('GLASS');
   const [filterTab, setFilterTab] = useState<FilterTab>('ALL');
   const [fileName, setFileName] = useState<string>('');
 
@@ -64,10 +55,6 @@ export function GlassGasketExcelModal({
     mutationFn: (file: File) => previewGlassGasketsExcel(file),
     onSuccess: (res) => {
       setGlassRows(res.glasses || []);
-      setGasketRows(res.gaskets || []);
-      setSheetTab(
-        (res.glasses?.length ?? 0) > 0 || (res.gaskets?.length ?? 0) === 0 ? 'GLASS' : 'GASKET',
-      );
       setFilterTab('ALL');
       toast.success(`Đã đọc ${res.totalRows} dòng dữ liệu từ file Excel`);
     },
@@ -78,36 +65,29 @@ export function GlassGasketExcelModal({
     mutationFn: bulkUpsertGlassGaskets,
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ['glasses'] });
-      queryClient.invalidateQueries({ queryKey: ['gaskets'] });
       toast.success(`Hoàn tất: Thêm mới ${res.createdCount}, Cập nhật ${res.updatedCount} mục!`);
       setGlassRows([]);
-      setGasketRows([]);
       setFileName('');
       onClose();
     },
-    onError: (err) => showErrorToast(err, 'Lỗi khi lưu dữ liệu Kính & Gioăng'),
+    onError: (err) => showErrorToast(err, 'Lỗi khi lưu dữ liệu Kính, Tấm & Lưới'),
   });
 
   const counts = useMemo(() => {
-    const all = [...glassRows, ...gasketRows];
     let create = 0;
     let update = 0;
     let error = 0;
-    all.forEach((r) => {
+    glassRows.forEach((r) => {
       if (r.action === 'CREATE') create++;
       else if (r.action === 'UPDATE') update++;
       else error++;
     });
-    return { total: all.length, create, update, error, valid: create + update };
-  }, [glassRows, gasketRows]);
+    return { total: glassRows.length, create, update, error, valid: create + update };
+  }, [glassRows]);
 
   const filteredGlasses = useMemo(
     () => (filterTab === 'ALL' ? glassRows : glassRows.filter((r) => r.action === filterTab)),
     [glassRows, filterTab],
-  );
-  const filteredGaskets = useMemo(
-    () => (filterTab === 'ALL' ? gasketRows : gasketRows.filter((r) => r.action === filterTab)),
-    [gasketRows, filterTab],
   );
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -120,7 +100,6 @@ export function GlassGasketExcelModal({
 
   const handleClearAll = () => {
     setGlassRows([]);
-    setGasketRows([]);
     setFileName('');
     setFilterTab('ALL');
     toast.success('Đã xóa toàn bộ dữ liệu đang nhập');
@@ -142,56 +121,32 @@ export function GlassGasketExcelModal({
     );
   };
 
-  const handleUpdateGasketCell = (rowIndex: number, patch: Partial<GasketExcelItemData>) => {
-    setGasketRows((prev) =>
-      prev.map((r) =>
-        r.rowIndex === rowIndex
-          ? validateGasketRow({ ...r.data, ...patch }, r.rowIndex, existingGaskets, r.oldData)
-          : r,
-      ),
-    );
-  };
-
   const handleAddRow = () => {
-    if (sheetTab === 'GLASS') {
-      const firstCat = categories[0] || null;
-      const nextIdx = glassRows.length > 0 ? Math.max(...glassRows.map((r) => r.rowIndex)) + 1 : 2;
-      const blank: GlassExcelItemData = {
-        code: '',
-        name: '',
-        materialType: firstCat ? getCategoryMaterialType(firstCat) : 'glass',
-        categoryId: firstCat?.id ?? null,
-        glassType: 'cuong_luc',
-        thicknessMm: 8,
-        unitPrice: 450000,
-        weightPerM2: 20,
-        maxWidthMm: 2400,
-        maxHeightMm: 3600,
-        isDefault: false,
-        isActive: true,
-      };
-      setGlassRows((prev) => [
-        ...prev,
-        validateGlassRow(blank, nextIdx, categories, existingGlasses),
-      ]);
-    } else {
-      const nextIdx =
-        gasketRows.length > 0 ? Math.max(...gasketRows.map((r) => r.rowIndex)) + 1 : 2;
-      const blank: GasketExcelItemData = {
-        code: '',
-        name: '',
-        unit: 'm',
-        pricePerUnit: 8000,
-        isActive: true,
-      };
-      setGasketRows((prev) => [...prev, validateGasketRow(blank, nextIdx, existingGaskets)]);
-    }
+    const firstCat = categories[0] || null;
+    const nextIdx = glassRows.length > 0 ? Math.max(...glassRows.map((r) => r.rowIndex)) + 1 : 2;
+    const blank: GlassExcelItemData = {
+      code: '',
+      name: '',
+      materialType: firstCat ? getCategoryMaterialType(firstCat) : 'glass',
+      categoryId: firstCat?.id ?? null,
+      glassType: 'cuong_luc',
+      thicknessMm: 8,
+      unitPrice: 450000,
+      weightPerM2: 20,
+      maxWidthMm: 2400,
+      maxHeightMm: 3600,
+      isDefault: false,
+      isActive: true,
+    };
+    setGlassRows((prev) => [
+      ...prev,
+      validateGlassRow(blank, nextIdx, categories, existingGlasses),
+    ]);
   };
 
   const handleConfirmSave = () => {
     const validGlasses = glassRows.filter((r) => r.action === 'CREATE' || r.action === 'UPDATE');
-    const validGaskets = gasketRows.filter((r) => r.action === 'CREATE' || r.action === 'UPDATE');
-    if (validGlasses.length === 0 && validGaskets.length === 0) {
+    if (validGlasses.length === 0) {
       toast.error('Không có dòng hợp lệ nào để lưu');
       return;
     }
@@ -210,14 +165,6 @@ export function GlassGasketExcelModal({
         isDefault: r.data.isDefault,
         isActive: r.data.isActive,
       })),
-      gaskets: validGaskets.map((r) => ({
-        existingId: r.existingId,
-        code: r.data.code.trim(),
-        name: r.data.name.trim(),
-        unit: r.data.unit,
-        pricePerUnit: Number(r.data.pricePerUnit) || 0,
-        isActive: r.data.isActive,
-      })),
     });
   };
 
@@ -230,7 +177,7 @@ export function GlassGasketExcelModal({
         <div className="flex items-center gap-2.5">
           <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
           <span className="font-bold text-slate-900">
-            Nhập Excel & Kiểm tra Kính, Tấm Pano, Lưới Muỗi & Gioăng Keo
+            Nhập Excel & Kiểm tra Kính, Tấm Pano & Lưới Muỗi
           </span>
         </div>
       }
@@ -243,7 +190,7 @@ export function GlassGasketExcelModal({
             {fileName ? 'Chọn file Excel khác' : 'Tải file Excel (.xlsx) lên'}
           </Button>
           <Button variant="outline" size="sm" leftIcon={<Download size={15} />} onClick={() => exportGlassGasketsExcel({ templateOnly: true }).catch((err) => showErrorToast(err, 'Lỗi tải file mẫu'))}>
-            Tải file mẫu (2 Sheet: Kính & Gioăng)
+            Tải file mẫu (Kính, Tấm & Lưới)
           </Button>
           <Button variant="outline" size="sm" leftIcon={<Plus size={15} />} onClick={handleAddRow}>
             Thêm dòng trực tiếp
@@ -275,25 +222,12 @@ export function GlassGasketExcelModal({
       {counts.total === 0 ? (
         <div onClick={() => fileInputRef.current?.click()} className="flex-1 bg-white border-2 border-dashed border-slate-300 hover:border-primary rounded-2xl flex flex-col items-center justify-center p-10 cursor-pointer transition">
           <Upload className="w-12 h-12 text-slate-400 mb-3 stroke-1" />
-          <p className="text-sm font-semibold text-slate-700">Bấm để chọn file Excel (.xlsx) Kính / Tấm / Lưới & Gioăng</p>
-          <p className="text-xs text-slate-500 mt-1 text-center max-w-lg">Hỗ trợ đồng thời cả 2 sheet <strong>Kinh_Tam_Luoi</strong> và <strong>Gioang_Keo</strong> trong cùng 1 file Excel.</p>
+          <p className="text-sm font-semibold text-slate-700">Bấm để chọn file Excel (.xlsx) Kính / Tấm / Lưới</p>
+          <p className="text-xs text-slate-500 mt-1 text-center max-w-lg">Hỗ trợ nhập danh sách Kính, Tấm Pano và Lưới muỗi từ sheet <strong>Kinh_Tam_Luoi</strong>.</p>
         </div>
       ) : (
         <div className="flex-1 bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col shadow-2xs">
-          <div className="px-4 pt-3 border-b border-slate-200 flex items-center gap-2 bg-slate-50/70">
-            <button type="button" onClick={() => setSheetTab('GLASS')} className={`px-4 py-2 text-xs font-bold rounded-t-lg border-b-2 transition cursor-pointer ${sheetTab === 'GLASS' ? 'border-primary text-primary bg-white' : 'border-transparent text-slate-600'}`}>
-              Sheet 1: Kính / Tấm / Lưới ({glassRows.length})
-            </button>
-            <button type="button" onClick={() => setSheetTab('GASKET')} className={`px-4 py-2 text-xs font-bold rounded-t-lg border-b-2 transition cursor-pointer ${sheetTab === 'GASKET' ? 'border-primary text-primary bg-white' : 'border-transparent text-slate-600'}`}>
-              Sheet 2: Gioăng / Keo ({gasketRows.length})
-            </button>
-          </div>
-
-          {sheetTab === 'GLASS' ? (
-            <GlassExcelTable rows={filteredGlasses} categories={categories} onUpdateCell={handleUpdateGlassCell} onRemoveRow={(idx) => setGlassRows((prev) => prev.filter((r) => r.rowIndex !== idx))} />
-          ) : (
-            <GasketExcelTable rows={filteredGaskets} onUpdateCell={handleUpdateGasketCell} onRemoveRow={(idx) => setGasketRows((prev) => prev.filter((r) => r.rowIndex !== idx))} />
-          )}
+          <GlassExcelTable rows={filteredGlasses} categories={categories} onUpdateCell={handleUpdateGlassCell} onRemoveRow={(idx) => setGlassRows((prev) => prev.filter((r) => r.rowIndex !== idx))} />
 
           <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="text-xs text-slate-600">

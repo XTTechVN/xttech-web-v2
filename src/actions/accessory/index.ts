@@ -3,6 +3,7 @@ import { downloadOrShareBlob, getFilenameFromContentDisposition } from '@/utils'
 import type { BaseResponseWithPagination } from '@/components';
 import type {
   Accessory,
+  AccessoryDropdownItem,
   AccessoryAssignDoors,
   AccessoryAssignMaterials,
   AccessoryCreate,
@@ -12,6 +13,7 @@ import type {
   AccessoryUpdate,
   AccessoryExcelPreviewResponse,
   AccessoryBulkUpsertRequest,
+  AccessoryImageUploadResponse,
   MaterialBulkUpsertResponse,
   BulkDeleteRequest,
   BulkDeleteResponse,
@@ -20,6 +22,21 @@ import type {
   Material,
   MaterialQueryParams,
 } from '@/types';
+
+export const getAccessoriesDropdown = async (params?: {
+  brandId?: number;
+  unit?: string;
+}): Promise<AccessoryDropdownItem[]> => {
+  try {
+    const response = await api.get<AccessoryDropdownItem[]>('/api/v1/accessories/dropdown', {
+      params,
+    });
+    return response.data || [];
+  } catch (error: unknown) {
+    console.warn('API error getAccessoriesDropdown', error);
+    throw error;
+  }
+};
 
 export const getAccessories = async (
   params?: AccessoryQueryParams,
@@ -141,11 +158,15 @@ export const exportAccessoriesExcel = async (params?: {
   }
 };
 
-export const previewAccessoriesExcel = async (file: File): Promise<AccessoryExcelPreviewResponse> => {
+export const previewAccessoriesExcel = async (
+  file: File,
+  brandId?: number | null,
+): Promise<AccessoryExcelPreviewResponse> => {
   try {
     const formData = new FormData();
     formData.append('file', file);
     const response = await api.post('/api/v1/accessories/excel/preview', formData, {
+      params: brandId ? { brandId } : undefined,
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return response.data;
@@ -163,6 +184,24 @@ export const bulkUpsertAccessories = async (
     return response.data;
   } catch (error: unknown) {
     console.warn('API error bulkUpsertAccessories', error);
+    throw error;
+  }
+};
+
+export const uploadAccessoryExcelImage = async (
+  file: File,
+): Promise<AccessoryImageUploadResponse> => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post<AccessoryImageUploadResponse>(
+      '/api/v1/accessories/excel/upload-image',
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } },
+    );
+    return response.data;
+  } catch (error: unknown) {
+    console.warn('API error uploadAccessoryExcelImage', error);
     throw error;
   }
 };

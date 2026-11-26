@@ -8,7 +8,7 @@ import { Badge, Button, Modal } from '@/components';
 import { getWarehouseItems, getWarehouseSuppliers } from '@/actions';
 import queryClient from '@/utils/query';
 import type { CuttingPlan, ProductionOrder } from '@/types';
-import { ReceiptFormModal } from '../../../../../warehouse/_components/modals';
+import ReceiptFormDrawer from '../../../../../warehouse/_components/receipts/receipt-form-drawer';
 import {
   buildShortagePurchaseItems,
   getPurchasableShortages,
@@ -26,9 +26,9 @@ interface CuttingPlanModalProps {
 
 function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-slate-200/60 bg-slate-50 p-2.5">
-      <span className="block text-[10px] font-bold uppercase text-slate-400">{label}</span>
-      <span className="font-mono text-base font-bold text-slate-800">{value}</span>
+    <div className="rounded-control border border-slate-200/60 bg-slate-50 p-2.5">
+      <span className="block text-[10px] font-bold text-slate-400">{label}</span>
+      <span className="tabular-nums text-base font-bold text-slate-800">{value}</span>
     </div>
   );
 }
@@ -151,7 +151,7 @@ export function CuttingPlanModal({ projectId, order, onClose }: CuttingPlanModal
             </div>
 
             {plan.isEstimated && (
-              <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-800">
+              <div className="flex items-start gap-2 rounded-control border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-800">
                 <AlertTriangle size={14} className="mt-0.5 shrink-0" />
                 Có cửa chưa có BOM thật hoặc thanh nhôm chưa cấu hình mã kho, kế hoạch dùng số liệu
                 ước tính. Cần kiểm tra trước khi cắt và xuất kho.
@@ -175,7 +175,7 @@ export function CuttingPlanModal({ projectId, order, onClose }: CuttingPlanModal
                 <section key={group.key} className="space-y-1.5">
                   <h4 className="text-xs font-bold text-slate-700">
                     {group.profileName}{' '}
-                    <span className="font-mono text-slate-400">({group.profileCode})</span> -{' '}
+                    <span className="tabular-nums text-slate-400">({group.profileCode})</span> -{' '}
                     {group.colorName} · {group.bars.length} cây
                   </h4>
                   {group.bars.map((bar, index) => (
@@ -195,7 +195,7 @@ export function CuttingPlanModal({ projectId, order, onClose }: CuttingPlanModal
             </div>
 
             {isOrderCompleted && returnedBarsCount > 0 && !canReturnOffcuts && (
-              <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-2.5 text-xs text-emerald-800">
+              <div className="flex items-center gap-2 rounded-control border border-emerald-200 bg-emerald-50 p-2.5 text-xs text-emerald-800">
                 <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
                 <span>
                   Lệnh sản xuất đã hoàn thành. Hệ thống đã tự động nhập <strong>{returnedBarsCount}</strong> đoạn nhôm dư (≥ 1m) vào kho tái sử dụng.
@@ -204,7 +204,7 @@ export function CuttingPlanModal({ projectId, order, onClose }: CuttingPlanModal
             )}
 
             {canReturnOffcuts && (
-              <div className="flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50 p-2.5 text-xs text-emerald-800">
+              <div className="flex items-center justify-between rounded-control border border-emerald-200 bg-emerald-50 p-2.5 text-xs text-emerald-800">
                 <span>
                   {returnedBarsCount > 0
                     ? `Đã tự động nhập ${returnedBarsCount} đoạn. Còn ${returnableBars.length} đoạn dư có thể trả bổ sung:`
@@ -276,7 +276,7 @@ export function CuttingPlanModal({ projectId, order, onClose }: CuttingPlanModal
           )}
         </div>
 
-        <ReceiptFormModal
+        <ReceiptFormDrawer
           isOpen={isReceiptOpen}
           onClose={() => setIsReceiptOpen(false)}
           onSuccess={() => {
@@ -286,8 +286,8 @@ export function CuttingPlanModal({ projectId, order, onClose }: CuttingPlanModal
             queryClient.invalidateQueries({ queryKey: ['cutting_plan', projectId, orderId] });
             toast.success('Nhập kho thành công! Có thể tiến hành tạo phiếu xuất kho.');
           }}
-          itemsList={itemsData?.items ?? []}
-          suppliersList={suppliersData?.items ?? []}
+          items={itemsData?.items ?? []}
+          suppliers={suppliersData?.items ?? []}
           initialItems={buildShortagePurchaseItems(shortage.shortages, `#${projectId}`)}
         />
       </div>

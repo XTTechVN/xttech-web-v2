@@ -12,6 +12,7 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
+import { useCan } from '@/hooks';
 import type { WeeklyDayStat } from '@/types';
 import { CalendarCheck, Users } from 'lucide-react';
 
@@ -21,6 +22,7 @@ interface WeeklyAttendanceChartProps {
 }
 
 export const WeeklyAttendanceChart: React.FC<WeeklyAttendanceChartProps> = ({ data = [] }) => {
+  const { can } = useCan();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -29,11 +31,13 @@ export const WeeklyAttendanceChart: React.FC<WeeklyAttendanceChartProps> = ({ da
 
   const totalWeeklyCheckins = data.reduce((acc, cur) => acc + (cur.presentCount || 0), 0);
 
+  if (!can('attendance_report:read')) return null;
+
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col gap-4 min-w-0">
+    <div className="bg-white border border-gray-100 rounded-block p-4 sm:p-5 shadow-xs flex flex-col gap-4 min-w-0">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
-          <div className="p-2 rounded-xl bg-primary/10 text-primary">
+          <div className="p-2 rounded-block bg-primary/10 text-primary">
             <CalendarCheck size={18} />
           </div>
           <div className="flex flex-col">
@@ -47,7 +51,7 @@ export const WeeklyAttendanceChart: React.FC<WeeklyAttendanceChartProps> = ({ da
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 text-xs text-gray-600 bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100">
+          <div className="flex items-center gap-1.5 text-xs text-gray-600 bg-gray-50 px-2.5 py-1 rounded-control border border-gray-100">
             <Users size={13} className="text-primary" />
             <span>
               Tổng tuần: <strong className="text-gray-900">{totalWeeklyCheckins}</strong>
@@ -109,7 +113,7 @@ export const WeeklyAttendanceChart: React.FC<WeeklyAttendanceChartProps> = ({ da
             </BarChart>
           </ResponsiveContainer>
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gray-50/50 rounded-xl">
+          <div className="w-full h-full flex items-center justify-center bg-gray-50/50 rounded-block">
             <span className="text-xs text-gray-400">Đang tải biểu đồ...</span>
           </div>
         )}

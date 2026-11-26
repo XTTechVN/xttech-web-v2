@@ -9,4 +9,14 @@ export * from './contract-default-terms';
 export * from './quotation-template';
 export * from './customer';
 export * from './work-shift';
+export * from './news';
+export * from './task';
+export * from './seo';
 
+
+
+
+export * from './contact';
+export * from './sign';
+export * from './lead';
+export * from './location-diag';

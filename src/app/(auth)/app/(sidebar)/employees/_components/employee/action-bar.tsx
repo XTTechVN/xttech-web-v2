@@ -1,33 +1,29 @@
 'use client';
 
 import { useState } from 'react';
-
-// Thành phần dùng chung cho toàn bộ trang
-import { Button } from '@/components';
-
-// Icon thư viện lucide-react
-import { Plus } from 'lucide-react';
-
-// Component con dùng riêng cho nhân sự
+import { useCan } from '@/hooks';
+import { Mail, Plus } from 'lucide-react';
+import { Button } from '@/components-remake';
 import EmployeeFormModal from './form-modal';
+import { InviteDrawer } from './invite-drawer';
 
 const ActionBar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [inviting, setInviting] = useState(false);
+  const { can } = useCan();
+
+  if (!can('user:create')) return null;
 
   return (
     <>
-      <Button
-        variant="primary"
-        size="sm"
-        className="h-10 rounded-full px-5 text-sm shrink-0"
-        leftIcon={<Plus className="w-4 h-4" />}
-        onClick={() => setIsOpen(true)}
-      >
-        Thêm nhân sự
+      <Button variant="outline" icon={<Mail size={16} />} iconOnly="mobile" onClick={() => setInviting(true)}>
+        Mời qua email
       </Button>
-
-      {/* Modal Thêm nhân sự mới */}
-      <EmployeeFormModal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Thêm nhân sự mới" submitText="Xác nhận tạo" />
+      <Button icon={<Plus size={18} />} iconOnly="mobile" onClick={() => setIsOpen(true)}>
+        Thêm nhân sự
+      </Button>
+      <InviteDrawer isOpen={inviting} onClose={() => setInviting(false)} />
+      <EmployeeFormModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
     </>
   );
 };

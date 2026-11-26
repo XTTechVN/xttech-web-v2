@@ -21,6 +21,13 @@ export interface ModalProps {
   containerClassName?: string;
   bodyClassName?: string;
   fullScreenMobile?: boolean;
+  /**
+   * Ẩn thanh header mặc định của Modal.
+   * Lưu ý: `fullScreenMobile` mặc định là `true`, nên khi truyền `hideHeader={true}`
+   * caller bắt buộc tự render nút đóng trong `children` hoặc truyền `fullScreenMobile={false}`
+   * để người dùng mobile không bị kẹt màn hình.
+   */
+  hideHeader?: boolean;
 }
 
 const Modal: React.FC<ModalProps> = ({
@@ -36,6 +43,7 @@ const Modal: React.FC<ModalProps> = ({
   containerClassName,
   bodyClassName,
   fullScreenMobile = true,
+  hideHeader = false,
 }) => {
   const [mounted, setMounted] = useState(false);
 
@@ -116,30 +124,32 @@ const Modal: React.FC<ModalProps> = ({
             )}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-100 shrink-0 bg-white rounded-t-none md:rounded-t-xl">
-              {title ? (
-                typeof title === 'string' ? (
-                  <Heading size="h3" className="text-gray-900 font-semibold truncate pr-4 text-base sm:text-lg min-w-0 flex-1">
-                    {title}
-                  </Heading>
+            {!hideHeader && (
+              <div className="flex items-center justify-between p-4 border-b border-gray-100 shrink-0 bg-white rounded-t-none md:rounded-t-xl">
+                {title ? (
+                  typeof title === 'string' ? (
+                    <Heading size="h3" className="text-gray-900 font-semibold truncate pr-4 text-base sm:text-lg min-w-0 flex-1">
+                      {title}
+                    </Heading>
+                  ) : (
+                    <div className="min-w-0 flex-1 pr-2">
+                      {title}
+                    </div>
+                  )
                 ) : (
-                  <div className="min-w-0 flex-1 pr-2">
-                    {title}
-                  </div>
-                )
-              ) : (
-                <div />
-              )}
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={disabled}
-                className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent shrink-0"
-                aria-label="Close modal"
-              >
-                <X size={18} />
-              </button>
-            </div>
+                  <div />
+                )}
+                <button
+                  type="button"
+                  onClick={onClose}
+                  disabled={disabled}
+                  className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent shrink-0"
+                  aria-label="Close modal"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            )}
 
             {/* Content (Body) */}
             <div className={cn("flex-1 min-h-0 overflow-y-auto p-4 text-sm text-gray-600 leading-relaxed", bodyClassName)}>

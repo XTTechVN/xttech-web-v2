@@ -1,240 +1,138 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { getBrands, deleteBrand, updateBrand } from '@/actions';
-import { isBrandFavorite, type Brand } from '@/types';
+import { useMemo, useState } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
-import queryClient from '@/utils/query';
-import { showErrorToast } from '@/utils';
-import {
-  BrandCard,
-  BrandToolbar,
-  BrandModal,
-  BrandDetailModal,
-  BrandGridSkeleton,
-  BrandEmptyState,
-} from './_components';
+import { deleteBrand, getBrands } from '@/actions';
+import { Button, ConfirmDelete, FilterDrawer, SearchField, TabState, type FilterGroup } from '@/components-remake';
+import { useCan } from '@/hooks';
+import type { Brand } from '@/types';
+import { includesSearchText, showErrorToast } from '@/utils';
+import { BrandDrawer } from './_components/brand-drawer';
+import BrandFormDrawer from './_components/brand-form-drawer';
+import { BrandCard } from './_components/brand-card';
+import { BRAND_TYPES, refreshBrands } from './_components/format';
+
+const GROUPS: FilterGroup[] = [{ key: 'type', label: 'Phân loại', options: BRAND_TYPES }];
+
+// Hãng "cả hai" nằm trong cả hai nhóm khi lọc
+const inGroup = (b: Brand, type: string) => b.brandType === type || b.brandType === 'both' || (type === 'aluminum' && !b.brandType);
 
 export default function BrandTab() {
+  const { can } = useCan();
   const [search, setSearch] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
+  const [filters, setFilters] = useState<Record<string, string>>({});
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [deleting, setDeleting] = useState<Brand | null>(null);
 
-  // State Modal toàn màn hình để cấu hình hãng
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [detailBrand, setDetailBrand] = useState<Brand | null>(null);
-
-  const { data: response, isLoading } = useQuery({
-    queryKey: ['brands', search],
-    queryFn: async () => {
-      return await getBrands({ offset: 0, limit: 9999, search: search || undefined });
-    },
+  const query = useQuery({
+    queryKey: ['brands', 'all'],
+    queryFn: async () => (await getBrands({ offset: 0, limit: 9999 })).items,
   });
+  const brands = useMemo(() => [...(query.data ?? [])].sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' })), [query.data]);
 
-  const allBrands = useMemo(() => {
-    const items = response?.items || [];
-    return [...items].sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' }));
-  }, [response?.items]);
+  const kw = search.trim();
+  const rows = useMemo(
+    () =>
+      brands.filter((b) => (!filters.type || inGroup(b, filters.type)) && (!kw || includesSearchText(b.name, kw) || includesSearchText(b.code, kw))),
+    [brands, filters, kw],
+  );
+  const sections = useMemo(
+    () =>
+      [
+        { type: 'accessory', title: 'Hãng phụ kiện', rows: rows.filter((b) => inGroup(b, 'accessory')) },
+        { type: 'aluminum', title: 'Hãng nhôm', rows: rows.filter((b) => inGroup(b, 'aluminum')) },
+      ].filter((g) => g.rows.length > 0),
+    [rows],
+  );
+  const selected = useMemo(() => brands.find((b) => b.id === selectedId) ?? null, [brands, selectedId]);
+  const filtered = !!kw || !!filters.type;
 
-  // Phân loại: Hãng nhôm
-  const aluminumBrands = useMemo(() => {
-    return allBrands.filter(
-      (b) => b.brandType === 'aluminum' || b.brandType === 'both' || !b.brandType
-    );
-  }, [allBrands]);
-
-  // Phân loại: Hãng phụ kiện
-  const accessoryBrands = useMemo(() => {
-    return allBrands.filter(
-      (b) => b.brandType === 'accessory' || b.brandType === 'both'
-    );
-  }, [allBrands]);
-
-  const { mutate: deleteBrandMutate } = useMutation({
+  const remove = useMutation({
     mutationFn: (id: number) => deleteBrand(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['brands'] });
-      toast.success('Xóa thương hiệu thành công');
+      refreshBrands();
+      toast.success('Đã xóa thương hiệu');
+      setDeleting(null);
+      setSelectedId(null);
     },
-    onError: (err) => showErrorToast(err, 'Lỗi khi xóa thương hiệu'),
+    onError: (e) => showErrorToast(e, 'Không thể xóa thương hiệu'),
   });
-
-  const { mutate: toggleFavoriteMutate, isPending: isTogglingFavorite } = useMutation({
-    mutationFn: async ({
-      brand,
-      nextFavorite,
-      groupBrands,
-    }: {
-      brand: Brand;
-      nextFavorite: boolean;
-      groupBrands: Brand[];
-    }) => {
-      if (nextFavorite) {
-        const previousFavorites = groupBrands.filter(
-          (item) => item.id !== brand.id && isBrandFavorite(item),
-        );
-        await Promise.all([
-          ...previousFavorites.map((item) => updateBrand(item.id, { sortOrder: 0 })),
-          updateBrand(brand.id, { sortOrder: 1 }),
-        ]);
-        return;
-      }
-      await updateBrand(brand.id, { sortOrder: 0 });
-    },
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['brands'] });
-      queryClient.invalidateQueries({ queryKey: ['brands-picker'] });
-      if (variables.nextFavorite) {
-        toast.success(`Đã đặt "${variables.brand.name}" làm hãng mặc định khi vào trang`);
-      } else {
-        toast.success(`Đã bỏ đánh dấu yêu thích hãng "${variables.brand.name}"`);
-      }
-    },
-    onError: (err) => showErrorToast(err, 'Không thể cập nhật trạng thái yêu thích'),
-  });
-
-  const handleToggleFavorite = (brand: Brand, groupBrands: Brand[]) => {
-    if (isTogglingFavorite) return;
-    toggleFavoriteMutate({
-      brand,
-      nextFavorite: !isBrandFavorite(brand),
-      groupBrands,
-    });
-  };
-
-  const handleOpenCreateModal = () => {
-    setSelectedBrand(null);
-    setIsModalOpen(true);
-  };
-
-  const handleOpenEditModal = (brand: Brand) => {
-    setSelectedBrand(brand);
-    setIsModalOpen(true);
-  };
-
-  const handleOpenDetailModal = (brand: Brand) => {
-    setDetailBrand(brand);
-    setIsDetailModalOpen(true);
-  };
-
-  const handleDeleteBrand = (brand: Brand) => {
-    if (confirm(`Xác nhận xóa thương hiệu "${brand.name}" (${brand.code})?`)) {
-      deleteBrandMutate(brand.id);
-    }
-  };
 
   return (
-    <div className="p-4 flex flex-col gap-6">
-      {/* Toolbar: Tìm kiếm và nút Thêm mới */}
-      <BrandToolbar
-        search={search}
-        onSearchChange={setSearch}
-        onAddClick={handleOpenCreateModal}
-      />
-
-      {isLoading ? (
-        <BrandGridSkeleton count={12} />
-      ) : allBrands.length === 0 ? (
-        <BrandEmptyState />
-      ) : (
-        <div className="flex flex-col gap-8">
-          {/* Mục 1: Hãng nhôm */}
-          <section className="flex flex-col gap-3.5">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-200">
-              <div>
-                <h2 className="text-base font-bold text-slate-900 tracking-tight">
-                  Hãng nhôm
-                </h2>
-                <p className="text-xs text-slate-500">
-                  Các thương hiệu cung cấp thanh profile nhôm và phụ kiện hệ nhôm
-                </p>
-              </div>
-              <span className="text-xs text-slate-500 font-medium">
-                {aluminumBrands.length} thương hiệu
-              </span>
-            </div>
-
-            {aluminumBrands.length === 0 ? (
-              <div className="p-6 text-center bg-slate-50/60 rounded-xl border border-dashed border-slate-200 text-xs text-slate-500">
-                Không tìm thấy hãng nhôm nào phù hợp
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
-                {aluminumBrands.map((brand) => (
-                  <BrandCard
-                    key={brand.id}
-                    brand={brand}
-                    onClick={handleOpenDetailModal}
-                    onEdit={handleOpenEditModal}
-                    onDelete={handleDeleteBrand}
-                    onToggleFavorite={(b) => handleToggleFavorite(b, aluminumBrands)}
-                  />
-                ))}
-              </div>
-            )}
-          </section>
-
-          {/* Mục 2: Hãng phụ kiện */}
-          <section className="flex flex-col gap-3.5">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-200">
-              <div>
-                <h2 className="text-base font-bold text-slate-900 tracking-tight">
-                  Hãng phụ kiện
-                </h2>
-                <p className="text-xs text-slate-500">
-                  Các thương hiệu cung cấp phụ kiện cửa, khóa, bản lề, tay nắm...
-                </p>
-              </div>
-              <span className="text-xs text-slate-500 font-medium">
-                {accessoryBrands.length} thương hiệu
-              </span>
-            </div>
-
-            {accessoryBrands.length === 0 ? (
-              <div className="p-6 text-center bg-slate-50/60 rounded-xl border border-dashed border-slate-200 text-xs text-slate-500">
-                Không tìm thấy hãng phụ kiện nào phù hợp
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
-                {accessoryBrands.map((brand) => (
-                  <BrandCard
-                    key={brand.id}
-                    brand={brand}
-                    onClick={handleOpenDetailModal}
-                    onEdit={handleOpenEditModal}
-                    onDelete={handleDeleteBrand}
-                    onToggleFavorite={(b) => handleToggleFavorite(b, accessoryBrands)}
-                  />
-                ))}
-              </div>
-            )}
-          </section>
+    <div className="flex flex-col gap-4 px-4 pb-4 md:px-6 md:pb-6">
+      <div className="flex items-center gap-2">
+        <SearchField value={search} onChange={setSearch} label="Tìm thương hiệu" placeholder="Tìm theo mã hoặc tên hãng..." />
+        <div className="ml-auto flex flex-none items-center gap-2">
+          <FilterDrawer groups={GROUPS} value={filters} onChange={setFilters} />
+          {can('catalog:create') && (
+            <Button icon={<Plus size={18} />} iconOnly="mobile" onClick={() => setAdding(true)}>
+              Thêm thương hiệu
+            </Button>
+          )}
         </div>
-      )}
+      </div>
 
-      {/* Modal Thêm mới / Chỉnh sửa thương hiệu */}
-      <BrandModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setSelectedBrand(null);
-        }}
-        brand={selectedBrand}
-      />
+      <TabState
+        loading={query.isLoading}
+        error={query.isError}
+        onRetry={() => query.refetch()}
+        empty={rows.length === 0}
+        emptyText={filtered ? 'Không có thương hiệu khớp bộ lọc.' : 'Chưa có thương hiệu.'}
+        emptyAction={
+          !filtered &&
+          can('catalog:create') && (
+            <Button icon={<Plus size={18} />} onClick={() => setAdding(true)}>
+              Thêm thương hiệu
+            </Button>
+          )
+        }
+      >
+        <div className="flex flex-col gap-6">
+          {sections.map((g) => (
+            <section key={g.type} aria-label={g.title} className="flex flex-col gap-2">
+              <h2 className="flex items-baseline gap-2 text-sm font-semibold text-slate-900">
+                {g.title}
+                <span className="text-xs font-normal text-slate-500">{g.rows.length} thương hiệu</span>
+              </h2>
+              <ul className="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-3 sm:grid-cols-[repeat(3,minmax(0,1fr))] md:grid-cols-[repeat(4,minmax(0,1fr))] lg:grid-cols-[repeat(6,minmax(0,1fr))] xl:grid-cols-[repeat(8,minmax(0,1fr))]">
+                {g.rows.map((b) => (
+                  <li key={b.id}>
+                    <BrandCard
+                      brand={b}
+                      brands={brands}
+                      canFavorite={can('catalog:update')}
+                      onDelete={can('catalog:delete') ? setDeleting : undefined}
+                      onOpen={(x) => setSelectedId(x.id)}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
+        </div>
+      </TabState>
 
-      {/* Modal Toàn màn hình Cấu hình Hãng */}
-      <BrandDetailModal
-        isOpen={isDetailModalOpen}
-        onClose={() => {
-          setIsDetailModalOpen(false);
-          setSelectedBrand(null);
-          setDetailBrand(null);
-        }}
-        brand={detailBrand}
-        brands={allBrands}
-        onSelectBrand={setDetailBrand}
+      <BrandDrawer
+        brand={selected}
+        brands={brands}
+        canEdit={can('catalog:update')}
+        canDelete={can('catalog:delete')}
+        onClose={() => setSelectedId(null)}
+        onDelete={setDeleting}
       />
+      <BrandFormDrawer isOpen={adding} onClose={() => setAdding(false)} />
+      <ConfirmDelete
+        isOpen={!!deleting}
+        title="Xác nhận xóa thương hiệu"
+        pending={remove.isPending}
+        onClose={() => setDeleting(null)}
+        onConfirm={() => deleting && remove.mutate(deleting.id)}
+      >
+        Xóa thương hiệu <strong className="font-semibold text-slate-900 [overflow-wrap:anywhere]">{deleting?.name}</strong>?
+      </ConfirmDelete>
     </div>
   );
 }

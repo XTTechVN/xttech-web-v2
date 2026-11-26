@@ -21,16 +21,36 @@ export function useMyTodayAttendance() {
         endDate: todayStr,
         sortBy: 'createdAt',
         sortOrder: 'desc',
-        limit: 1,
+        limit: 10,
       }),
     enabled: Boolean(user?.id),
     staleTime: 2000 * 60, // 2 phút coi là fresh
   });
 
-  const todayAttendance: Attendance | null = data?.items?.[0] ?? null;
-  const hasCheckedIn = Boolean(todayAttendance?.checkIn);
-  const hasCheckedOut = Boolean(todayAttendance?.checkOut);
-  const isWorkingShift = hasCheckedIn && !hasCheckedOut;
+  const validItems = (data?.items ?? []).filter(
+    (item) =>
+      item.workDate === todayStr &&
+      item.status !== 'absent' &&
+      item.status !== 'leave' &&
+      item.status !== 'overtime',
+  );
+
+  const openAttendance = validItems.find((item) => Boolean(item.checkIn) && !item.checkOut) ?? null;
+  const todayAttendance: Attendance | null = openAttendance ?? validItems[0] ?? null;
+
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const checkInStr = openAttendance?.checkIn ?? '';
+  const isMorningCheckIn = Boolean(checkInStr) && checkInStr.slice(0, 5) < '12:00';
+  const isExpiredMorningShift =
+    Boolean(openAttendance) &&
+    user?.attendancePolicy !== 'part_time' &&
+    isMorningCheckIn &&
+    currentMinutes >= 12 * 60 + 30;
+
+  const hasCheckedIn = isExpiredMorningShift ? false : Boolean(todayAttendance?.checkIn);
+  const hasCheckedOut = isExpiredMorningShift ? false : Boolean(todayAttendance?.checkOut);
+  const isWorkingShift = Boolean(openAttendance) && !isExpiredMorningShift;
 
   return {
     attendance: todayAttendance,

@@ -22,6 +22,7 @@ export function usePermission() {
   // Quyền hạn nghiệp vụ (Capabilities)
   const canViewAll = isManager;
   const canAssignStaff = isManager;
+  const canManageTasks = isManager;
 
   return {
     user,
@@ -33,5 +34,6 @@ export function usePermission() {
     isManager,
     canViewAll,
     canAssignStaff,
+    canManageTasks,
   };
 }

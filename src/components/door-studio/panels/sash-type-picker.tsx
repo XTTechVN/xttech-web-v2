@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
-import { SashOpenType, SashConfig } from '../studio-types';
+import { SashOpenType, SashConfig, SceneCellNode } from '../studio-types';
+import { resolveIsCellOpenBottom } from '../cad-engine/cad-cell-config-resolver';
 import { Columns, Rows, Grid, ChevronDown, ChevronRight, ChevronLeft, Settings2 } from 'lucide-react';
 import {
   SASH_LAYOUT_CATALOG,
@@ -15,6 +16,9 @@ interface SashTypePickerProps {
   isInsideSash?: boolean;
   sashConfig?: SashConfig;
   isOpenBottom?: boolean;
+  /** Ô đang chọn: cho phép nhập Hở nền riêng khi ô ghi đè Hở cạnh đáy */
+  selectedCell?: SceneCellNode | null;
+  onUpdateCell?: (updates: Partial<SceneCellNode>) => void;
   onChangeSashConfig?: (updates: Partial<SashConfig>) => void;
   onSelectSashType: (sashType: SashOpenType) => void;
   onSplitSashMullion?: (count: number, direction: 'vertical' | 'horizontal') => void;
@@ -355,10 +359,25 @@ export const SashTypePicker: React.FC<SashTypePickerProps> = ({
   isInsideSash = false,
   sashConfig,
   isOpenBottom = false,
+  selectedCell,
+  onUpdateCell,
   onChangeSashConfig,
   onSelectSashType,
   onSplitSashMullion,
 }) => {
+  // Hở nền: ô ghi đè 'open' ghi vào chính ô; còn lại giữ hành vi cũ (ghi cấu hình chung)
+  const isCellOverrideOpen = selectedCell?.openBottomOverride === 'open';
+  const isCellOpenBottom = selectedCell ? resolveIsCellOpenBottom(selectedCell, isOpenBottom) : false;
+  const shouldShowHoNen = isOpenBottom || isCellOpenBottom;
+  const globalHoNenMm = sashConfig?.hoNenMm ?? 8;
+  const hoNenValue = isCellOverrideOpen ? (selectedCell?.hoNenMm ?? globalHoNenMm) : globalHoNenMm;
+  const handleChangeHoNen = (value: number): void => {
+    if (isCellOverrideOpen && onUpdateCell) {
+      onUpdateCell({ hoNenMm: value });
+      return;
+    }
+    onChangeSashConfig?.({ hoNenMm: value });
+  };
   const [splitCount, setSplitCount] = useState<number>(2);
   const [activeFamily, setActiveFamily] = useState<SashFamily>(() =>
     mapConfigFamilyToTab(sashConfig?.family)
@@ -729,7 +748,7 @@ export const SashTypePicker: React.FC<SashTypePickerProps> = ({
               Mặc định
             </button>
           </div>
-          <div className={`grid ${isOpenBottom ? 'grid-cols-3' : 'grid-cols-2'} gap-2`}>
+          <div className={`grid ${shouldShowHoNen ? 'grid-cols-3' : 'grid-cols-2'} gap-2`}>
             <div className="space-y-1 text-center">
               <div className="text-[10.5px] text-emerald-700 font-medium">Ngậm ngang</div>
               <input
@@ -748,13 +767,13 @@ export const SashTypePicker: React.FC<SashTypePickerProps> = ({
                 className="w-full h-7 px-1 text-center text-xs font-bold rounded-lg border border-emerald-300 bg-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-slate-800 shadow-2xs"
               />
             </div>
-            {isOpenBottom && (
+            {shouldShowHoNen && (
               <div className="space-y-1 text-center">
                 <div className="text-[10.5px] text-emerald-700 font-medium">Hở nền</div>
                 <input
                   type="number"
-                  value={sashConfig?.hoNenMm ?? 8}
-                  onChange={(e) => onChangeSashConfig?.({ hoNenMm: Number(e.target.value) })}
+                  value={hoNenValue}
+                  onChange={(e) => handleChangeHoNen(Number(e.target.value))}
                   className="w-full h-7 px-1 text-center text-xs font-bold rounded-lg border border-emerald-300 bg-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-slate-800 shadow-2xs"
                 />
               </div>
