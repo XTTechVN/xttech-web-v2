@@ -47,18 +47,41 @@ export const resolveIsCellOpenBottom = (node: SceneCellNode, isGlobalOpen: boole
   return isGlobalOpen;
 };
 
-/** Đảo riêng của ô: undefined = kế thừa; 'wall' chỉ áp cho ô fix, 'sash' chỉ áp cho ô cánh */
-export const resolveCellReversal = (node: SceneCellNode): CadReversalMode | undefined => {
-  const override = node.reversalOverride;
+type RawExplicitReversal = 'none' | 'wall' | 'sash' | 'auto';
+
+const getRawExplicitReversal = (cell?: SceneCellNode): RawExplicitReversal | undefined => {
+  if (!cell) return undefined;
+  const override = cell.reversalOverride;
   if (override !== undefined && override !== 'inherit') {
-    if (override === 'none') return 'none';
-    const isFixed = node.sashType === 'fixed';
-    if (override === 'wall') return isFixed ? 'wall' : 'none';
-    return isFixed ? 'none' : 'sash';
+    return override;
   }
-  if (node.hasFrameReversalOverride === false) return 'none';
-  if (node.hasFrameReversalOverride === true) {
-    return node.sashType === 'fixed' ? 'wall' : 'sash';
+  if (cell.hasFrameReversalOverride === false) return 'none';
+  if (cell.hasFrameReversalOverride === true) return 'auto';
+  return undefined;
+};
+
+const filterReversalForLeaf = (raw: RawExplicitReversal, isFixed: boolean): CadReversalMode => {
+  if (raw === 'none') return 'none';
+  if (raw === 'auto') return isFixed ? 'wall' : 'sash';
+  if (raw === 'wall') return isFixed ? 'wall' : 'none';
+  return isFixed ? 'none' : 'sash';
+};
+
+/** Đảo riêng của ô (kế thừa tiếp unitNode nếu ô là 'inherit'): 'wall' chỉ áp cho ô fix, 'sash' chỉ áp cho ô cánh */
+export const resolveCellReversal = (
+  node: SceneCellNode,
+  unitNode?: SceneCellNode
+): CadReversalMode | undefined => {
+  const isFixed = node.sashType === 'fixed';
+  const ownRaw = getRawExplicitReversal(node);
+  if (ownRaw !== undefined) {
+    return filterReversalForLeaf(ownRaw, isFixed);
+  }
+  if (unitNode && unitNode.id !== node.id) {
+    const unitRaw = getRawExplicitReversal(unitNode);
+    if (unitRaw !== undefined) {
+      return filterReversalForLeaf(unitRaw, isFixed);
+    }
   }
   return undefined;
 };

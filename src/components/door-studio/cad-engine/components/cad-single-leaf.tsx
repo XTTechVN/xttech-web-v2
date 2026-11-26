@@ -8,6 +8,7 @@ import {
   resolveHandleY,
 } from '../cad-leaf-geometry';
 import { buildSashSubPanes } from '../cad-leaf-subpanes';
+import { isLeafReversalOpenBottom, resolveLeafReversalBoxRect } from '../cad-reversal-utils';
 import { renderCadGrille } from './cad-grille';
 import { CadLeafHardware, resolveLeafHandleFlags } from './cad-leaf-hardware';
 import { CadOpeningSymbol } from './cad-opening-symbol';
@@ -38,10 +39,13 @@ const CadSlimLeafBody: React.FC<{
   node: SceneCellNode;
   geometry: LeafGeometry;
   leaf: LeafCell;
+  isHydraulic: boolean;
   aluminumColor: string;
   onSelectCell: (cellId: string | null) => void;
-}> = ({ node, geometry, leaf, aluminumColor, onSelectCell }) => {
+}> = ({ node, geometry, leaf, isHydraulic, aluminumColor, onSelectCell }) => {
   const { sashBox, hasReversalSash, reversalD } = geometry;
+  const reversalRect = resolveLeafReversalBoxRect(leaf, isHydraulic);
+  const isReversalOpenBottom = isLeafReversalOpenBottom(leaf, isHydraulic);
   const guideLine = (xRatio: number) => (
     <line
       x1={sashBox.x + sashBox.w * xRatio}
@@ -56,7 +60,7 @@ const CadSlimLeafBody: React.FC<{
   return (
     <g>
       {hasReversalSash && (
-        <CadSashBox sx={leaf.x} sy={leaf.y} sw={leaf.w} sh={leaf.h} aluminumColor={aluminumColor} joint="45" effectiveSashD={reversalD} />
+        <CadSashBox sx={reversalRect.x} sy={reversalRect.y} sw={reversalRect.w} sh={reversalRect.h} aluminumColor={aluminumColor} joint="45" effectiveSashD={reversalD} isOpenBottom={isReversalOpenBottom} />
       )}
       <g
         onClick={(e) => {
@@ -103,9 +107,13 @@ export const CadSingleLeaf: React.FC<CadSingleLeafProps> = ({
 
   if (!isFixed && sashConfig?.sashStyle === 'slim' && !flags.isSlidingDoorSash) {
     return (
-      <CadSlimLeafBody node={node} geometry={geometry} leaf={leaf} aluminumColor={aluminumColor} onSelectCell={onSelectCell} />
+      <CadSlimLeafBody node={node} geometry={geometry} leaf={leaf} isHydraulic={isHydraulic} aluminumColor={aluminumColor} onSelectCell={onSelectCell} />
     );
   }
+
+  const reversalRect = resolveLeafReversalBoxRect(leaf, isHydraulic);
+  const isReversalOpenBottom = isLeafReversalOpenBottom(leaf, isHydraulic);
+  const isFixedBeadOpenBottom = Boolean(isFixed && hasReversalWall && isReversalOpenBottom);
 
   const { subPanes, mullionBars } = buildSashSubPanes({
     node,
@@ -114,6 +122,7 @@ export const CadSingleLeaf: React.FC<CadSingleLeafProps> = ({
     mullionThickness: metrics.sashMullion,
     beadWidth: leaf.beadW ?? metrics.bead,
     aluminumColor,
+    isOpenBottom: isFixedBeadOpenBottom,
   });
 
   const isSecondaryOfPair =
@@ -133,7 +142,16 @@ export const CadSingleLeaf: React.FC<CadSingleLeafProps> = ({
     <g>
       {/* Khung thanh đảo cho ô Fix (Đảo vách) / ô Cánh (Đảo cánh) */}
       {(hasReversalWall || hasReversalSash) && (
-        <CadSashBox sx={leaf.x} sy={leaf.y} sw={leaf.w} sh={leaf.h} aluminumColor={aluminumColor} joint="45" effectiveSashD={reversalD} />
+        <CadSashBox
+          sx={reversalRect.x}
+          sy={reversalRect.y}
+          sw={reversalRect.w}
+          sh={reversalRect.h}
+          aluminumColor={aluminumColor}
+          joint="45"
+          effectiveSashD={reversalD}
+          isOpenBottom={isReversalOpenBottom}
+        />
       )}
 
       {/* Khung cánh cửa */}

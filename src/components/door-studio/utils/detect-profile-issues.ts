@@ -1,5 +1,6 @@
 import { DoorCalculateResponse } from '@/types';
 import { FrameConfig, SashConfig, SceneCellNode } from '../studio-types';
+import { resolveGlobalCadReversalMode } from '../cad-engine/cad-reversal-utils';
 
 export const detectProfileIssues = ({
   rootCell,
@@ -25,9 +26,17 @@ export const detectProfileIssues = ({
   let hasSash = false;
   let hasDoubleSash = false;
   let hasMullion = false;
+  let hasCellReversal = false;
 
   const checkNodes = (node?: SceneCellNode) => {
     if (!node) return;
+    if (
+      node.reversalOverride === 'wall' ||
+      node.reversalOverride === 'sash' ||
+      Boolean(node.hasFrameReversalOverride)
+    ) {
+      hasCellReversal = true;
+    }
     if (node.sashType && node.sashType !== 'fixed') {
       hasSash = true;
       if (node.sashType === 'swing_double') {
@@ -104,6 +113,20 @@ export const detectProfileIssues = ({
 
   if (hasFixedGlass && !frameConfig?.beadProfileId) {
     issues.push('Thiếu profile nẹp kính cho vách cố định (Khung bao)');
+  }
+
+  // 5b. Kiểm tra thanh Đảo khung (REVERSAL) nếu bật Đảo nhưng hãng nhôm chưa cấu hình profile REVERSAL
+  const hasAnyReversalEnabled =
+    resolveGlobalCadReversalMode(frameConfig) !== 'none' || hasCellReversal;
+  const hasUnconfiguredReversalBar = Boolean(
+    calcData?.bars?.some(
+      (bar) => (bar.category || '').toLowerCase() === 'reversal' && !bar.profileId
+    )
+  );
+  if (hasAnyReversalEnabled && hasUnconfiguredReversalBar) {
+    issues.push(
+      'Hãng nhôm chưa cấu hình thanh Đảo khung (REVERSAL) — đang tạm tính bản rộng 28mm, tỷ trọng 0 kg/m'
+    );
   }
 
   // 6. Kiểm tra Cảnh báo Phụ kiện & Ke liên kết

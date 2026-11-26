@@ -1,5 +1,6 @@
 import { SashCornerJoint, SashConfig, SceneCellNode, SlidingSashRole } from '../studio-types';
 import { CadMetrics, EdgeThickness, LeafCell } from './cad-types';
+import { isLeafReversalOpenBottom } from './cad-reversal-utils';
 
 export interface CadRect {
   x: number;
@@ -119,17 +120,19 @@ const resolveDoubleGeometry = (
   baseSashEdges: EdgeThickness,
   hasReversalSash: boolean,
   sashJoint: SashCornerJoint,
-  reversalWidth: number
+  reversalWidth: number,
+  isReversalOpenBottom: boolean
 ): LeafGeometry => {
   const { x: cx, y: cy, w: cw, h: ch } = leaf;
   const reversalD = hasReversalSash
     ? Math.max(0, Math.min(reversalWidth, (Math.min(cw, ch) - 20) / 2))
     : 0;
+  const revBot = isReversalOpenBottom ? 0 : reversalD;
   const sashBox: CadRect = {
     x: cx + reversalD,
     y: cy + reversalD,
     w: Math.max(10, cw - 2 * reversalD),
-    h: Math.max(10, ch - 2 * reversalD),
+    h: Math.max(10, ch - reversalD - revBot),
   };
   const halfW = (sashBox.w - metrics.astragal) / 2;
   const thickness = clampEdgeThickness(baseSashEdges, halfW, sashBox.h);
@@ -167,16 +170,29 @@ export const resolveLeafGeometry = (
   const role = resolveSlidingRole(leaf, allLeaves);
   const sashJoint = leaf.sashCornerJoint ?? resolveSashJoint(role, sashConfig);
   const baseSashEdges = leaf.sashEdges ?? resolveBaseThickness(role, metrics);
+  const consumedByCluster = Boolean(leaf.reversalConsumedByCluster);
   // Ô có ghi đè đảo riêng dùng chế độ/bề rộng của ô; ngược lại theo cấu hình chung
-  const reversalMode = leaf.effectiveReversalMode ?? metrics.reversalMode;
-  const reversalWidth = leaf.reversalD ?? metrics.reversal;
-  const hasReversalWall = isFixed && reversalMode === 'wall';
-  const hasReversalSash = !isFixed && reversalMode === 'sash';
+  const reversalMode = consumedByCluster ? 'none' : (leaf.effectiveReversalMode ?? metrics.reversalMode);
+  const reversalWidth = consumedByCluster ? 0 : (leaf.reversalD ?? metrics.reversal);
+  const hasReversalWall = !consumedByCluster && isFixed && reversalMode === 'wall';
+  const hasReversalSash = !consumedByCluster && !isFixed && reversalMode === 'sash';
+  const isReversalOpenBottom = isLeafReversalOpenBottom(leaf, Boolean(sashConfig?.isHydraulic || node.isHydraulic));
 
-  if (isDouble) return resolveDoubleGeometry(leaf, metrics, baseSashEdges, hasReversalSash, sashJoint, reversalWidth);
+  if (isDouble) {
+    return resolveDoubleGeometry(
+      leaf,
+      metrics,
+      baseSashEdges,
+      hasReversalSash,
+      sashJoint,
+      reversalWidth,
+      isReversalOpenBottom
+    );
+  }
 
   const hasReversal = hasReversalWall || hasReversalSash;
   const reversalD = hasReversal ? Math.max(0, Math.min(reversalWidth, (Math.min(cw, ch) - 10) / 2)) : 0;
+  const revBot = isReversalOpenBottom ? 0 : reversalD;
 
   if (isFixed) {
     return {
@@ -191,7 +207,7 @@ export const resolveLeafGeometry = (
         x: cx + reversalD,
         y: cy + reversalD,
         w: Math.max(MIN_INNER_PX, cw - 2 * reversalD),
-        h: Math.max(MIN_INNER_PX, ch - 2 * reversalD),
+        h: Math.max(MIN_INNER_PX, ch - reversalD - revBot),
       },
       sashJoint,
     };
@@ -201,7 +217,7 @@ export const resolveLeafGeometry = (
     x: cx + reversalD,
     y: cy + reversalD,
     w: Math.max(MIN_INNER_PX, cw - 2 * reversalD),
-    h: Math.max(MIN_INNER_PX, ch - 2 * reversalD),
+    h: Math.max(MIN_INNER_PX, ch - reversalD - revBot),
   };
   const thickness = clampEdgeThickness(baseSashEdges, sashBox.w, sashBox.h);
   return {

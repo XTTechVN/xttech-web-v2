@@ -15,9 +15,11 @@ import {
   isArchOpenBottomShape,
 } from './cad-geometry';
 import { buildCadLayout, getVerticalSlices, getHorizontalSlices, collectLeafSashMullions } from './cad-tree-traverser';
+import { resolveCurvedDoorReversalPx } from './cad-reversal-utils';
 import { CadMiteredFrame } from './components/cad-mitered-frame';
 import { CadCurvedDoubleDoor, CadCurvedSingleDoor } from './components/cad-curved-door';
 import { CadRectangularLeaf } from './components/cad-rectangular-leaf';
+import { CadSashBox } from './components/cad-sash-box';
 import { CadDimensionOverlay } from './components/cad-dimension-overlay';
 import { CadSplitResizer } from './components/cad-split-resizer';
 
@@ -140,28 +142,35 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
     : Math.round((vbH - totalContentH) / 2) + topRulerH;
 
   // Số đo thực (px = mm × scale): độ dày từng cạnh khung bao / cánh, nẹp, đố, đảo khung, độ ngậm cánh lùa
-  const metrics = computeCadMetrics({
-    scale,
-    doorHeightMm: h,
-    frameShape,
-    isThumbnail: hideDimensions,
-    frameConfig,
-    sashConfig,
-    availableProfiles,
-  });
+  const metrics = React.useMemo(
+    () =>
+      computeCadMetrics({
+        scale,
+        doorHeightMm: h,
+        frameShape,
+        isThumbnail: hideDimensions,
+        frameConfig,
+        sashConfig,
+        availableProfiles,
+      }),
+    [scale, h, frameShape, hideDimensions, frameConfig, sashConfig, availableProfiles]
+  );
   // Khung vòm / bo góc vẽ theo 1 độ dày đồng nhất (lấy theo cạnh trên); khung chữ nhật dùng độ dày từng cạnh
   const frameD = metrics.frame.top;
   const mullionT = Math.max(metrics.vertMullion, metrics.horizMullion);
 
   // Quy đổi thông số vòm sang hệ tọa độ pixel của SVG
-  const scaledArchConfig: ArchConfig | undefined = frameConfig?.archConfig
-    ? {
-        ...frameConfig.archConfig,
-        radiusMm: frameConfig.archConfig.radiusMm
-          ? frameConfig.archConfig.radiusMm * scale
-          : undefined,
-      }
-    : undefined;
+  const archConfig = frameConfig?.archConfig;
+  const scaledArchConfig: ArchConfig | undefined = React.useMemo(
+    () =>
+      archConfig
+        ? {
+            ...archConfig,
+            radiusMm: archConfig.radiusMm ? archConfig.radiusMm * scale : undefined,
+          }
+        : undefined,
+    [archConfig, scale]
+  );
 
   // Tính toán hình dạng khung vòm/bo góc (nếu có)
   const curvedPaths = getCurvedFramePaths(
@@ -177,33 +186,57 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
   const clipId = `door-inner-clip-${id || 'root'}`;
 
   // Xây dựng sơ đồ khung, đố và ô lá từ cây scene
-  const isHydraulic = Boolean(sashConfig?.isHydraulic);
-  const { frames, mullions, couplingSeams, leaves, bottomSills, isLeftBottomOpen, isRightBottomOpen, bottomBarSegments } = buildCadLayout(
-    rootCell,
-    ox,
-    oy,
-    fw,
-    fh,
-    frameD,
-    mullionT,
-    {
-      frameEdges: metrics.frame,
-      isOpenBottom: isGlobalOpenBottom,
-      isHydraulic,
-      vertMullionT: metrics.vertMullion,
-      horizMullionT: metrics.horizMullion,
+  const isDoorOpenBottom = isGlobalOpenBottom;
+  const isDoorHydraulic = Boolean(sashConfig?.isHydraulic);
+  const {
+    frames,
+    mullions,
+    couplingSeams,
+    leaves,
+    reversals,
+    bottomSills,
+    isLeftBottomOpen,
+    isRightBottomOpen,
+    bottomBarSegments,
+  } = React.useMemo(
+    () =>
+      buildCadLayout(rootCell, ox, oy, fw, fh, frameD, mullionT, {
+        frameEdges: metrics.frame,
+        isOpenBottom: isDoorOpenBottom,
+        isHydraulic: isDoorHydraulic,
+        vertMullionT: metrics.vertMullion,
+        horizMullionT: metrics.horizMullion,
+        frameConfig,
+        sashConfig,
+        slidingOverlapPx: metrics.slidingOverlap,
+        availableProfiles,
+        scale,
+        resolveReversalPx: (profileId) => resolveReversalMm(availableProfiles, frameConfig, profileId) * scale,
+      }),
+    [
+      fw,
+      fh,
+      ox,
+      oy,
+      frameD,
+      mullionT,
+      metrics,
+      rootCell,
       frameConfig,
       sashConfig,
-      slidingOverlapPx: metrics.slidingOverlap,
       availableProfiles,
+      isDoorOpenBottom,
+      isDoorHydraulic,
       scale,
-      resolveReversalPx: (profileId) => resolveReversalMm(availableProfiles, frameConfig, profileId) * scale,
-    }
+    ]
   );
 
   // Thu thập toàn bộ đố cánh (kể cả phân chia đệ quy) và hợp nhất vào danh sách đố tương tác
-  const sashMullions = collectLeafSashMullions(leaves, metrics, sashConfig);
-  const allMullions = [...mullions, ...sashMullions];
+  const sashMullions = React.useMemo(
+    () => collectLeafSashMullions(leaves, metrics, sashConfig),
+    [leaves, metrics, sashConfig]
+  );
+  const allMullions = React.useMemo(() => [...mullions, ...sashMullions], [mullions, sashMullions]);
 
   const isCurvedDouble = Boolean(
     curvedPaths &&
@@ -222,6 +255,21 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
     leaves.length === 1 &&
     leaves[0].node.sashType !== 'swing_double'
   );
+
+  const curvedReversalD = React.useMemo(() => {
+    if (!isCurvedDouble && !isCurvedSingle) return 0;
+    const nodes = isCurvedDouble
+      ? leaves[0]?.node.sashType === 'swing_double'
+        ? [leaves[0].node]
+        : [leaves[0]?.node, leaves[1]?.node].filter((n): n is SceneCellNode => Boolean(n))
+      : [leaves[0]?.node].filter((n): n is SceneCellNode => Boolean(n));
+    return resolveCurvedDoorReversalPx({
+      nodes,
+      unitNode: rootCell,
+      frameConfig,
+      resolveReversalPx: (profileId) => resolveReversalMm(availableProfiles, frameConfig, profileId) * scale,
+    });
+  }, [isCurvedDouble, isCurvedSingle, leaves, rootCell, frameConfig, availableProfiles, scale]);
 
   // Các đường chia khung bao vòm (Cắt vòm tại đỉnh & Tách rời chân thẳng)
   const archMetrics = curvedPaths ? computeArchMetrics(frameShape, fw, fh, 0, scaledArchConfig) : null;
@@ -350,7 +398,7 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
                 frameShape={frameShape}
                 framesCount={frames.length}
                 frameConfig={fbConfig}
-                isHydraulic={isHydraulic}
+                isHydraulic={isDoorHydraulic}
                 isOpenBottomOverride={
                   fb.isOpenBottom !== undefined
                     ? fb.isOpenBottom
@@ -404,6 +452,7 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
             rightNode={leaves[1]?.node}
             sashConfig={sashConfig}
             scaledArchConfig={scaledArchConfig}
+            reversalD={curvedReversalD}
           />
         ) : isCurvedSingle ? (
           <CadCurvedSingleDoor
@@ -428,28 +477,44 @@ export const DoorCadRenderer: React.FC<DoorCadRendererProps> = ({
             frameConfig={frameConfig}
             sashConfig={sashConfig}
             scaledArchConfig={scaledArchConfig}
+            reversalD={curvedReversalD}
           />
         ) : (
-          [...leaves]
-            .sort((a, b) => (a.node.sashZIndex ?? 0) - (b.node.sashZIndex ?? 0))
-            .map((leaf) => (
-            <CadRectangularLeaf
-              key={leaf.node.id}
-              leaf={leaf}
-              allLeaves={leaves}
-              isSelected={selectedCellId === leaf.node.id}
-              selectedCellId={selectedCellId}
-              metrics={metrics}
-              h={h}
-              oy={oy}
-              fh={fh}
-              aluminumColor={aluminumColor}
-              hardwareColor={hardwareColor}
-              isOpenBottom={isOpenBottom}
-              sashConfig={sashConfig}
-              onSelectCell={onSelectCell}
-            />
-          ))
+          <>
+            {reversals?.map((rev) => (
+              <CadSashBox
+                key={rev.id}
+                sx={rev.x}
+                sy={rev.y}
+                sw={rev.w}
+                sh={rev.h}
+                aluminumColor={aluminumColor}
+                joint="45"
+                effectiveSashD={rev.thickness}
+                isOpenBottom={rev.isOpenBottom}
+              />
+            ))}
+            {[...leaves]
+              .sort((a, b) => (a.node.sashZIndex ?? 0) - (b.node.sashZIndex ?? 0))
+              .map((leaf) => (
+              <CadRectangularLeaf
+                key={leaf.node.id}
+                leaf={leaf}
+                allLeaves={leaves}
+                isSelected={selectedCellId === leaf.node.id}
+                selectedCellId={selectedCellId}
+                metrics={metrics}
+                h={h}
+                oy={oy}
+                fh={fh}
+                aluminumColor={aluminumColor}
+                hardwareColor={hardwareColor}
+                isOpenBottom={isOpenBottom}
+                sashConfig={sashConfig}
+                onSelectCell={onSelectCell}
+              />
+            ))}
+          </>
         )}
 
         {/* 3. Split Resizer Layer: Đố T, Vách ghép Tách khung và Tay nắm khóa (Nằm trên cùng để nhận chuột 100%) */}

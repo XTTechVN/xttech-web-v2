@@ -31,7 +31,108 @@ interface CadCurvedDoubleDoorProps {
   rightNode?: SceneCellNode;
   sashConfig?: SashConfig;
   scaledArchConfig?: ArchConfig;
+  /** Bề rộng thanh đảo khung uốn vòm (px, mặc định 0 = không đảo) */
+  reversalD?: number;
 }
+
+const toOpenBottomStrokePath = (pathD: string, startX: number, botY: number): string => {
+  const withoutZ = pathD.replace(/\s*Z\s*$/, '').trim();
+  const match = withoutZ.match(/^(.*)\s+L\s+([-+]?[\d.]+)\s+([-+]?[\d.]+)$/);
+  if (match && Math.abs(Number(match[2]) - startX) < 1 && Math.abs(Number(match[3]) - botY) < 1) {
+    return match[1];
+  }
+  return withoutZ;
+};
+
+interface CurvedReversalRingProps {
+  frameShape: FrameShape;
+  ox: number;
+  oy: number;
+  fw: number;
+  fh: number;
+  dFrame: number;
+  dRev: number;
+  effectiveOpenBottom: boolean;
+  aluminumColor: string;
+  scaledArchConfig?: ArchConfig;
+  showApexCut?: boolean;
+}
+
+/** Vành thanh đảo uốn cong theo viền trong khung bao vòm (hở đáy khi effectiveOpenBottom=true) */
+const CurvedReversalRing: React.FC<CurvedReversalRingProps> = ({
+  frameShape,
+  ox,
+  oy,
+  fw,
+  fh,
+  dFrame,
+  dRev,
+  effectiveOpenBottom,
+  aluminumColor,
+  scaledArchConfig,
+  showApexCut = false,
+}) => {
+  if (dRev <= 0) return null;
+  const revBotOuter = effectiveOpenBottom ? 0 : dFrame;
+  const revBotInner = effectiveOpenBottom ? 0 : dFrame + dRev;
+  const outerPath = getCurvedContourPath(
+    frameShape,
+    ox,
+    oy,
+    fw,
+    fh,
+    dFrame,
+    effectiveOpenBottom,
+    scaledArchConfig,
+    revBotOuter
+  );
+  const innerPath = getCurvedContourPath(
+    frameShape,
+    ox,
+    oy,
+    fw,
+    fh,
+    dFrame + dRev,
+    effectiveOpenBottom,
+    scaledArchConfig,
+    revBotInner
+  );
+  if (!outerPath || !innerPath) return null;
+
+  const yBot = oy + fh;
+  const xMid = Math.round(ox + fw / 2);
+  const outerStroke = effectiveOpenBottom ? toOpenBottomStrokePath(outerPath, ox + dFrame, yBot) : outerPath;
+  const innerStroke = effectiveOpenBottom ? toOpenBottomStrokePath(innerPath, ox + dFrame + dRev, yBot) : innerPath;
+
+  return (
+    <g>
+      <path d={`${outerPath} ${innerPath}`} fill={aluminumColor} fillRule="evenodd" />
+      <path d={outerStroke} fill="none" stroke="#18181b" strokeWidth="0.85" />
+      <path d={innerStroke} fill="none" stroke="#18181b" strokeWidth="0.8" />
+      {effectiveOpenBottom ? (
+        <g stroke="#18181b" strokeWidth="0.8">
+          <line x1={ox + dFrame} y1={yBot} x2={ox + dFrame + dRev} y2={yBot} />
+          <line x1={ox + fw - dFrame - dRev} y1={yBot} x2={ox + fw - dFrame} y2={yBot} />
+        </g>
+      ) : (
+        <g stroke="#18181b" strokeWidth="0.75">
+          <line x1={ox + dFrame} y1={yBot - dFrame} x2={ox + dFrame + dRev} y2={yBot - dFrame - dRev} />
+          <line x1={ox + fw - dFrame} y1={yBot - dFrame} x2={ox + fw - dFrame - dRev} y2={yBot - dFrame - dRev} />
+        </g>
+      )}
+      {showApexCut && (
+        <line
+          x1={xMid}
+          y1={getArchYAtX(frameShape, ox, oy, fw, fh, dFrame, xMid, scaledArchConfig)}
+          x2={xMid}
+          y2={getArchYAtX(frameShape, ox, oy, fw, fh, dFrame + dRev, xMid, scaledArchConfig)}
+          stroke="#18181b"
+          strokeWidth="0.85"
+        />
+      )}
+    </g>
+  );
+};
 
 /**
  * Render Cửa Vòm Mở Quay 2 Cánh đối xứng (Curved Double Swing Door):
@@ -60,6 +161,7 @@ export const CadCurvedDoubleDoor: React.FC<CadCurvedDoubleDoorProps> = ({
   rightNode,
   sashConfig,
   scaledArchConfig,
+  reversalD = 0,
 }) => {
   const dFrame = frameD;
   const dSash = sashD;
@@ -71,45 +173,50 @@ export const CadCurvedDoubleDoor: React.FC<CadCurvedDoubleDoorProps> = ({
   const hoNenPx = effectiveOpenBottom ? Math.round((hoNenVal / (h || 1)) * fh) : 0;
   const effFh = Math.max(40, fh - hoNenPx);
 
+  const maxRev = Math.max(0, (Math.min(fw - 2 * dFrame, effFh - dFrame - dBot) - 20) / 2);
+  const dRev = reversalD > 0 ? Math.max(0, Math.min(reversalD, maxRev)) : 0;
+  const dFrameEff = dFrame + dRev;
+  const dBotEff = effectiveOpenBottom ? 0 : dBot + dRev;
+
   const xMid = Math.round(ox + fw / 2);
 
-  // 1. Đường viền ngoài của cánh = viền trong của khung bao (offset = dFrame)
+  // 1. Đường viền ngoài của cánh = viền trong của khung bao (hoặc thanh đảo vòm)
   const sashOuterPath = getCurvedContourPath(
     frameShape,
     ox,
     oy,
     fw,
     effFh,
-    dFrame,
+    dFrameEff,
     false,
     scaledArchConfig,
-    dBot
+    dBotEff
   );
 
-  // 2. Đường viền trong của cánh = viền ngoài của nẹp (offset = dFrame + dSash)
+  // 2. Đường viền trong của cánh = viền ngoài của nẹp (offset = dFrameEff + dSash)
   const sashInnerPath = getCurvedContourPath(
     frameShape,
     ox,
     oy,
     fw,
     effFh,
-    dFrame + dSash,
+    dFrameEff + dSash,
     false,
     scaledArchConfig,
-    dBot + dSash
+    dBotEff + dSash
   );
 
-  // 3. Đường viền trong của nẹp = vùng kính thông thủy (offset = dFrame + dSash + dBead)
+  // 3. Đường viền trong của nẹp = vùng kính thông thủy (offset = dFrameEff + dSash + dBead)
   const beadInnerPath = getCurvedContourPath(
     frameShape,
     ox,
     oy,
     fw,
     effFh,
-    dFrame + dSash + dBead,
+    dFrameEff + dSash + dBead,
     false,
     scaledArchConfig,
-    dBot + dSash + dBead
+    dBotEff + dSash + dBead
   );
 
   if (!sashOuterPath || !sashInnerPath || !beadInnerPath) return null;
@@ -130,7 +237,7 @@ export const CadCurvedDoubleDoor: React.FC<CadCurvedDoubleDoorProps> = ({
   const isLeftSelected = selectedCellId === leftNode.id;
   const isRightSelected = rightNode ? selectedCellId === rightNode.id : isLeftSelected;
 
-  const yBotOuter = oy + effFh - dBot;
+  const yBotOuter = oy + effFh - dBotEff;
   const yBotSashInner = yBotOuter - dSash;
   const yBotBeadInner = yBotSashInner - dBead;
 
@@ -141,14 +248,14 @@ export const CadCurvedDoubleDoor: React.FC<CadCurvedDoubleDoorProps> = ({
   const xRightBeadInner = xRightStileInner + dBead;
 
   // Tọa độ Y chính xác tại nơi đố cánh trung tâm và nẹp trung tâm giao với đường cong vòm
-  const yApexFrameInner = getArchYAtX(frameShape, ox, oy, fw, effFh, dFrame, xMid, scaledArchConfig);
+  const yApexFrameInner = getArchYAtX(frameShape, ox, oy, fw, effFh, dFrameEff, xMid, scaledArchConfig);
   const yLeftStileTop = getArchYAtX(
     frameShape,
     ox,
     oy,
     fw,
     effFh,
-    dFrame + dSash,
+    dFrameEff + dSash,
     xLeftStileInner,
     scaledArchConfig
   );
@@ -158,7 +265,7 @@ export const CadCurvedDoubleDoor: React.FC<CadCurvedDoubleDoorProps> = ({
     oy,
     fw,
     effFh,
-    dFrame + dSash,
+    dFrameEff + dSash,
     xRightStileInner,
     scaledArchConfig
   );
@@ -168,7 +275,7 @@ export const CadCurvedDoubleDoor: React.FC<CadCurvedDoubleDoorProps> = ({
     oy,
     fw,
     effFh,
-    dFrame + dSash + dBead,
+    dFrameEff + dSash + dBead,
     xLeftBeadInner,
     scaledArchConfig
   );
@@ -178,7 +285,7 @@ export const CadCurvedDoubleDoor: React.FC<CadCurvedDoubleDoorProps> = ({
     oy,
     fw,
     effFh,
-    dFrame + dSash + dBead,
+    dFrameEff + dSash + dBead,
     xRightBeadInner,
     scaledArchConfig
   );
@@ -189,8 +296,8 @@ export const CadCurvedDoubleDoor: React.FC<CadCurvedDoubleDoorProps> = ({
   const leftStrokeDash = isLeftInward ? '6,4' : undefined;
   const rightStrokeDash = isRightInward ? '6,4' : undefined;
 
-  const yOpenTopLeft = Math.max(oy + dFrame + dSash + dBead + 2, yLeftBeadTop);
-  const yOpenTopRight = Math.max(oy + dFrame + dSash + dBead + 2, yRightBeadTop);
+  const yOpenTopLeft = Math.max(oy + dFrameEff + dSash + dBead + 2, yLeftBeadTop);
+  const yOpenTopRight = Math.max(oy + dFrameEff + dSash + dBead + 2, yRightBeadTop);
   const yOpenBot = yBotBeadInner;
   const yOpenMidLeft = (yOpenTopLeft + yOpenBot) / 2;
   const yOpenMidRight = (yOpenTopRight + yOpenBot) / 2;
@@ -201,7 +308,7 @@ export const CadCurvedDoubleDoor: React.FC<CadCurvedDoubleDoorProps> = ({
     oy,
     fw,
     effFh,
-    dFrame + dSash + dBead,
+    dFrameEff + dSash + dBead,
     yOpenMidLeft,
     'left',
     scaledArchConfig
@@ -212,7 +319,7 @@ export const CadCurvedDoubleDoor: React.FC<CadCurvedDoubleDoorProps> = ({
     oy,
     fw,
     effFh,
-    dFrame + dSash + dBead,
+    dFrameEff + dSash + dBead,
     yOpenMidRight,
     'right',
     scaledArchConfig
@@ -227,7 +334,7 @@ export const CadCurvedDoubleDoor: React.FC<CadCurvedDoubleDoorProps> = ({
           oy,
           fw,
           effFh,
-          dFrame + dSash * 0.45,
+          dFrameEff + dSash * 0.45,
           scaledArchConfig
         )
       : null;
@@ -237,7 +344,7 @@ export const CadCurvedDoubleDoor: React.FC<CadCurvedDoubleDoorProps> = ({
   const handleHVal =
     rightNode?.handleHeight || leftNode?.handleHeight || (isHyd ? 1050 : Math.round(h / 2));
   const lockY = Math.max(
-    oy + dFrame + dSash + 30,
+    oy + dFrameEff + dSash + 30,
     Math.min(yBotSashInner - 20, oy + effFh - Math.round((handleHVal / (h || 1)) * fh))
   );
   const hx = xMid + Math.round(dSash * 0.45);
@@ -253,6 +360,20 @@ export const CadCurvedDoubleDoor: React.FC<CadCurvedDoubleDoorProps> = ({
           <path d={beadInnerPath} />
         </clipPath>
       </defs>
+
+      <CurvedReversalRing
+        frameShape={frameShape}
+        ox={ox}
+        oy={oy}
+        fw={fw}
+        fh={fh}
+        dFrame={dFrame}
+        dRev={dRev}
+        effectiveOpenBottom={effectiveOpenBottom}
+        aluminumColor={aluminumColor}
+        scaledArchConfig={scaledArchConfig}
+        showApexCut={Boolean(scaledArchConfig?.isCutAtApex || frameShape === 'arch_pointed' || frameShape === 'arch_pointed_leg')}
+      />
 
       {/* 1. Vùng Kính 2 bên trái/phải */}
       <g clipPath={`url(#${glassClipId})`}>
@@ -287,10 +408,10 @@ export const CadCurvedDoubleDoor: React.FC<CadCurvedDoubleDoorProps> = ({
             cellId={id || 'curved'}
             pathD={beadInnerPath}
             bbox={{
-              x: ox + dFrame + dSash + dBead,
-              y: oy + dFrame + dSash + dBead,
-              width: Math.max(10, fw - (dFrame + dSash + dBead) * 2),
-              height: Math.max(10, effFh - (dFrame + dSash + dBead) * 2),
+              x: ox + dFrameEff + dSash + dBead,
+              y: oy + dFrameEff + dSash + dBead,
+              width: Math.max(10, fw - (dFrameEff + dSash + dBead) * 2),
+              height: Math.max(10, effFh - (dFrameEff + dSash + dBead) * 2),
             }}
             clipId={glassClipId}
             effect={leftNode?.glassVisualEffect}
@@ -381,9 +502,9 @@ export const CadCurvedDoubleDoor: React.FC<CadCurvedDoubleDoorProps> = ({
 
         {/* Đường cắt mòi 45° tại 4 góc đáy của 2 cánh (xuyên qua cả cánh và nẹp) */}
         <line
-          x1={ox + dFrame}
+          x1={ox + dFrameEff}
           y1={yBotOuter}
-          x2={ox + dFrame + dSash + dBead}
+          x2={ox + dFrameEff + dSash + dBead}
           y2={yBotBeadInner}
         />
         <line
@@ -399,9 +520,9 @@ export const CadCurvedDoubleDoor: React.FC<CadCurvedDoubleDoorProps> = ({
           y2={yBotBeadInner}
         />
         <line
-          x1={ox + fw - dFrame}
+          x1={ox + fw - dFrameEff}
           y1={yBotOuter}
-          x2={ox + fw - dFrame - dSash - dBead}
+          x2={ox + fw - dFrameEff - dSash - dBead}
           y2={yBotBeadInner}
         />
       </g>
@@ -439,10 +560,10 @@ export const CadCurvedDoubleDoor: React.FC<CadCurvedDoubleDoorProps> = ({
       {/* 8. Viền sáng xanh khi người dùng click chọn ô cánh */}
       {isLeftSelected && (
         <rect
-          x={ox + dFrame + 2}
-          y={oy + dFrame + 2}
-          width={Math.max(0, xMid - (ox + dFrame) - 4)}
-          height={Math.max(0, effFh - dFrame - dBot - 4)}
+          x={ox + dFrameEff + 2}
+          y={oy + dFrameEff + 2}
+          width={Math.max(0, xMid - (ox + dFrameEff) - 4)}
+          height={Math.max(0, effFh - dFrameEff - dBotEff - 4)}
           fill="none"
           stroke="#2563eb"
           strokeWidth="1.6"
@@ -453,9 +574,9 @@ export const CadCurvedDoubleDoor: React.FC<CadCurvedDoubleDoorProps> = ({
       {isRightSelected && rightNode && (
         <rect
           x={xMid + 2}
-          y={oy + dFrame + 2}
-          width={Math.max(0, ox + fw - dFrame - xMid - 4)}
-          height={Math.max(0, effFh - dFrame - dBot - 4)}
+          y={oy + dFrameEff + 2}
+          width={Math.max(0, ox + fw - dFrameEff - xMid - 4)}
+          height={Math.max(0, effFh - dFrameEff - dBotEff - 4)}
           fill="none"
           stroke="#2563eb"
           strokeWidth="1.6"
@@ -526,6 +647,8 @@ interface CadCurvedSingleDoorProps {
   frameConfig?: FrameConfig;
   sashConfig?: SashConfig;
   scaledArchConfig?: ArchConfig;
+  /** Bề rộng thanh đảo khung uốn vòm (px, mặc định 0 = không đảo) */
+  reversalD?: number;
 }
 
 /**
@@ -554,6 +677,7 @@ export const CadCurvedSingleDoor: React.FC<CadCurvedSingleDoorProps> = ({
   frameConfig,
   sashConfig,
   scaledArchConfig,
+  reversalD = 0,
 }) => {
   const sashType = node?.sashType ?? 'fixed';
   const hasSash = sashType !== 'fixed';
@@ -563,10 +687,17 @@ export const CadCurvedSingleDoor: React.FC<CadCurvedSingleDoorProps> = ({
   const dBead = beadW;
 
   const effectiveOpenBottom = Boolean(isOpenBottom || isArchOpenBottomShape(frameShape));
-  const dBot = effectiveOpenBottom && hasSash ? 0 : dFrame;
+  const dBotBase = effectiveOpenBottom && hasSash ? 0 : dFrame;
   const hoNenVal = node?.hoNenMm ?? sashConfig?.hoNenMm ?? 8;
   const hoNenPx = effectiveOpenBottom && hasSash ? Math.round((hoNenVal / (h || 1)) * fh) : 0;
   const effFh = Math.max(40, fh - hoNenPx);
+
+  const maxRev = Math.max(0, (Math.min(fw - 2 * dFrame, effFh - dFrame - dBotBase) - 20) / 2);
+  const dRev = reversalD > 0 ? Math.max(0, Math.min(reversalD, maxRev)) : 0;
+  const dFrameEff = dFrame + dRev;
+  const dBotEff = dRev > 0 && effectiveOpenBottom ? 0 : dBotBase + dRev;
+  const isFixedRevOpenBottom = !hasSash && dRev > 0 && effectiveOpenBottom;
+  const dBeadBot = isFixedRevOpenBottom ? 0 : dBotEff + dSash + dBead;
 
   const sashOuterPath = getCurvedContourPath(
     frameShape,
@@ -574,10 +705,10 @@ export const CadCurvedSingleDoor: React.FC<CadCurvedSingleDoorProps> = ({
     oy,
     fw,
     effFh,
-    dFrame,
+    dFrameEff,
     false,
     scaledArchConfig,
-    dBot
+    dBotEff
   );
 
   const sashInnerPath = hasSash
@@ -587,10 +718,10 @@ export const CadCurvedSingleDoor: React.FC<CadCurvedSingleDoorProps> = ({
         oy,
         fw,
         effFh,
-        dFrame + dSash,
+        dFrameEff + dSash,
         false,
         scaledArchConfig,
-        dBot + dSash
+        dBotEff + dSash
       )
     : sashOuterPath;
 
@@ -600,10 +731,10 @@ export const CadCurvedSingleDoor: React.FC<CadCurvedSingleDoorProps> = ({
     oy,
     fw,
     effFh,
-    dFrame + dSash + dBead,
-    false,
+    dFrameEff + dSash + dBead,
+    isFixedRevOpenBottom,
     scaledArchConfig,
-    dBot + dSash + dBead
+    dBeadBot
   );
 
   if (!sashOuterPath || !sashInnerPath || !beadInnerPath) return null;
@@ -621,11 +752,11 @@ export const CadCurvedSingleDoor: React.FC<CadCurvedSingleDoorProps> = ({
 
   const isSelected = selectedCellId === node.id;
 
-  const gx = ox + dFrame + dSash + dBead;
-  const gy = oy + dFrame + dSash + dBead;
-  const gw = Math.max(10, fw - 2 * (dFrame + dSash + dBead));
-  const gh = Math.max(10, effFh - dFrame - dBot - 2 * (dSash + dBead));
-  const yBotOuter = oy + effFh - dBot;
+  const gx = ox + dFrameEff + dSash + dBead;
+  const gy = oy + dFrameEff + dSash + dBead;
+  const gw = Math.max(10, fw - 2 * (dFrameEff + dSash + dBead));
+  const gh = Math.max(10, effFh - dFrameEff - dSash - dBead - dBeadBot);
+  const yBotOuter = oy + effFh - dBotEff;
   const yBotBeadInner = gy + gh;
 
   const isLeftSwing = ['swing_left', 'le-trai-mo-ra', 'le-trai-mo-vao', 'gap-xep-le-trai'].includes(sashType);
@@ -643,7 +774,7 @@ export const CadCurvedSingleDoor: React.FC<CadCurvedSingleDoorProps> = ({
     oy,
     fw,
     effFh,
-    dFrame + dSash + dBead,
+    dFrameEff + dSash + dBead,
     yMidGlass,
     'left',
     scaledArchConfig
@@ -654,7 +785,7 @@ export const CadCurvedSingleDoor: React.FC<CadCurvedSingleDoorProps> = ({
     oy,
     fw,
     effFh,
-    dFrame + dSash + dBead,
+    dFrameEff + dSash + dBead,
     yMidGlass,
     'right',
     scaledArchConfig
@@ -665,7 +796,7 @@ export const CadCurvedSingleDoor: React.FC<CadCurvedSingleDoorProps> = ({
     oy,
     fw,
     effFh,
-    dFrame,
+    dFrameEff,
     ox + fw / 2,
     scaledArchConfig
   );
@@ -675,7 +806,7 @@ export const CadCurvedSingleDoor: React.FC<CadCurvedSingleDoorProps> = ({
     oy,
     fw,
     effFh,
-    dFrame + dSash + dBead,
+    dFrameEff + dSash + dBead,
     ox + fw / 2,
     scaledArchConfig
   );
@@ -694,7 +825,7 @@ export const CadCurvedSingleDoor: React.FC<CadCurvedSingleDoorProps> = ({
           oy,
           fw,
           effFh,
-          dFrame + (hasSash ? dSash * 0.45 : dBead * 0.5),
+          dFrameEff + (hasSash ? dSash * 0.45 : dBead * 0.5),
           scaledArchConfig
         )
       : null;
@@ -704,7 +835,7 @@ export const CadCurvedSingleDoor: React.FC<CadCurvedSingleDoorProps> = ({
   const isHyd = Boolean(sashConfig?.isHydraulic || node?.isHydraulic);
   const handleHVal = node?.handleHeight || (isHyd ? 1050 : Math.round(h / 2));
   const lockY = Math.max(
-    oy + dFrame + dSash + 30,
+    oy + dFrameEff + dSash + 30,
     Math.min(yBotOuter - dSash - 20, oy + effFh - Math.round((handleHVal / (h || 1)) * fh))
   );
   const handleSide = isLeftSwing ? 'right' : 'left';
@@ -714,11 +845,14 @@ export const CadCurvedSingleDoor: React.FC<CadCurvedSingleDoorProps> = ({
     oy,
     fw,
     effFh,
-    dFrame + dSash * 0.5,
+    dFrameEff + dSash * 0.5,
     lockY,
     handleSide,
     scaledArchConfig
   );
+  const beadInnerStroke = isFixedRevOpenBottom
+    ? toOpenBottomStrokePath(beadInnerPath, gx, oy + effFh)
+    : beadInnerPath;
 
   return (
     <g>
@@ -727,6 +861,20 @@ export const CadCurvedSingleDoor: React.FC<CadCurvedSingleDoorProps> = ({
           <path d={beadInnerPath} />
         </clipPath>
       </defs>
+
+      <CurvedReversalRing
+        frameShape={frameShape}
+        ox={ox}
+        oy={oy}
+        fw={fw}
+        fh={fh}
+        dFrame={dFrame}
+        dRev={dRev}
+        effectiveOpenBottom={effectiveOpenBottom}
+        aluminumColor={aluminumColor}
+        scaledArchConfig={scaledArchConfig}
+        showApexCut={showSingleApexCut}
+      />
 
       {/* 1. Mặt Kính */}
       <g clipPath={`url(#${glassClipId})`}>
@@ -775,7 +923,7 @@ export const CadCurvedSingleDoor: React.FC<CadCurvedSingleDoorProps> = ({
         fill={aluminumColor}
         fillRule="evenodd"
       />
-      <path d={beadInnerPath} fill="none" stroke="#27272a" strokeWidth="0.65" />
+      <path d={beadInnerStroke} fill="none" stroke="#27272a" strokeWidth="0.65" />
 
       {/* 4. Đường cắt mòi 45° tại 2 góc đáy và nét cắt đỉnh (khi chia đôi tại đỉnh) */}
       <g stroke="#18181b" strokeWidth="0.75">
@@ -788,18 +936,22 @@ export const CadCurvedSingleDoor: React.FC<CadCurvedSingleDoorProps> = ({
             strokeWidth="0.85"
           />
         )}
-        <line
-          x1={ox + dFrame}
-          y1={yBotOuter}
-          x2={gx}
-          y2={yBotBeadInner}
-        />
-        <line
-          x1={ox + fw - dFrame}
-          y1={yBotOuter}
-          x2={gx + gw}
-          y2={yBotBeadInner}
-        />
+        {!isFixedRevOpenBottom && (
+          <>
+            <line
+              x1={ox + dFrameEff}
+              y1={yBotOuter}
+              x2={gx}
+              y2={yBotBeadInner}
+            />
+            <line
+              x1={ox + fw - dFrameEff}
+              y1={yBotOuter}
+              x2={gx + gw}
+              y2={yBotBeadInner}
+            />
+          </>
+        )}
       </g>
 
       {/* 5. Đường tâm uốn cam nét đứt cho Vòm nhọn 2 cung */}

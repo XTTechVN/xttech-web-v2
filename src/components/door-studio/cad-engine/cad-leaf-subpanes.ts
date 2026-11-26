@@ -47,6 +47,8 @@ export interface SashSubPaneParams {
   /** Bản rộng nẹp kính (px) */
   beadWidth: number;
   aluminumColor: string;
+  /** Chỉ áp dụng cho ô Fix bật Đảo vách hở đáy (bỏ nẹp đáy) */
+  isOpenBottom?: boolean;
 }
 
 const resolvePaneFill = (paneType: SceneCellNode['paneType'], aluminumColor: string): string => {
@@ -63,13 +65,30 @@ const getNodeWeight = (child: SceneCellNode, isVertical: boolean): number => (is
  * Hàm thuần dùng chung cho hình vẽ cánh và danh sách đố tương tác, để hai bên khớp tuyệt đối.
  */
 export const buildSashSubPanes = (params: SashSubPaneParams): SashSubPaneLayout => {
-  const { node, inner, isFixed, mullionThickness, beadWidth, aluminumColor } = params;
+  const { node, inner, isFixed, mullionThickness, beadWidth, aluminumColor, isOpenBottom = false } = params;
+  const isFixedOpenBottom = Boolean(isFixed && isOpenBottom);
   const beadJoint = node.beadJoint || '90';
   const subPanes: SashSubPane[] = [];
   const mullionBars: SashMullionBarItem[] = [];
 
-  const pushPane = (id: string, paneNode: SceneCellNode, rect: CadRect, beadKey: string) => {
-    const bead = renderCadBead(rect.x, rect.y, rect.w, rect.h, beadKey, aluminumColor, beadWidth, beadJoint);
+  const pushPane = (
+    id: string,
+    paneNode: SceneCellNode,
+    rect: CadRect,
+    beadKey: string,
+    paneOpenBottom = false
+  ) => {
+    const bead = renderCadBead(
+      rect.x,
+      rect.y,
+      rect.w,
+      rect.h,
+      beadKey,
+      aluminumColor,
+      beadWidth,
+      beadJoint,
+      paneOpenBottom
+    );
     subPanes.push({
       id,
       node: paneNode,
@@ -84,10 +103,10 @@ export const buildSashSubPanes = (params: SashSubPaneParams): SashSubPaneLayout 
     });
   };
 
-  const traverseSashTree = (currNode: SceneCellNode, box: CadRect) => {
+  const traverseSashTree = (currNode: SceneCellNode, box: CadRect, touchesBottom = false) => {
     const children = currNode.children;
     if (!children || children.length === 0 || currNode.splitType !== 'sash_mullion') {
-      pushPane(currNode.id, currNode, box, `${currNode.id}-bead`);
+      pushPane(currNode.id, currNode, box, `${currNode.id}-bead`, touchesBottom);
       return;
     }
 
@@ -106,7 +125,7 @@ export const buildSashSubPanes = (params: SashSubPaneParams): SashSubPaneLayout 
         ? { x: box.x + cursor, y: box.y, w: span, h: box.h }
         : { x: box.x, y: box.y + cursor, w: box.w, h: span };
 
-      traverseSashTree(child, childBox);
+      traverseSashTree(child, childBox, touchesBottom && (isVertical || isLast));
       cursor += span;
       usedSpan += span;
       if (isLast) return;
@@ -186,11 +205,11 @@ export const buildSashSubPanes = (params: SashSubPaneParams): SashSubPaneLayout 
   const hasFlatMullions = !isFixed && Boolean(node.sashMullions && node.sashMullions.count > 1);
 
   if (hasSashTree) {
-    traverseSashTree(node, inner);
+    traverseSashTree(node, inner, isFixedOpenBottom);
   } else if (hasFlatMullions) {
     traverseFlatMullions();
   } else {
-    pushPane(node.id, node, inner, `${node.id}-bead`);
+    pushPane(node.id, node, inner, `${node.id}-bead`, isFixedOpenBottom);
   }
 
   return { subPanes, mullionBars };

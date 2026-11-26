@@ -8,7 +8,7 @@ import {
   normalizeMullionCutType,
   resolveMullionCutEnds,
 } from '../studio-types';
-import { FrameBox, MullionBar, LeafCell, CouplingSeamBar, VerticalSlice, EdgeThickness, CadMetrics, BottomBarSegment } from './cad-types';
+import { FrameBox, MullionBar, LeafCell, CouplingSeamBar, VerticalSlice, EdgeThickness, CadMetrics, BottomBarSegment, ReversalBox } from './cad-types';
 import { BottomOpenRange } from '../studio-types';
 import {
   BottomOpenPlan,
@@ -21,6 +21,12 @@ import {
 import { computeSlidingSashes } from './cad-geometry';
 import { resolveLeafGeometry } from './cad-leaf-geometry';
 import { buildSashSubPanes } from './cad-leaf-subpanes';
+import { resolveReversalMm } from './cad-metrics';
+import {
+  buildClusterReversalBox,
+  resolveClusterReversalConfig,
+  resolveGlobalCadReversalMode,
+} from './cad-reversal-utils';
 import { hasFrameMullionBetween, isSlidingClusterNode } from '../utils/door-tree-utils';
 
 export interface BottomSill {
@@ -35,6 +41,7 @@ export interface CadLayoutResult {
   mullions: MullionBar[];
   couplingSeams: CouplingSeamBar[];
   leaves: LeafCell[];
+  reversals?: ReversalBox[];
   bottomSills?: BottomSill[];
   /** Hở đáy hiệu lực ở cấp khung bao (đã tính ghi đè từng ô) */
   isOpenBottom?: boolean;
@@ -297,6 +304,35 @@ export const getHorizontalSlices = (node: SceneCellNode): SceneCellNode[] => {
   return [];
 };
 
+const collectClusterBottomLeafIds = (nodes: SceneCellNode[]): string[] => {
+  const ids: string[] = [];
+  const walk = (curr: SceneCellNode): void => {
+    if (!curr.children || curr.children.length === 0 || curr.splitType === 'sash_mullion') {
+      ids.push(curr.id);
+      return;
+    }
+    if (curr.splitDirection === 'vertical') {
+      curr.children.forEach(walk);
+    } else {
+      walk(curr.children[curr.children.length - 1]);
+    }
+  };
+  nodes.forEach(walk);
+  return ids;
+};
+
+const isClusterOpenBottom = (
+  nodes: SceneCellNode[],
+  activePlan: BottomOpenPlan,
+  touchesUnitBot: boolean
+): boolean => {
+  if (!touchesUnitBot) return false;
+  if (activePlan.isOpenBottom) return true;
+  if (activePlan.mode !== 'partial') return false;
+  const leafIds = collectClusterBottomLeafIds(nodes);
+  return leafIds.length > 0 && leafIds.every((id) => activePlan.openLeafIds.has(id));
+};
+
 /**
  * Duyệt đệ quy cây SceneCellNode để tính toán tọa độ SVG cho khung (Frame), đố (Mullion) và ô lá (Leaf)
  */
@@ -320,7 +356,7 @@ export const buildCadLayout = (
     slidingOverlapPx?: number;
     availableProfiles?: ProfileBar[];
     scale?: number;
-    /** Quy đổi mã thanh REVERSAL của ô (ghi đè) sang bề rộng px; không truyền = ô không có reversalD riêng */
+    /** Quy đổi mã thanh REVERSAL của ô (ghi đè) sang bề rộng px; không truyền = tự suy từ availableProfiles & scale */
     resolveReversalPx?: (profileId?: ProfileIdRef | null) => number;
   }
 ): CadLayoutResult => {
@@ -328,6 +364,7 @@ export const buildCadLayout = (
   const mullions: MullionBar[] = [];
   const couplingSeams: CouplingSeamBar[] = [];
   const leaves: LeafCell[] = [];
+  const reversals: ReversalBox[] = [];
   const bottomSills: BottomSill[] = [];
 
   const isDoorHydraulic = Boolean(options?.isHydraulic || rootCell.isHydraulic);
@@ -341,6 +378,12 @@ export const buildCadLayout = (
   const frameEdges: EdgeThickness = options?.frameEdges ?? { top: frameD, right: frameD, bottom: frameD, left: frameD };
   const layoutScale = options?.scale ?? (isRealProportion ? fw / Math.max(1, rootCell.w || fw) : 1);
   const snap = (value: number): number => (isRealProportion ? value : Math.round(value));
+  const globalReversalMode = resolveGlobalCadReversalMode(options?.frameConfig);
+  const resolveRevPx =
+    options?.resolveReversalPx ??
+    ((profileId?: ProfileIdRef | null) =>
+      resolveReversalMm(options?.availableProfiles, options?.frameConfig, profileId) * layoutScale);
+  const clusterLeafBottomPad = new Map<string, { padLeft?: number; padRight?: number }>();
 
   interface FrameUnitBounds {
     unitNode: SceneCellNode;
@@ -359,6 +402,11 @@ export const buildCadLayout = (
     horizMullionPx?: number;
   }
 
+  interface TraverseClusterFlags {
+    reversalConsumedByCluster?: boolean;
+    bottomExtended?: boolean;
+  }
+
   const unitLeafMap = new Map<string, LeafCell[]>();
 
   const traverse = (
@@ -369,7 +417,8 @@ export const buildCadLayout = (
     hBox: number,
     isFrameUnit: boolean,
     frameBounds?: FrameUnitBounds,
-    refBox?: { x: number; y: number; w: number; h: number }
+    refBox?: { x: number; y: number; w: number; h: number },
+    clusterFlags?: TraverseClusterFlags
   ) => {
     // 1. Frame Coupling: Mỗi nhánh con là 1 module khung độc lập ghép lại
     if (node.splitType === 'coupling' && node.children && node.children.length > 0) {
@@ -504,20 +553,75 @@ export const buildCadLayout = (
       if (isSlidingCluster && node.children) {
         const count = node.children.length;
         const activeOverlap = options?.slidingOverlapPx ?? Math.max(12, Math.round(frameD * 1.1));
-        const slidingLayout = computeSlidingSashes(innerX, innerW, count, activeOverlap, node.sashLayout);
+        const clusterRev = resolveClusterReversalConfig(
+          node,
+          node.children,
+          activeFrameBounds.unitNode,
+          globalReversalMode,
+          resolveRevPx
+        );
+        let slidingBox = { x: innerX, y: innerY, w: innerW, h: innerH };
+        let slidingClusterFlags: TraverseClusterFlags | undefined;
+
+        if (clusterRev && clusterRev.reversalPx > 0) {
+          const unitInnerBotY = activeFrameBounds.y + activeFrameBounds.h - activeFrameBounds.fBot;
+          const touchesUnitBot = Math.abs(innerY + innerH - unitInnerBotY) < 2;
+          const isOpenBot = isClusterOpenBottom(node.children, activePlan, touchesUnitBot);
+          const extraBot = isOpenBot && activePlan.mode === 'partial' ? activeFrameBounds.fBot : 0;
+          const { reversalBox, innerRect } = buildClusterReversalBox({
+            id: `${node.id}-reversal`,
+            x: innerX,
+            y: innerY,
+            w: innerW,
+            h: innerH + extraBot,
+            reversalPx: clusterRev.reversalPx,
+            isOpenBottom: isOpenBot,
+          });
+          reversals.push(reversalBox);
+          slidingBox = innerRect;
+          slidingClusterFlags = { reversalConsumedByCluster: true, bottomExtended: extraBot > 0 };
+          if (reversalBox.thickness > 0) {
+            const firstLeafIds = collectClusterBottomLeafIds([node.children[0]]);
+            const lastLeafIds = collectClusterBottomLeafIds([node.children[count - 1]]);
+            firstLeafIds.forEach((id) =>
+              clusterLeafBottomPad.set(id, { ...clusterLeafBottomPad.get(id), padLeft: reversalBox.thickness })
+            );
+            lastLeafIds.forEach((id) =>
+              clusterLeafBottomPad.set(id, { ...clusterLeafBottomPad.get(id), padRight: reversalBox.thickness })
+            );
+          }
+        }
+
+        const slidingLayout = computeSlidingSashes(
+          slidingBox.x,
+          slidingBox.w,
+          count,
+          activeOverlap,
+          node.sashLayout
+        );
 
         node.children.forEach((child, idx) => {
-          const pos = slidingLayout[idx] || { x: innerX, w: innerW, trackIndex: 0, zIndex: 0 };
+          const pos = slidingLayout[idx] || { x: slidingBox.x, w: slidingBox.w, trackIndex: 0, zIndex: 0 };
           const leafChild: SceneCellNode = {
             ...child,
             sashZIndex: child.sashZIndex ?? pos.zIndex,
           };
-          traverse(leafChild, pos.x, innerY, pos.w, innerH, false, activeFrameBounds, {
-            x: pos.x,
-            y: curRefBox.y,
-            w: pos.w,
-            h: curRefBox.h,
-          });
+          traverse(
+            leafChild,
+            pos.x,
+            slidingBox.y,
+            pos.w,
+            slidingBox.h,
+            false,
+            activeFrameBounds,
+            {
+              x: pos.x,
+              y: curRefBox.y,
+              w: pos.w,
+              h: curRefBox.h,
+            },
+            slidingClusterFlags
+          );
         });
         return;
       }
@@ -561,27 +665,32 @@ export const buildCadLayout = (
 
       const childClearStarts = new Array<number>(count).fill(0);
       const childClearSpans = new Array<number>(count).fill(0);
+      const childYs = new Array<number>(count).fill(innerY);
+      const childHs = new Array<number>(count).fill(innerH);
+      const childClusterFlags = new Array<TraverseClusterFlags | undefined>(count).fill(undefined);
       const mullionPositions = new Array<number>(Math.max(0, count - 1)).fill(0);
 
-      if (mullionCount > 0 && innerSpan > totalMullions + count * minLeafClear) {
-        let prevBoundEnd = innerStart;
-        let prevBoundIdx = -1;
-        let remMullions = mullionCount;
+      if (mullionCount === 0 || innerSpan > totalMullions + count * minLeafClear) {
+        if (mullionCount > 0) {
+          let prevBoundEnd = innerStart;
+          let prevBoundIdx = -1;
+          let remMullions = mullionCount;
 
-        for (let b = 0; b < count - 1; b++) {
-          if (!hasMullionAt[b]) continue;
-          remMullions -= 1;
-          const leftRunCount = b - prevBoundIdx;
-          const rightChildCount = count - 1 - b;
-          const nominalCenter = childRefStarts[b] + childRefSpans[b];
-          const minCenter = prevBoundEnd + leftRunCount * minLeafClear + activeMullionT / 2;
-          const maxCenter =
-            innerEnd - remMullions * activeMullionT - rightChildCount * minLeafClear - activeMullionT / 2;
-          const clampedCenter = Math.max(minCenter, Math.min(maxCenter, nominalCenter));
-          const mStart = snap(clampedCenter - activeMullionT / 2);
-          mullionPositions[b] = mStart;
-          prevBoundEnd = mStart + activeMullionT;
-          prevBoundIdx = b;
+          for (let b = 0; b < count - 1; b++) {
+            if (!hasMullionAt[b]) continue;
+            remMullions -= 1;
+            const leftRunCount = b - prevBoundIdx;
+            const rightChildCount = count - 1 - b;
+            const nominalCenter = childRefStarts[b] + childRefSpans[b];
+            const minCenter = prevBoundEnd + leftRunCount * minLeafClear + activeMullionT / 2;
+            const maxCenter =
+              innerEnd - remMullions * activeMullionT - rightChildCount * minLeafClear - activeMullionT / 2;
+            const clampedCenter = Math.max(minCenter, Math.min(maxCenter, nominalCenter));
+            const mStart = snap(clampedCenter - activeMullionT / 2);
+            mullionPositions[b] = mStart;
+            prevBoundEnd = mStart + activeMullionT;
+            prevBoundIdx = b;
+          }
         }
 
         let runStart = 0;
@@ -594,9 +703,60 @@ export const buildCadLayout = (
           const runClearEnd = runEnd === count - 1 ? innerEnd : mullionPositions[runEnd];
           const runSpan = Math.max(1, runClearEnd - runClearStart);
 
+          let effectiveRunStart = runClearStart;
+          let effectiveRunSpan = runSpan;
+          let runY = innerY;
+          let runH = innerH;
+          let runClusterFlags: TraverseClusterFlags | undefined;
+
+          if (isVert && runEnd > runStart) {
+            const runChildren = node.children.slice(runStart, runEnd + 1);
+            const clusterRev = resolveClusterReversalConfig(
+              node,
+              runChildren,
+              activeFrameBounds.unitNode,
+              globalReversalMode,
+              resolveRevPx
+            );
+            if (clusterRev && clusterRev.reversalPx > 0) {
+              const unitInnerBotY = activeFrameBounds.y + activeFrameBounds.h - activeFrameBounds.fBot;
+              const touchesUnitBot = Math.abs(innerY + innerH - unitInnerBotY) < 2;
+              const isOpenBot = isClusterOpenBottom(runChildren, activePlan, touchesUnitBot);
+              const extraBot = isOpenBot && activePlan.mode === 'partial' ? activeFrameBounds.fBot : 0;
+              const { reversalBox, innerRect } = buildClusterReversalBox({
+                id: `${node.id}-reversal-${runStart}-${runEnd}`,
+                x: runClearStart,
+                y: innerY,
+                w: runSpan,
+                h: innerH + extraBot,
+                reversalPx: clusterRev.reversalPx,
+                isOpenBottom: isOpenBot,
+              });
+              reversals.push(reversalBox);
+              effectiveRunStart = innerRect.x;
+              effectiveRunSpan = innerRect.w;
+              runY = innerRect.y;
+              runH = innerRect.h;
+              runClusterFlags = { reversalConsumedByCluster: true, bottomExtended: extraBot > 0 };
+              if (reversalBox.thickness > 0) {
+                const firstLeafIds = collectClusterBottomLeafIds([runChildren[0]]);
+                const lastLeafIds = collectClusterBottomLeafIds([runChildren[runChildren.length - 1]]);
+                firstLeafIds.forEach((id) =>
+                  clusterLeafBottomPad.set(id, { ...clusterLeafBottomPad.get(id), padLeft: reversalBox.thickness })
+                );
+                lastLeafIds.forEach((id) =>
+                  clusterLeafBottomPad.set(id, { ...clusterLeafBottomPad.get(id), padRight: reversalBox.thickness })
+                );
+              }
+            }
+          }
+
           if (runStart === runEnd) {
-            childClearStarts[runStart] = runClearStart;
-            childClearSpans[runStart] = runSpan;
+            childClearStarts[runStart] = effectiveRunStart;
+            childClearSpans[runStart] = effectiveRunSpan;
+            childYs[runStart] = runY;
+            childHs[runStart] = runH;
+            childClusterFlags[runStart] = runClusterFlags;
           } else {
             const runCount = runEnd - runStart + 1;
             let runWeight = 0;
@@ -605,9 +765,12 @@ export const buildCadLayout = (
             for (let k = runStart; k <= runEnd; k++) {
               const isRunLast = k === runEnd;
               const rRatio = runWeight > 0 ? weights[k] / runWeight : 1 / runCount;
-              const cSpan = isRunLast ? Math.max(1, runSpan - runAcc) : snap(runSpan * rRatio);
-              childClearStarts[k] = runClearStart + runAcc;
+              const cSpan = isRunLast ? Math.max(1, effectiveRunSpan - runAcc) : snap(effectiveRunSpan * rRatio);
+              childClearStarts[k] = effectiveRunStart + runAcc;
               childClearSpans[k] = cSpan;
+              childYs[k] = runY;
+              childHs[k] = runH;
+              childClusterFlags[k] = runClusterFlags;
               runAcc += cSpan;
             }
           }
@@ -634,14 +797,14 @@ export const buildCadLayout = (
 
       node.children.forEach((child, idx) => {
         const cw = isVert ? childClearSpans[idx] : innerW;
-        const ch = isVert ? innerH : childClearSpans[idx];
+        const ch = isVert ? childHs[idx] : childClearSpans[idx];
         const cx = isVert ? childClearStarts[idx] : innerX;
-        const cy = isVert ? innerY : childClearStarts[idx];
+        const cy = isVert ? childYs[idx] : childClearStarts[idx];
         const childRefBox = isVert
           ? { x: childRefStarts[idx], y: curRefBox.y, w: childRefSpans[idx], h: curRefBox.h }
           : { x: curRefBox.x, y: childRefStarts[idx], w: curRefBox.w, h: childRefSpans[idx] };
 
-        traverse(child, cx, cy, cw, ch, false, activeFrameBounds, childRefBox);
+        traverse(child, cx, cy, cw, ch, false, activeFrameBounds, childRefBox, childClusterFlags[idx]);
 
         if (idx < count - 1) {
           const nextChild = node.children?.[idx + 1];
@@ -743,19 +906,32 @@ export const buildCadLayout = (
     // 4. Ô lá cuối cùng (Leaf Cell)
     // Ô Hở đáy trong cửa Hở đáy từng phần: cộng bù chiều dày khung đáy để ô kéo xuống sàn
     const isOpenLeaf = isOpenLeafInUnit(node.id);
-    if (isOpenLeaf) innerH += activeFrameBounds.fBot;
+    if (isOpenLeaf && !clusterFlags?.bottomExtended) innerH += activeFrameBounds.fBot;
     const unitBottomY = activeFrameBounds.y + activeFrameBounds.h;
     const touchesFloor =
       (activePlan.isOpenBottom || isOpenLeaf) && Math.abs((innerY + innerH) - unitBottomY) < 2;
-    const cellReversalMode = resolveCellReversal(node);
-    const leafReversalFields: Pick<LeafCell, 'effectiveReversalMode' | 'reversalD'> =
-      cellReversalMode === undefined
+    const consumedByCluster = Boolean(clusterFlags?.reversalConsumedByCluster);
+    const cellReversalMode = consumedByCluster
+      ? 'none'
+      : resolveCellReversal(node, activeFrameBounds.unitNode);
+    const reversalProfileId =
+      node.reversalProfileIdOverride ?? activeFrameBounds.unitNode.reversalProfileIdOverride;
+    const leafReversalFields: Pick<
+      LeafCell,
+      'effectiveReversalMode' | 'reversalD' | 'reversalConsumedByCluster'
+    > = consumedByCluster
+      ? {
+          effectiveReversalMode: 'none',
+          reversalD: 0,
+          reversalConsumedByCluster: true,
+        }
+      : cellReversalMode === undefined
         ? {}
         : {
             effectiveReversalMode: cellReversalMode,
             reversalD:
-              cellReversalMode !== 'none' && options?.resolveReversalPx
-                ? options.resolveReversalPx(node.reversalProfileIdOverride)
+              cellReversalMode !== 'none'
+                ? resolveRevPx(reversalProfileId)
                 : undefined,
           };
 
@@ -907,8 +1083,9 @@ export const buildCadLayout = (
     };
 
     bottomLeaves.forEach((leaf) => {
-      const leafX0 = leaf.rawX ?? leaf.x;
-      const leafX1 = leafX0 + (leaf.rawW ?? leaf.w);
+      const pad = clusterLeafBottomPad.get(leaf.node.id);
+      const leafX0 = (leaf.rawX ?? leaf.x) - (pad?.padLeft ?? 0);
+      const leafX1 = (leaf.rawX ?? leaf.x) + (leaf.rawW ?? leaf.w) + (pad?.padRight ?? 0);
       if (uPlan.openLeafIds.has(leaf.node.id)) {
         flushSegment();
         unitOpenRanges.push({ startX: leafX0, endX: leafX1, cellId: leaf.node.id });
@@ -941,7 +1118,7 @@ export const buildCadLayout = (
   });
 
   if (!isPartialBottomOpen && !frames.some((f) => f.isPartialBottomOpen)) {
-    return { frames, mullions, couplingSeams, leaves, bottomSills, isOpenBottom: isOpenBottomDoor };
+    return { frames, mullions, couplingSeams, leaves, reversals, bottomSills, isOpenBottom: isOpenBottomDoor };
   }
 
   return {
@@ -949,6 +1126,7 @@ export const buildCadLayout = (
     mullions,
     couplingSeams,
     leaves,
+    reversals,
     bottomSills,
     isOpenBottom: false,
     isPartialBottomOpen: true,

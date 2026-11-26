@@ -2,6 +2,7 @@ import React from 'react';
 import { SceneCellNode } from '../../studio-types';
 import { CadMetrics, LeafCell } from '../cad-types';
 import { LeafGeometry, resolveHandleHeightMm, resolveHandleY } from '../cad-leaf-geometry';
+import { isLeafReversalOpenBottom, resolveLeafReversalBoxRect } from '../cad-reversal-utils';
 import { renderCadBead } from './cad-bead';
 import { renderCadGrille } from './cad-grille';
 import { CadOpeningSymbol } from './cad-opening-symbol';
@@ -53,6 +54,8 @@ export const CadDoubleLeaf: React.FC<CadDoubleLeafProps> = ({
   const rightBead = renderCadBead(rightSashX + thickness.left, paneY, paneWidth, paneHeight, `${node.id}-bead-2`, aluminumColor, effectiveBeadW, beadJoint);
 
   const isHydraulic = isGlobalHydraulic || Boolean(node.isHydraulic);
+  const reversalRect = resolveLeafReversalBoxRect(leaf, isHydraulic);
+  const isReversalOpenBottom = isLeafReversalOpenBottom(leaf, isHydraulic);
   const handleY = resolveHandleY(geometry, resolveHandleHeightMm(node, isGlobalHydraulic), {
     doorHeightMm,
     originY,
@@ -84,7 +87,16 @@ export const CadDoubleLeaf: React.FC<CadDoubleLeafProps> = ({
     <g>
       {/* Khung thanh đảo cho ô 2 cánh (nếu có reversalMode === 'sash') */}
       {hasReversalSash && (
-        <CadSashBox sx={leaf.x} sy={leaf.y} sw={leaf.w} sh={leaf.h} aluminumColor={aluminumColor} joint="45" effectiveSashD={reversalD} />
+        <CadSashBox
+          sx={reversalRect.x}
+          sy={reversalRect.y}
+          sw={reversalRect.w}
+          sh={reversalRect.h}
+          aluminumColor={aluminumColor}
+          joint="45"
+          effectiveSashD={reversalD}
+          isOpenBottom={isReversalOpenBottom}
+        />
       )}
 
       <CadSashBox sx={leftSashX} sy={sashBox.y} sw={sashWidth} sh={sashBox.h} aluminumColor={aluminumColor} joint={sashJoint} effectiveSashD={thickness.left} thickness={thickness} />

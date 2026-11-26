@@ -20,7 +20,8 @@ export const renderCadBead = (
   key: string,
   aluminumColor: string,
   effectiveBeadW: number,
-  jointType: '90' | '45' = '90'
+  jointType: '90' | '45' = '90',
+  isOpenBottom = false
 ): CadBeadResult => {
   // Nẹp theo bản rộng profile thật; chỉ chặn khi ô kính quá nhỏ để không âm diện tích lòng kính
   const maxAllowed = Math.max(0.5, (Math.min(gw, gh) - 4) / 2);
@@ -28,18 +29,21 @@ export const renderCadBead = (
   const gx2 = gx + bw;
   const gy2 = gy + bw;
   const gw2 = Math.max(2, gw - 2 * bw);
-  const gh2 = Math.max(2, gh - 2 * bw);
+  const gh2 = Math.max(2, gh - (isOpenBottom ? bw : 2 * bw));
+  const innerBotY = isOpenBottom ? gy + gh : gy + gh - bw;
 
   const el = jointType === '45' ? (
     <g key={key} fill={aluminumColor} stroke="#27272a" strokeWidth="0.5" strokeLinejoin="miter">
       {/* Top Bead */}
       <polygon points={`${gx},${gy} ${gx + gw},${gy} ${gx + gw - bw},${gy + bw} ${gx + bw},${gy + bw}`} />
       {/* Bottom Bead */}
-      <polygon points={`${gx},${gy + gh} ${gx + bw},${gy + gh - bw} ${gx + gw - bw},${gy + gh - bw} ${gx + gw},${gy + gh}`} />
+      {!isOpenBottom && (
+        <polygon points={`${gx},${gy + gh} ${gx + bw},${gy + gh - bw} ${gx + gw - bw},${gy + gh - bw} ${gx + gw},${gy + gh}`} />
+      )}
       {/* Left Bead */}
-      <polygon points={`${gx},${gy} ${gx + bw},${gy + bw} ${gx + bw},${gy + gh - bw} ${gx},${gy + gh}`} />
+      <polygon points={`${gx},${gy} ${gx + bw},${gy + bw} ${gx + bw},${innerBotY} ${gx},${gy + gh}`} />
       {/* Right Bead */}
-      <polygon points={`${gx + gw},${gy} ${gx + gw},${gy + gh} ${gx + gw - bw},${gy + gh - bw} ${gx + gw - bw},${gy + bw}`} />
+      <polygon points={`${gx + gw},${gy} ${gx + gw},${gy + gh} ${gx + gw - bw},${innerBotY} ${gx + gw - bw},${gy + bw}`} />
     </g>
   ) : (
     <g key={key} fill={aluminumColor} stroke="#27272a" strokeWidth="0.5" strokeLinejoin="miter">
@@ -48,7 +52,7 @@ export const renderCadBead = (
       <rect x={gx + gw - bw} y={gy} width={bw} height={gh} />
       {/* Nẹp ngang ăn vuông góc 90° vào nẹp đứng (Top & Bottom) */}
       <rect x={gx + bw} y={gy} width={Math.max(0, gw - 2 * bw)} height={bw} />
-      <rect x={gx + bw} y={gy + gh - bw} width={Math.max(0, gw - 2 * bw)} height={bw} />
+      {!isOpenBottom && <rect x={gx + bw} y={gy + gh - bw} width={Math.max(0, gw - 2 * bw)} height={bw} />}
     </g>
   );
 

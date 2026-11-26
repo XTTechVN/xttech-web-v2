@@ -66,6 +66,8 @@ export interface LeafCell {
   effectiveReversalMode?: 'none' | 'wall' | 'sash';
   /** Bề rộng thanh đảo riêng của ô (px, chỉ có khi ô ghi đè đảo) */
   reversalD?: number;
+  /** true nếu thanh đảo đã được vẽ bao quanh ở cấp cụm cánh (bỏ qua ở từng lá) */
+  reversalConsumedByCluster?: boolean;
   /** Độ dày 4 cạnh cánh riêng của ô (px) */
   sashEdges?: EdgeThickness;
   /** Độ dày 4 cạnh cánh riêng của ô (mm, dùng cho 3D) */
@@ -133,6 +135,16 @@ export interface FrameBox {
   isRightBottomOpen?: boolean;
   bottomBarSegments?: BottomBarSegment[];
   bottomOpenRanges?: Array<{ startX: number; endX: number; cellId: string }>;
+}
+
+export interface ReversalBox {
+  id: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  thickness: number;
+  isOpenBottom: boolean;
 }
 
 export interface CurvedFramePaths {

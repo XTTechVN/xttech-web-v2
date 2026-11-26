@@ -17,6 +17,11 @@ import {
 import { buildCadLayout, collectSashMullions } from '../cad-engine/cad-tree-traverser';
 import { resolveBottomOpenPlan } from '../cad-engine/cad-cell-config-resolver';
 import { resolveReversalMm } from '../cad-engine/cad-metrics';
+import {
+  isLeafReversalOpenBottom,
+  resolveGlobalCadReversalMode,
+  resolveLeafReversalBoxRect,
+} from '../cad-engine/cad-reversal-utils';
 import { BottomBarSegment } from '../cad-engine/cad-types';
 import { addGlassEffectDetails3D, resolveGlassEffectAppearance } from './door-3d-glass-effects';
 import { Door3DMeshCollector, hexToRgb01, MaterialId, Vec3 } from './door-3d-math';
@@ -537,9 +542,15 @@ function addArchedFrame3D(
   archConfig: ArchConfig | undefined,
   color: Vec3,
   matId: MaterialId,
-  edgeColor: Vec3
+  edgeColor: Vec3,
+  opts?: { baseOffsetMm?: number; bottomYOverride?: number }
 ) {
   const { x, y, w, h } = box;
+  const baseOff = opts?.baseOffsetMm ?? 0;
+  const outerD = baseOff;
+  const innerD = baseOff + frameD;
+  const yBotOuter = opts?.bottomYOverride ?? y + h;
+  const yBotInner = isOpenBottom ? yBotOuter : yBotOuter - frameD;
   const metrics = computeArchMetrics(shape, w, h, frameD, archConfig);
   const ySpringAbs = y + metrics.ySpring;
   const segments = 32;
@@ -547,15 +558,17 @@ function addArchedFrame3D(
   for (let i = 0; i < segments; i++) {
     const t0 = i / segments;
     const t1 = (i + 1) / segments;
-    const xOuter0 = x + t0 * w;
-    const xOuter1 = x + t1 * w;
-    const xInner0 = x + frameD + t0 * Math.max(10, w - 2 * frameD);
-    const xInner1 = x + frameD + t1 * Math.max(10, w - 2 * frameD);
+    const spanOuter = Math.max(10, w - 2 * outerD);
+    const spanInner = Math.max(10, w - 2 * innerD);
+    const xOuter0 = x + outerD + t0 * spanOuter;
+    const xOuter1 = x + outerD + t1 * spanOuter;
+    const xInner0 = x + innerD + t0 * spanInner;
+    const xInner1 = x + innerD + t1 * spanInner;
 
-    const yOuter0 = getArchYAtX(shape, x, y, w, h, 0, xOuter0, archConfig);
-    const yOuter1 = getArchYAtX(shape, x, y, w, h, 0, xOuter1, archConfig);
-    const yInner0 = getArchYAtX(shape, x, y, w, h, frameD, xInner0, archConfig);
-    const yInner1 = getArchYAtX(shape, x, y, w, h, frameD, xInner1, archConfig);
+    const yOuter0 = getArchYAtX(shape, x, y, w, h, outerD, xOuter0, archConfig);
+    const yOuter1 = getArchYAtX(shape, x, y, w, h, outerD, xOuter1, archConfig);
+    const yInner0 = getArchYAtX(shape, x, y, w, h, innerD, xInner0, archConfig);
+    const yInner1 = getArchYAtX(shape, x, y, w, h, innerD, xInner1, archConfig);
 
     const isApexCut = Boolean(archConfig?.isCutAtApex || metrics.isPointed);
     const shrink0 = isApexCut && i === segments / 2 ? 0.8 : 0;
@@ -570,14 +583,16 @@ function addArchedFrame3D(
     collector.addExtrudedConvexPolygon(poly, zBack, zFront, color, matId, edgeColor, 0.35);
   }
 
-  if (metrics.legH > 2) {
-    const botY = isOpenBottom ? y + h : y + h - frameD;
+  const ySpringOuter = baseOff > 0 ? getArchYAtX(shape, x, y, w, h, outerD, x + outerD, archConfig) : ySpringAbs;
+  const ySpringInner = baseOff > 0 ? getArchYAtX(shape, x, y, w, h, innerD, x + innerD, archConfig) : ySpringAbs;
+  if (metrics.legH > 2 || (baseOff > 0 && yBotOuter - Math.max(ySpringOuter, ySpringInner) > 2)) {
+    const botY = yBotInner;
     collector.addExtrudedConvexPolygon(
       ensureCCW([
-        to3D(x, ySpringAbs),
-        to3D(x + frameD, ySpringAbs),
-        to3D(x + frameD, botY),
-        to3D(x, y + h),
+        to3D(x + outerD, ySpringOuter),
+        to3D(x + innerD, ySpringInner),
+        to3D(x + innerD, botY),
+        to3D(x + outerD, yBotOuter),
       ]),
       zBack,
       zFront,
@@ -587,10 +602,10 @@ function addArchedFrame3D(
     );
     collector.addExtrudedConvexPolygon(
       ensureCCW([
-        to3D(x + w - frameD, ySpringAbs),
-        to3D(x + w, ySpringAbs),
-        to3D(x + w, y + h),
-        to3D(x + w - frameD, botY),
+        to3D(x + w - innerD, ySpringInner),
+        to3D(x + w - outerD, ySpringOuter),
+        to3D(x + w - outerD, yBotOuter),
+        to3D(x + w - innerD, botY),
       ]),
       zBack,
       zFront,
@@ -603,10 +618,10 @@ function addArchedFrame3D(
   if (!isOpenBottom) {
     collector.addExtrudedConvexPolygon(
       ensureCCW([
-        to3D(x + frameD, y + h - frameD),
-        to3D(x + w - frameD, y + h - frameD),
-        to3D(x + w, y + h),
-        to3D(x, y + h),
+        to3D(x + innerD, yBotInner),
+        to3D(x + w - innerD, yBotInner),
+        to3D(x + w - outerD, yBotOuter),
+        to3D(x + outerD, yBotOuter),
       ]),
       zBack,
       zFront,
@@ -1028,6 +1043,7 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
     slidingOverlapPx: slidingOverlapMm,
     availableProfiles,
     scale: 1,
+    resolveReversalPx: (profileId) => resolveReversalMm(availableProfiles, frameConfig, profileId),
   });
 
   const cfg: Door3DCustomSettings = customSettings ?? DEFAULT_DOOR_3D_SETTINGS;
@@ -1247,6 +1263,53 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
     );
   }
 
+  // 5b. Dựng các thanh Đảo khung ở cấp cụm cánh (Cluster Reversals)
+  const isGlobalHydraulic = Boolean(sashConfig?.isHydraulic || rootCell.isHydraulic);
+  const globalReversalMode = resolveGlobalCadReversalMode(frameConfig);
+  for (const rev of layout.reversals ?? []) {
+    if (rev.thickness <= 0) continue;
+    const isTopFullArchRev =
+      frameShape !== 'rect' &&
+      rev.y <= frameMm + 2 &&
+      Math.abs(rev.w - (safeW - 2 * frameMm)) < 4;
+    if (isTopFullArchRev) {
+      addArchedFrame3D(
+        collector,
+        to3D,
+        frameShape,
+        { x: 0, y: 0, w: safeW, h: safeH },
+        rev.thickness,
+        -sashDepthM / 2,
+        sashDepthM / 2,
+        rev.isOpenBottom,
+        frameConfig?.archConfig,
+        aluRgb,
+        aluMatId,
+        aluEdgeRgb,
+        { baseOffsetMm: rev.y, bottomYOverride: rev.y + rev.h }
+      );
+    } else {
+      addFourPerimeterBars3D(
+        collector,
+        to3D,
+        { x: rev.x, y: rev.y, w: rev.w, h: rev.h },
+        {
+          left: rev.thickness,
+          top: rev.thickness,
+          right: rev.thickness,
+          bottom: rev.isOpenBottom ? 0 : rev.thickness,
+        },
+        -sashDepthM / 2,
+        sashDepthM / 2,
+        '45',
+        aluRgb,
+        aluMatId,
+        aluEdgeRgb,
+        { isOpenBottom: rev.isOpenBottom, gapMm: 0.4 }
+      );
+    }
+  }
+
   // 6. Thu thập trước Đố chia cánh (Sash Mullions)
   const sashMullionsAll = collectSashMullions(layout.leaves, sashMm);
 
@@ -1294,55 +1357,95 @@ export function buildDoor3DGeometry(params: BuildDoor3DParams): Door3DMeshCollec
 
   for (const leaf of layout.leaves) {
     const { node, x: leafX, y: leafY, w: leafW, h: leafH } = leaf;
-    // Ô ghi đè Đảo vách/Đảo cánh riêng: dựng 4 thanh REVERSAL quanh ô rồi thu nhỏ hộp ô vào trong
-    const hasCellReversal = leaf.effectiveReversalMode === 'wall' || leaf.effectiveReversalMode === 'sash';
+    const st = String(node.sashType || 'fixed');
+    const effectiveMode = leaf.effectiveReversalMode ?? globalReversalMode;
+    const isLeafHydraulic = Boolean(isGlobalHydraulic || node.isHydraulic);
+    // Ô ghi đè Đảo vách/Đảo cánh riêng hoặc thừa hưởng toàn cục (nếu chưa xử lý ở cấp cụm)
+    const hasCellReversal =
+      !leaf.reversalConsumedByCluster &&
+      ((st === 'fixed' && effectiveMode === 'wall') || (st !== 'fixed' && effectiveMode === 'sash'));
+    const revRect = resolveLeafReversalBoxRect(leaf, isLeafHydraulic);
+    const isRevOpenBot = isLeafReversalOpenBottom(leaf, isLeafHydraulic);
     const cellReversalMm = hasCellReversal
       ? Math.min(
           resolveReversalMm(availableProfiles, frameConfig, node.reversalProfileIdOverride),
-          Math.floor(Math.min(leafW, leafH) * 0.2)
+          Math.floor(Math.min(revRect.w, revRect.h) * 0.2)
         )
       : 0;
-    if (cellReversalMm > 0) {
-      addFourPerimeterBars3D(
-        collector,
-        to3D,
-        { x: leafX, y: leafY, w: leafW, h: leafH },
-        { left: cellReversalMm, top: cellReversalMm, right: cellReversalMm, bottom: cellReversalMm },
-        -sashDepthM / 2,
-        sashDepthM / 2,
-        '45',
-        aluRgb,
-        aluMatId,
-        aluEdgeRgb,
-        { gapMm: 0.4 }
-      );
+    if (hasCellReversal && cellReversalMm > 0) {
+      const isTopFullArchLeaf =
+        frameShape !== 'rect' &&
+        revRect.y <= frameMm + 2 &&
+        Math.abs(revRect.w - (safeW - 2 * frameMm)) < 4;
+      if (isTopFullArchLeaf) {
+        addArchedFrame3D(
+          collector,
+          to3D,
+          frameShape,
+          { x: 0, y: 0, w: safeW, h: safeH },
+          cellReversalMm,
+          -sashDepthM / 2,
+          sashDepthM / 2,
+          isRevOpenBot,
+          frameConfig?.archConfig,
+          aluRgb,
+          aluMatId,
+          aluEdgeRgb,
+          { baseOffsetMm: revRect.y, bottomYOverride: revRect.y + revRect.h }
+        );
+      } else {
+        addFourPerimeterBars3D(
+          collector,
+          to3D,
+          revRect,
+          {
+            left: cellReversalMm,
+            top: cellReversalMm,
+            right: cellReversalMm,
+            bottom: isRevOpenBot ? 0 : cellReversalMm,
+          },
+          -sashDepthM / 2,
+          sashDepthM / 2,
+          '45',
+          aluRgb,
+          aluMatId,
+          aluEdgeRgb,
+          { isOpenBottom: isRevOpenBot, gapMm: 0.4 }
+        );
+      }
     }
+    const revBot = hasCellReversal && isRevOpenBot ? 0 : cellReversalMm;
     const lx = leafX + cellReversalMm;
     const ly = leafY + cellReversalMm;
     const lw = leafW - 2 * cellReversalMm;
-    const lh = leafH - 2 * cellReversalMm;
-    const st = String(node.sashType || 'fixed');
+    const lh = leafH - cellReversalMm - revBot;
 
     if (st === 'fixed') {
       const bW = Math.min(leaf.beadMm ?? beadMm, Math.floor(Math.min(lw, lh) * 0.15));
+      const isFixedBeadOpenBottom = Boolean(hasCellReversal && isRevOpenBot);
       const beadDepth = Math.max(0.018, (cfg.glassThicknessMm || 8) * 0.001 + 0.01);
       addFourPerimeterBars3D(
         collector,
         to3D,
         { x: lx, y: ly, w: lw, h: lh },
-        { left: bW, top: bW, right: bW, bottom: bW },
+        { left: bW, top: bW, right: bW, bottom: isFixedBeadOpenBottom ? 0 : bW },
         -beadDepth / 2,
         beadDepth / 2,
         frameConfig?.beadCornerJoint ?? '45',
         beadRgb,
         aluMatId,
         aluEdgeRgb,
-        { gapMm: 0.4 }
+        { isOpenBottom: isFixedBeadOpenBottom, gapMm: 0.4 }
       );
       addInfillPane3D(
         collector,
         to3D,
-        { x: lx + bW, y: ly + bW, w: Math.max(20, lw - 2 * bW), h: Math.max(20, lh - 2 * bW) },
+        {
+          x: lx + bW,
+          y: ly + bW,
+          w: Math.max(20, lw - 2 * bW),
+          h: Math.max(20, lh - (isFixedBeadOpenBottom ? bW : 2 * bW)),
+        },
         0,
         node.paneType || 'glass',
         aluRgb,

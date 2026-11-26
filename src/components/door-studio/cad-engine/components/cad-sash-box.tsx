@@ -13,6 +13,8 @@ interface CadSashBoxProps {
   effectiveSashD: number;
   /** Độ dày riêng từng cạnh (px, số thực) — ưu tiên hơn `effectiveSashD` */
   thickness?: EdgeThickness;
+  /** Hở cạnh đáy (bỏ thanh đáy, 2 thanh đứng chạm phẳng 90° xuống đáy) */
+  isOpenBottom?: boolean;
 }
 
 const BOX_STROKE = '#27272a';
@@ -37,10 +39,11 @@ export const CadSashBox: React.FC<CadSashBoxProps> = ({
   joint = '45',
   effectiveSashD,
   thickness,
+  isOpenBottom = false,
 }) => {
   const top = thickness?.top ?? effectiveSashD;
   const right = thickness?.right ?? effectiveSashD;
-  const bottom = thickness?.bottom ?? effectiveSashD;
+  const bottom = isOpenBottom ? 0 : (thickness?.bottom ?? effectiveSashD);
   const left = thickness?.left ?? effectiveSashD;
   const x2 = sx + sw;
   const y2 = sy + sh;
@@ -59,7 +62,7 @@ export const CadSashBox: React.FC<CadSashBoxProps> = ({
         <rect x={sx} y={sy} width={left} height={sh} />
         <rect x={x2 - right} y={sy} width={right} height={sh} />
         <rect x={sx + left} y={sy} width={innerW} height={top} />
-        <rect x={sx + left} y={y2 - bottom} width={innerW} height={bottom} />
+        {!isOpenBottom && <rect x={sx + left} y={y2 - bottom} width={innerW} height={bottom} />}
       </>
     );
   }
@@ -68,7 +71,7 @@ export const CadSashBox: React.FC<CadSashBoxProps> = ({
     return renderGroup(
       <>
         <rect x={sx} y={sy} width={sw} height={top} />
-        <rect x={sx} y={y2 - bottom} width={sw} height={bottom} />
+        {!isOpenBottom && <rect x={sx} y={y2 - bottom} width={sw} height={bottom} />}
         <rect x={sx} y={sy + top} width={left} height={innerH} />
         <rect x={x2 - right} y={sy + top} width={right} height={innerH} />
       </>
@@ -78,15 +81,15 @@ export const CadSashBox: React.FC<CadSashBoxProps> = ({
   if (joint === 'd_left' || joint === 'd_right') {
     const isLeftFull = joint === 'd_left';
     const leftY = isLeftFull ? sy : sy + top;
-    const leftH = isLeftFull ? sh : innerH;
+    const leftH = isOpenBottom ? Math.max(0, y2 - leftY) : isLeftFull ? sh : innerH;
     const rightY = isLeftFull ? sy + top : sy;
-    const rightH = isLeftFull ? innerH : sh;
+    const rightH = isOpenBottom ? Math.max(0, y2 - rightY) : isLeftFull ? innerH : sh;
     const barX = isLeftFull ? sx + left : sx;
     const barW = sw - (isLeftFull ? left : 0) - (isLeftFull ? 0 : right);
     return renderGroup(
       <>
         <rect x={barX} y={sy} width={Math.max(0, barW)} height={top} />
-        <rect x={barX} y={y2 - bottom} width={Math.max(0, barW)} height={bottom} />
+        {!isOpenBottom && <rect x={barX} y={y2 - bottom} width={Math.max(0, barW)} height={bottom} />}
         <rect x={sx} y={leftY} width={left} height={leftH} />
         <rect x={x2 - right} y={rightY} width={right} height={rightH} />
       </>
@@ -97,20 +100,24 @@ export const CadSashBox: React.FC<CadSashBoxProps> = ({
     return renderGroup(
       <>
         <polygon points={polygonPoints([[sx, sy], [x2, sy], [x2 - right, sy + top], [sx + left, sy + top]])} />
-        <rect x={sx + left} y={y2 - bottom} width={innerW} height={bottom} />
+        {!isOpenBottom && <rect x={sx + left} y={y2 - bottom} width={innerW} height={bottom} />}
         <polygon points={polygonPoints([[sx, sy], [sx + left, sy + top], [sx + left, y2], [sx, y2]])} />
         <polygon points={polygonPoints([[x2, sy], [x2 - right, sy + top], [x2 - right, y2], [x2, y2]])} />
       </>
     );
   }
 
-  // Mặc định: Ghép mòi 45° 4 góc
+  // Mặc định: Ghép mòi 45° 4 góc (khi hở đáy: đầu dưới chạm phẳng 90° tại y2, bỏ thanh đáy)
+  const leftInnerBotY = isOpenBottom ? y2 : y2 - bottom;
+  const rightInnerBotY = isOpenBottom ? y2 : y2 - bottom;
   return renderGroup(
     <>
       <polygon points={polygonPoints([[sx, sy], [x2, sy], [x2 - right, sy + top], [sx + left, sy + top]])} />
-      <polygon points={polygonPoints([[sx, y2], [x2, y2], [x2 - right, y2 - bottom], [sx + left, y2 - bottom]])} />
-      <polygon points={polygonPoints([[sx, sy], [sx + left, sy + top], [sx + left, y2 - bottom], [sx, y2]])} />
-      <polygon points={polygonPoints([[x2, sy], [x2 - right, sy + top], [x2 - right, y2 - bottom], [x2, y2]])} />
+      {!isOpenBottom && (
+        <polygon points={polygonPoints([[sx, y2], [x2, y2], [x2 - right, y2 - bottom], [sx + left, y2 - bottom]])} />
+      )}
+      <polygon points={polygonPoints([[sx, sy], [sx + left, sy + top], [sx + left, leftInnerBotY], [sx, y2]])} />
+      <polygon points={polygonPoints([[x2, sy], [x2 - right, sy + top], [x2 - right, rightInnerBotY], [x2, y2]])} />
     </>
   );
 };

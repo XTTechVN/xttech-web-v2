@@ -6,6 +6,7 @@ import { Door, DoorCreate, DoorUpdate, DoorCalculateResponse, SelectedAccessoryI
 import { calculateDoor, createDoor, updateDoor, getDoorSeriesList, getProfileBars, getAccessoryCombos, getAccessories, getGlasses, getBrandColors, getBrands, } from '@/actions';
 import { FrameShape, SashOpenType, SceneCellNode, StudioMainTab, FrameConfig, SashConfig, FrameCornerJoint, SashCornerJoint, BeadCornerJoint, SlidingSashRole, SashOffsetScope, SashOffsetValues, SashVariantProfiles, DoorCustomExtraItem, DoorSystemFamily, DEFAULT_FRAME_CONFIG, DEFAULT_SASH_CONFIG, MullionInfo, MullionCutType, ColorSwatch, ALUMINUM_PALETTE, GlassGrilleConfig, } from '../studio-types';
 import { ResizeSplitParams } from '../cad-engine/door-cad-renderer';
+import { syncClusterReversalUpdate } from '../cad-engine/cad-reversal-utils';
 import { updateNode, findNode, findParentNode, createDefaultRootCell, rescaleTree, ensureRootCellDimensions, createSplitChildren, applySashTypeToCluster, resizeCellInParent, isInsideSash, findEnclosingFrameUnit, resolveFlatSashMullionPositions, pickGlassConfig, } from '../utils/door-tree-utils';
 import { formatReferenceValue } from '../utils/mullion-reference-utils';
 import { applyGlassVisualToTree } from '../utils/glass-visual-utils';
@@ -1677,7 +1678,7 @@ export function useDoorStudioState({
       }
       return;
     }
-    pushState(updateNode(rootCell, selectedCellId, updates));
+    pushState(syncClusterReversalUpdate(rootCell, selectedCellId, updates));
   };
 
   // Áp hiệu ứng kính cho mọi ô kính trong cửa (1 bước lịch sử)
