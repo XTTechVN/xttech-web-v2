@@ -68,7 +68,7 @@ export function TemplateDoorInfoStep({
       </div>
 
       <div className="p-4 space-y-3.5">
-        <div className="flex items-center gap-3 p-2.5 bg-slate-50/70 border border-slate-200/80 rounded-lg">
+        <div className="flex items-center gap-3 p-2.5 bg-slate-50/70 border border-slate-200/80 rounded-control">
           <div className="w-14 h-14 bg-white border border-slate-200 rounded shrink-0 flex items-center justify-center overflow-hidden p-1">
             {selectedDoor && (
               <DoorThumbnail
@@ -116,7 +116,7 @@ export function TemplateDoorInfoStep({
                 <select
                   value={targetFloorId}
                   onChange={(e) => onChangeFloorId(Number(e.target.value))}
-                  className="w-full h-10 px-3 text-base md:text-sm bg-white border border-gray-200 rounded-md outline-none hover:border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 text-gray-900 transition-all duration-200"
+                  className="w-full h-10 px-3 text-base md:text-sm bg-white border border-gray-200 rounded-control outline-none hover:border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 text-gray-900 transition-all duration-200"
                 >
                   {floors.map((fl) => (
                     <option key={fl.id} value={fl.id}>

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore, useMeStore } from '@/stores';
-import { getUser } from '@/actions/user';
+import { getMe } from '@/actions/me';
 import { SidebarProvider, PageTransitionProvider } from '@/contexts';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -23,27 +23,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       } else {
         setIsLoading(false);
 
-        // Đồng bộ ngầm profile mới nhất từ backend (avatar, quyền, chức vụ, họ tên)
+        // Đồng bộ ngầm tên, email, avatar từ /me (không cần quyền user:read)
         const currentUserId = state.user?.id;
         if (currentUserId) {
           try {
-            const latestUser = await getUser(currentUserId);
-            if (latestUser) {
-              useAuthStore.getState().updateUser({
-                email: latestUser.email,
-                username: latestUser.username,
-                fullName: latestUser.fullName,
-                phoneNumber: latestUser.phoneNumber,
-                avatar: latestUser.avatar ?? undefined,
-                gender: latestUser.gender,
-                birthday: latestUser.birthday,
-                address: latestUser.address ?? undefined,
-                joinedAt: latestUser.joinedAt ?? undefined,
-                identifyCode: latestUser.identifyCode ?? undefined,
-                attendancePolicy: latestUser.attendancePolicy,
-                roles: latestUser.roles,
-              });
-            }
+            const { user } = await getMe();
+            useAuthStore.getState().updateUser({
+              email: user.email,
+              username: user.username,
+              fullName: user.fullName ?? undefined,
+              avatar: user.avatar ?? undefined,
+            });
           } catch {
             // Không chặn giao diện nếu mạng yếu
           }

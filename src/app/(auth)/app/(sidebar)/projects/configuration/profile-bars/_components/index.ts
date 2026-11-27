@@ -1,7 +1,0 @@
-export * from './profile-bar-toolbar';
-export * from './profile-bar-table';
-export * from './profile-bar-modal';
-export * from './profile-bar-skeleton';
-export * from './profile-bar-empty-state';
-export * from './profile-section-library-modal';
-export * from './modals';

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { useQueryClient } from '@tanstack/react-query';
+import { useCan } from '@/hooks';
 import type { MyAttendanceToday } from '@/types';
 import { AutoTimekeepingModal } from '@/components';
 import { Clock, CheckCircle2, AlertCircle, ArrowRight, ShieldCheck } from 'lucide-react';
@@ -17,6 +18,7 @@ export const QuickAttendanceCard: React.FC<QuickAttendanceCardProps> = ({ attend
   const router = useRouter();
   const queryClient = useQueryClient();
   const [isOpenModal, setIsOpenModal] = useState(false);
+  const { can } = useCan();
 
   const isCheckedIn = Boolean(attendance?.checkIn);
   const isCheckedOut = Boolean(attendance?.checkOut);
@@ -25,6 +27,8 @@ export const QuickAttendanceCard: React.FC<QuickAttendanceCardProps> = ({ attend
   const isCurrentlyWorking = isCheckedIn && !isCheckedOut;
   // Đã hoàn tất ít nhất 1 lượt chấm công trong ngày (cả vào và ra)
   const hasCompletedSession = isCheckedIn && isCheckedOut;
+  // Tan ca cần attendance:checkout, vào ca (kể cả ca tiếp theo) cần attendance:checkin
+  const canPunch = can(isCurrentlyWorking ? 'attendance:checkout' : 'attendance:checkin');
 
   // Xác định thời điểm trong ngày (từ 12:00 trở đi là ca chiều)
   const currentHour = new Date().getHours();
@@ -52,7 +56,7 @@ export const QuickAttendanceCard: React.FC<QuickAttendanceCardProps> = ({ attend
   }, [queryClient]);
 
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/95 via-primary to-primary/85 text-white p-4.5 shadow-md">
+    <div className="relative overflow-hidden rounded-block bg-primary text-white p-4.5">
       {/* Nền hiệu ứng trang trí */}
       <div className="absolute -right-6 -bottom-6 w-32 h-32 rounded-full bg-white/10 blur-xl pointer-events-none" />
       <div className="absolute top-0 right-10 w-20 h-20 rounded-full bg-white/5 blur-lg pointer-events-none" />
@@ -61,7 +65,7 @@ export const QuickAttendanceCard: React.FC<QuickAttendanceCardProps> = ({ attend
         {/* Tiêu đề & Ca làm việc */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-white/15 backdrop-blur-xs text-white">
+            <span className="p-1.5 rounded-control bg-white/15 backdrop-blur-xs text-white">
               <Clock size={16} />
             </span>
             <div className="flex flex-col">
@@ -77,10 +81,10 @@ export const QuickAttendanceCard: React.FC<QuickAttendanceCardProps> = ({ attend
         </div>
 
         {/* Thông tin Check-in / Check-out 2 cột */}
-        <div className="grid grid-cols-2 gap-2 bg-black/15 rounded-xl p-2.5 border border-white/10 backdrop-blur-xs">
+        <div className="grid grid-cols-2 gap-2 bg-black/15 rounded-block p-2.5 border border-white/10 backdrop-blur-xs">
           {/* Cột Check-in */}
           <div className="flex flex-col gap-0.5">
-            <span className="text-[10px] text-white/70 uppercase tracking-wider font-medium">Giờ vào</span>
+            <span className="text-xs text-white/70 font-medium">Giờ vào</span>
             {isCheckedIn ? (
               <div className="flex items-center gap-1.5 text-emerald-300 font-bold text-sm">
                 <CheckCircle2 size={14} className="shrink-0" />
@@ -93,13 +97,13 @@ export const QuickAttendanceCard: React.FC<QuickAttendanceCardProps> = ({ attend
               </div>
             )}
             {attendance?.isLate && (
-              <span className="text-[10px] text-amber-200">Muộn {attendance.lateMinutes}p</span>
+              <span className="text-xs text-amber-200">Muộn {attendance.lateMinutes}p</span>
             )}
           </div>
 
           {/* Cột Check-out */}
           <div className="flex flex-col gap-0.5 pl-2 border-l border-white/15">
-            <span className="text-[10px] text-white/70 uppercase tracking-wider font-medium">Giờ ra</span>
+            <span className="text-xs text-white/70 font-medium">Giờ ra</span>
             {isCheckedOut ? (
               <div className="flex items-center gap-1.5 text-emerald-300 font-bold text-sm">
                 <CheckCircle2 size={14} className="shrink-0" />
@@ -131,28 +135,30 @@ export const QuickAttendanceCard: React.FC<QuickAttendanceCardProps> = ({ attend
         )}
 
         {/* Nút hành động chấm công */}
-        <button
-          type="button"
-          onClick={handlePunchClick}
-          className="w-full py-2.5 px-4 rounded-xl bg-white text-primary font-bold text-xs flex items-center justify-center gap-2 shadow-sm hover:bg-white/95 active:scale-[0.98] transition cursor-pointer"
-        >
-          {isCurrentlyWorking ? (
-            <>
-              <span>Chấm công tan ca</span>
-              <ArrowRight size={14} />
-            </>
-          ) : hasCompletedSession ? (
-            <>
-              <span>{isAfternoon ? 'Chấm công vào ca chiều' : 'Chấm công ca tiếp theo'}</span>
-              <ArrowRight size={14} />
-            </>
-          ) : (
-            <>
-              <span>Chấm công vào ca ngay</span>
-              <ArrowRight size={14} />
-            </>
-          )}
-        </button>
+        {canPunch && (
+          <button
+            type="button"
+            onClick={handlePunchClick}
+            className="w-full py-2.5 px-4 rounded-block bg-white text-primary font-bold text-xs flex items-center justify-center gap-2 shadow-sm hover:bg-white/95 active:scale-[0.98] transition cursor-pointer"
+          >
+            {isCurrentlyWorking ? (
+              <>
+                <span>Chấm công tan ca</span>
+                <ArrowRight size={14} />
+              </>
+            ) : hasCompletedSession ? (
+              <>
+                <span>{isAfternoon ? 'Chấm công vào ca chiều' : 'Chấm công ca tiếp theo'}</span>
+                <ArrowRight size={14} />
+              </>
+            ) : (
+              <>
+                <span>Chấm công vào ca ngay</span>
+                <ArrowRight size={14} />
+              </>
+            )}
+          </button>
+        )}
       </div>
 
       {/* Modal Chấm công tự động (Khuôn mặt + Vị trí GPS) */}

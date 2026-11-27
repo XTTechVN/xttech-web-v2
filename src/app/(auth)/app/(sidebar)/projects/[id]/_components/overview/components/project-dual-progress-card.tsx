@@ -31,7 +31,7 @@ export function ProjectDualProgressCard({ projectId, onSelectTab }: ProjectDualP
     enabled: !!projectId,
   });
 
-  if (isLoading || !overview) return <Skeleton className="h-44 w-full rounded-md" />;
+  if (isLoading || !overview) return <Skeleton className="h-44 w-full rounded-control" />;
 
   const { production, payment, nextActions } = overview;
   const statusEntries = (Object.entries(production.statusCounts) as [ProgressStepCode, number][]).filter(
@@ -47,7 +47,7 @@ export function ProjectDualProgressCard({ projectId, onSelectTab }: ProjectDualP
         <button
           type="button"
           onClick={() => onSelectTab?.('production')}
-          className="cursor-pointer space-y-2 rounded-md border border-slate-200/80 bg-white p-3.5 text-left shadow-2xs hover:border-primary/40"
+          className="cursor-pointer space-y-2 rounded-control border border-slate-200/80 bg-white p-3.5 text-left shadow-2xs hover:border-primary/40"
         >
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
@@ -74,7 +74,7 @@ export function ProjectDualProgressCard({ projectId, onSelectTab }: ProjectDualP
         <button
           type="button"
           onClick={() => onSelectTab?.('contracts')}
-          className="cursor-pointer space-y-2 rounded-md border border-slate-200/80 bg-white p-3.5 text-left shadow-2xs hover:border-amber-400/60"
+          className="cursor-pointer space-y-2 rounded-control border border-slate-200/80 bg-white p-3.5 text-left shadow-2xs hover:border-amber-400/60"
         >
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
@@ -95,7 +95,7 @@ export function ProjectDualProgressCard({ projectId, onSelectTab }: ProjectDualP
       </div>
 
       {nextActions.length > 0 && (
-        <div className="space-y-1 rounded-md border border-amber-200 bg-amber-50/60 p-2.5">
+        <div className="space-y-1 rounded-control border border-amber-200 bg-amber-50/60 p-2.5">
           <div className="flex items-center gap-1.5 text-[11px] font-bold text-amber-800">
             <Lightbulb size={12} /> Việc cần làm tiếp
           </div>

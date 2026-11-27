@@ -127,50 +127,40 @@ export function DoorCreateModal({ isOpen, onClose, title, submitText = 'Xác nh�
             <div className="w-full flex items-center justify-between">
               <span className="text-xs font-semibold text-gray-700 select-none">Hình ảnh ({newImages.length})</span>
               {newImages.length > 0 && (
-                <span className="text-[11px] text-primary bg-primary/10 px-2 py-0.5 rounded-md font-medium">
-                  Đã chọn ảnh chính
-                </span>
+                <span className="text-[11px] text-primary bg-primary/10 px-2 py-0.5 rounded-control font-medium">Đã chọn ảnh chính</span>
               )}
             </div>
 
             {/* Khung xem ảnh chính được chọn */}
-            <div className="w-full aspect-square max-w-50 rounded-xl border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center relative group">
+            <div className="w-full aspect-square max-w-50 rounded-block border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center relative group">
               {currentPrimaryPreview ? (
                 <img src={currentPrimaryPreview} alt="Preview" className="w-full h-full object-cover" />
               ) : (
                 <Columns className="w-10 h-10 text-gray-300" />
               )}
               {currentPrimaryPreview && (
-                <div className="absolute top-2 left-2 bg-primary text-white text-[10px] font-medium px-2 py-0.5 rounded shadow">
-                  Ảnh chính
-                </div>
+                <div className="absolute top-2 left-2 bg-primary text-white text-[10px] font-medium px-2 py-0.5 rounded shadow">Ảnh chính</div>
               )}
             </div>
 
-            <label className="flex items-center gap-2 px-3 py-1.5 border border-gray-300 rounded-lg cursor-pointer bg-white hover:bg-gray-50 text-sm font-medium text-gray-700 transition shadow-xs w-full justify-center">
+            <label className="flex items-center gap-2 px-3 py-1.5 border border-gray-300 rounded-control cursor-pointer bg-white hover:bg-gray-50 text-sm font-medium text-gray-700 transition shadow-xs w-full justify-center">
               <Upload size={16} />
               <span>Tải lên nhiều ảnh</span>
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={handleFileChange}
-              />
+              <input type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
             </label>
 
             {/* Danh sách ảnh thumbnails */}
             {newImages.length > 0 && (
               <div className="w-full flex flex-col gap-1.5 mt-1">
                 <span className="text-[11px] text-gray-500">Nhấn vào ảnh để chọn làm ảnh chính:</span>
-                <div className="grid grid-cols-3 gap-2.5 max-h-48 overflow-y-auto p-1.5 border border-gray-100 rounded-lg bg-gray-50/50">
+                <div className="grid grid-cols-3 gap-2.5 max-h-48 overflow-y-auto p-1.5 border border-gray-100 rounded-control bg-gray-50/50">
                   {newImages.map((img, idx) => {
                     const isPrimary = idx === primaryIndex;
                     return (
                       <div
                         key={img.id}
                         onClick={() => setPrimaryIndex(idx)}
-                        className={`relative aspect-square rounded-xl border overflow-hidden cursor-pointer group transition-all ${
+                        className={`relative aspect-square rounded-block border overflow-hidden cursor-pointer group transition-all ${
                           isPrimary
                             ? 'border-primary ring-2 ring-primary/40 shadow-xs'
                             : 'border-gray-200 hover:border-gray-400 opacity-85 hover:opacity-100'

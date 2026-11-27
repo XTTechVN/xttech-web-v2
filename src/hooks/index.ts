@@ -6,7 +6,6 @@ export { useQueryParam } from './use-query-param';
 export { useQueryParams } from './use-query-params';
 export { useLocationTracker, NativeTracking } from './useLocationTracker';
 export { useMyTodayAttendance } from './useMyTodayAttendance';
-export * from './user-permission';
 export * from './use-explorer-selection';
 export * from './use-document-modals';
 export * from './use-document-bulk-upload';

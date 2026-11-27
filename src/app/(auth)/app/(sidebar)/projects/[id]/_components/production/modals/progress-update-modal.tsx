@@ -156,7 +156,7 @@ export function ProgressUpdateModal({
             onDrop={handleDrop}
             onClick={() => !isUploading && evidenceMedia.length === 0 && fileInputRef.current?.click()}
             className={cn(
-              'rounded-lg border-2 border-dashed p-3 transition-all',
+              'rounded-control border-2 border-dashed p-3 transition-all',
               isDragging
                 ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
                 : 'border-slate-200 hover:border-primary/40 bg-slate-50/40',
@@ -174,7 +174,7 @@ export function ProgressUpdateModal({
                   {evidenceMedia.map((item, idx) => (
                     <div
                       key={`${item.url}-${idx}`}
-                      className="group relative flex aspect-square items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-white"
+                      className="group relative flex aspect-square items-center justify-center overflow-hidden rounded-control border border-slate-200 bg-white"
                     >
                       {item.type === 'video' ? (
                         <div className="flex flex-col items-center gap-1 text-slate-500">
@@ -222,7 +222,7 @@ export function ProgressUpdateModal({
           </div>
         </div>
 
-        <div className="flex items-center justify-between rounded-lg border border-slate-200/80 bg-slate-50 p-3">
+        <div className="flex items-center justify-between rounded-control border border-slate-200/80 bg-slate-50 p-3">
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-slate-500">Mốc hiện tại:</span>
             <span className="text-xs font-bold text-slate-700">
@@ -242,7 +242,7 @@ export function ProgressUpdateModal({
           <label className="mb-1.5 block text-xs font-semibold text-slate-700">
             Các bộ cửa áp dụng ({selectedPositions.length} cửa):
           </label>
-          <div className="flex max-h-24 flex-wrap gap-1.5 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50/50 p-2">
+          <div className="flex max-h-24 flex-wrap gap-1.5 overflow-y-auto rounded-control border border-slate-200 bg-slate-50/50 p-2">
             {selectedPositions.map((pos) => (
               <span
                 key={pos.id}

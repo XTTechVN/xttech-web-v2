@@ -1,12 +1,12 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { Search } from 'lucide-react';
 import { Button, Skeleton } from '@/components';
 import { FilterDrawer, type FilterGroup } from '@/components-remake';
-import { useQueryParam } from '@/hooks';
+import { useCan, useQueryParam } from '@/hooks';
 import { getEmployees } from '@/actions/employee';
 import type { Employee } from '@/types';
 
@@ -33,6 +33,13 @@ const Table = () => {
   });
 
   const all = useMemo(() => data?.items ?? [], [data]);
+
+  // Phạm vi own: API chỉ trả hồ sơ của chính mình, nên không có gì để lọc/tìm, vào thẳng hồ sơ
+  const { isWide } = useCan();
+  const ownOnly = !isWide('user:read');
+  useEffect(() => {
+    if (ownOnly && all.length === 1) router.replace(`/app/employees/${all[0].id}`);
+  }, [ownOnly, all, router]);
   const keyword = search.trim().toLowerCase();
 
   const groups = useMemo<FilterGroup[]>(() => {

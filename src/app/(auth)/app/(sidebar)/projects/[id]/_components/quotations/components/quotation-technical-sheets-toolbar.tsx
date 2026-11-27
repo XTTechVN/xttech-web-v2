@@ -44,7 +44,7 @@ export function QuotationTechnicalSheetsToolbar({
   ];
 
   return (
-    <div className="space-y-3 rounded-xl border border-slate-200/80 bg-white p-3 shadow-xs">
+    <div className="space-y-3 rounded-block border border-slate-200/80 bg-white p-3 shadow-xs">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2.5">
           <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
@@ -64,7 +64,7 @@ export function QuotationTechnicalSheetsToolbar({
             />
           </div>
 
-          <div className="inline-flex flex-wrap items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 p-0.5">
+          <div className="inline-flex flex-wrap items-center gap-1 rounded-control border border-slate-200 bg-slate-50 p-0.5">
             {FULFILLMENT_FILTER_OPTIONS.map((option) => {
               const isActive = fulfillmentFilter === option.value;
               return (
@@ -72,7 +72,7 @@ export function QuotationTechnicalSheetsToolbar({
                   key={option.value}
                   type="button"
                   onClick={() => onFulfillmentChange(option.value)}
-                  className={`cursor-pointer rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                  className={`cursor-pointer rounded-control px-2.5 py-1 text-xs font-medium transition-colors ${
                     isActive
                       ? 'bg-primary font-semibold text-white shadow-xs'
                       : 'text-slate-600 hover:bg-white hover:text-slate-900'
@@ -104,7 +104,7 @@ export function QuotationTechnicalSheetsToolbar({
           <button
             type="button"
             onClick={() => onSelectPosition('all')}
-            className={`cursor-pointer rounded-lg px-3 py-1 text-xs font-semibold transition-colors ${
+            className={`cursor-pointer rounded-control px-3 py-1 text-xs font-semibold transition-colors ${
               selectedPositionId === 'all'
                 ? 'bg-primary text-white shadow-xs'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
@@ -121,7 +121,7 @@ export function QuotationTechnicalSheetsToolbar({
                 type="button"
                 onClick={() => onSelectPosition(sheet.positionId)}
                 title={`${sheet.positionCode} · ${sheet.doorName} (${Math.round(sheet.width)}×${Math.round(sheet.height)} mm - ${sheet.floorName})`}
-                className={`cursor-pointer rounded-lg px-2.5 py-1 font-mono text-xs font-medium transition-colors ${
+                className={`cursor-pointer rounded-control px-2.5 py-1 tabular-nums text-xs font-medium transition-colors ${
                   isActive
                     ? 'bg-primary font-semibold text-white shadow-xs'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'

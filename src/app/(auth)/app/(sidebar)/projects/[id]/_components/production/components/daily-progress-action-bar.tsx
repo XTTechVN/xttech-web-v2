@@ -15,7 +15,7 @@ interface DailyProgressActionBarProps {
   blockedHint: string | null;
   hideAdvanceButton: boolean;
   isPending: boolean;
-  isAdmin: boolean;
+  canRevert: boolean;
   onAdvance: () => void;
   onOpenRevert: () => void;
   onClear: () => void;
@@ -29,7 +29,7 @@ export function DailyProgressActionBar({
   blockedHint,
   hideAdvanceButton,
   isPending,
-  isAdmin,
+  canRevert,
   onAdvance,
   onOpenRevert,
   onClear,
@@ -48,11 +48,11 @@ export function DailyProgressActionBar({
   })();
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-3 fixed bottom-4 left-1/2 z-40 flex max-w-[95vw] flex-wrap -translate-x-1/2 items-center gap-3 rounded-xl border border-slate-700/60 bg-slate-900/95 px-4 py-2.5 text-white shadow-xl backdrop-blur-md transition-all duration-200">
+    <div className="animate-in fade-in slide-in-from-bottom-3 fixed bottom-4 left-1/2 z-40 flex max-w-[95vw] flex-wrap -translate-x-1/2 items-center gap-3 rounded-block border border-slate-700/60 bg-slate-900/95 px-4 py-2.5 text-white shadow-xl backdrop-blur-md transition-all duration-200">
       <div className="flex items-center gap-2">
         <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
         <span className="text-xs font-medium">
-          Đã chọn <b className="font-mono tabular-nums text-emerald-400">{selectedCount}</b> cửa ở
+          Đã chọn <b className="tabular-nums text-emerald-400">{selectedCount}</b> cửa ở
           mốc{' '}
           <span className="font-semibold text-slate-200">
             {PROGRESS_STEP_LABEL[selectedStep] || selectedStep}
@@ -101,7 +101,7 @@ export function DailyProgressActionBar({
           </Button>
         )}
 
-        {isAdmin && selectedStep !== 'draft' && (
+        {canRevert && selectedStep !== 'draft' && (
           <Button
             variant="ghost"
             size="sm"
@@ -116,7 +116,7 @@ export function DailyProgressActionBar({
         <button
           type="button"
           onClick={onClear}
-          className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-800 hover:text-white cursor-pointer"
+          className="rounded-control p-1 text-slate-400 transition-colors hover:bg-slate-800 hover:text-white cursor-pointer"
           title="Bỏ chọn"
         >
           <X size={15} />

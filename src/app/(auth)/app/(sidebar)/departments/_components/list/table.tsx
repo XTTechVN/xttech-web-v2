@@ -1,278 +1,112 @@
 'use client';
 
-import React from 'react';
-
-// Icons thư viện lucide-react
-import { Pencil, Trash2, Eye, PlusCircle } from 'lucide-react';
-
-// Thành phần dùng chung cho toàn bộ trang
-import { TableData } from '@/components/table';
-import { Modal, Button } from '@/components';
-import { useQueryParam } from '@/hooks';
-
-// Kiểu dữ liệu phòng ban
-import { Department } from '@/types';
-
-import { useSearchParams } from 'next/navigation';
-import RowActions from '../row-actions';
-import DepartmentActionBar from './action-bar';
-import DepartmentFormModal from './form-modal';
-
-// toast
+import { useMemo, useState } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { Search } from 'lucide-react';
 import toast from 'react-hot-toast';
-
-import { useMutation } from '@tanstack/react-query';
-import queryClient from '@/utils/query';
-// action
+import { Skeleton } from '@/components';
+import { Button } from '@/components-remake';
+import { useQueryParam } from '@/hooks';
 import { deleteDepartment, getDepartments } from '@/actions/department';
-
-import { useRouter } from 'next/navigation';
+import queryClient from '@/utils/query';
 import { showErrorToast } from '@/utils';
+import type { Department } from '@/types';
 
+import DepartmentActionBar from './action-bar';
+import { DepartmentDrawer } from './detail-drawer';
+import { DeleteDepartmentModal } from './delete-modal';
+import { DepartmentList } from './list';
+import { DepartmentStats } from './stats';
+
+// Ít phòng ban nên tải hết một lần, tìm kiếm ngay trên máy, không phân trang
+const ALL = 1000;
 
 const Table = () => {
-  const [search, setSearch] = useQueryParam('search');
-  const router = useRouter();
-  // Trạng thái cho modal sửa phòng ban
-  const [isEditOpen, setIsEditOpen] = React.useState(false);
-  const [selectedDept, setSelectedDept] = React.useState<Department | null>(null);
+  const [urlSearch, setUrlSearch] = useQueryParam('search');
+  // Giữ chữ đang gõ trong state cục bộ: URL cập nhật trễ làm mất dấu tiếng Việt (bộ gõ) và nuốt dấu cách
+  const [search, setSearch] = useState(urlSearch ?? '');
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState<Department | null>(null);
 
-  // Trạng thái cho modal xóa phòng ban
-  const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
-  const [deptToDelete, setDeptToDelete] = React.useState<Department | null>(null);
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ['departments', 'all'],
+    queryFn: () => getDepartments({ limit: ALL }),
+  });
 
-
-
-  // Hàm fetcher gọi API thực tế
-  const fetcher = async (params: { offset: number; limit: number }) => {
-    try {
-      return await getDepartments({ ...params, search: search || undefined });
-    } catch (error) {
-      toast.error('Lỗi khi tải danh sách phòng ban');
-      throw new Error('Lỗi khi tải danh sách phòng ban');
-    }
-  };
-
-  // tạo hàm xóa phòng ban
-  const { mutate: deletDepartmentm, isPending } = useMutation({
+  const { mutate: remove, isPending } = useMutation({
     mutationFn: deleteDepartment,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['departments'] });
       toast.success('Xóa phòng ban thành công');
-      setIsDeleteOpen(false);
-      setDeptToDelete(null);
+      setDeleting(null);
     },
-    onError: (error) => {
-      showErrorToast(error, 'Xóa phòng ban thất bại');
-    },
+    onError: (e) => showErrorToast(e, 'Xóa phòng ban thất bại'),
   });
 
-  // Cấu hình các cột cho Desktop
-  const columns = [
-    {
-      key: 'code',
-      label: 'Mã phòng ban',
-      cell: (row: Department) => <span className="text-slate-500 font-medium">{row.code}</span>,
-    },
-    {
-      key: 'name',
-      label: 'Tên phòng ban',
-      minWidth: '250px',
-      cell: (row: Department) => (
-        <div className="flex flex-col">
-          <span className="font-semibold text-gray-900">{row.name}</span>
-        </div>
-      ),
-    },
-    {
-      key: 'createdAt',
-      label: 'Ngày tạo',
-      minWidth: '180px',
-      cell: (row: Department) => (
-        <span className="text-gray-600 text-sm">
-          {new Date(row.createdAt).toLocaleDateString('vi-VN', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-          })}
-        </span>
-      ),
-    },
-    {
-      key: 'actions',
-      label: 'Hành động',
-      minWidth: '150px',
-      cell: (row: Department) => (
-        <RowActions
-          items={[
-            {
-              label: 'Xem chi tiết',
-              icon: Eye,
-              onClick: () => {
-                router.push(`/app/departments/${row.id}`);
-              },
-            },
-            {
-              label: 'Chỉnh sửa',
-              icon: Pencil,
-              onClick: () => {
-                setSelectedDept(row);
-                setIsEditOpen(true);
-              },
-            },
-            {
-              label: 'Xóa',
-              danger: true,
-              icon: Trash2,
-              disabled: isPending,
-              onClick: () => {
-                setDeptToDelete(row);
-                setIsDeleteOpen(true);
-              },
-            },
-          ]}
-        />
-      ),
-    },
-  ];
+  const all = useMemo<Department[]>(() => data?.items ?? [], [data]);
+  // Lấy lại bản ghi mới nhất theo id để drawer cập nhật ngay sau khi sửa
+  const selected = useMemo(() => all.find((d) => d.id === selectedId) ?? null, [all, selectedId]);
+  const keyword = search.trim().toLowerCase();
 
-  // Cấu hình Card hiển thị trên thiết bị di động
-  const renderCard = (row: Department, index: number) => (
-    <div
-      key={row.id || index}
-      onClick={() => router.push(`/app/departments/${row.id}`)}
-      className="p-4 rounded-2xl border border-gray-100 bg-white flex flex-col gap-3 hover:border-gray-200 transition-colors cursor-pointer"
-    >
-      <div className="flex items-start gap-3">
-        <div className="flex flex-col flex-1 min-w-0">
-          <span className="font-semibold text-gray-900 wrap-break-word text-sm sm:text-base leading-snug">{row.name}</span>
-          <div className="flex items-center gap-2 mt-1 flex-wrap">
-            <span className="text-xs text-gray-400 font-medium">ID: {row.id}</span>
-            <span className="text-xs text-gray-300 select-none">•</span>
-            <span className="text-xs text-gray-500">
-              Ngày tạo:{' '}
-              {new Date(row.createdAt).toLocaleDateString('vi-VN', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-              })}
-            </span>
-          </div>
-        </div>
+  const rows = useMemo(() => all.filter((d) => !keyword || `${d.name} ${d.code}`.toLowerCase().includes(keyword)), [all, keyword]);
+
+  let body: React.ReactNode;
+  if (isLoading) {
+    body = <Skeleton className="h-64 w-full rounded-block" />;
+  } else if (isError) {
+    body = (
+      <div className="flex flex-col items-center gap-3 rounded-block border border-slate-200/80 bg-white py-12 text-center">
+        <p className="text-sm text-slate-600">Không tải được danh sách phòng ban.</p>
+        <Button variant="outline" onClick={() => refetch()}>
+          Thử lại
+        </Button>
       </div>
-      <div className="flex items-center justify-end gap-2 border-t border-gray-100/50 pt-2.5" onClick={(e) => e.stopPropagation()}>
-        <button
-          type="button"
-          onClick={() => {
-            setSelectedDept(row);
-            setIsEditOpen(true);
-          }}
-          className="px-3 py-1.5 text-xs font-semibold rounded-full bg-primary/5 text-primary border border-primary/10 hover:bg-primary/10 transition-colors flex items-center gap-1 cursor-pointer"
-        >
-          <Pencil size={12} />
-          Sửa
-        </button>
-        <button
-          type="button"
-          disabled={isPending}
-          onClick={() => {
-            setDeptToDelete(row);
-            setIsDeleteOpen(true);
-          }}
-          className="px-3 py-1.5 text-xs font-semibold rounded-full bg-red-50/50 text-red-600 border border-red-100 hover:bg-red-50 hover:text-red-700 transition-colors flex items-center gap-1 cursor-pointer"
-        >
-          <Trash2 size={12} />
-          Xóa
-        </button>
-      </div>
-    </div>
-  );
+    );
+  } else if (rows.length === 0) {
+    body = (
+      <p className="rounded-block border border-slate-200/80 bg-white py-12 text-center text-sm text-slate-500">
+        {keyword ? 'Không có phòng ban khớp với tìm kiếm.' : 'Chưa có phòng ban nào.'}
+      </p>
+    );
+  } else {
+    body = <DepartmentList rows={rows} onOpen={(d) => setSelectedId(d.id)} />;
+  }
 
   return (
-    <div className="flex flex-col gap-2">
-      <TableData<Department>
-        queryKey={['departments', search]}
-        fetcher={fetcher}
-        columns={columns}
-        renderCard={renderCard}
-        select={false}
-        actions={<DepartmentActionBar />}
-        mobileActions={{ primary: <DepartmentActionBar /> }}
-        search={{
-          placeholder: 'Tìm kiếm phòng ban...',
-          value: search,
-          onChange: setSearch,
-          className: 'w-80',
+    <div className="flex flex-col gap-3 md:gap-4">
+      {!isError && <DepartmentStats rows={all} />}
+
+      <div className="flex items-center gap-2">
+        <div className="relative min-w-0 flex-1 md:max-w-sm">
+          <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setUrlSearch(e.target.value);
+            }}
+            placeholder="Tìm phòng ban..."
+            aria-label="Tìm phòng ban"
+            className="h-11 w-full rounded-control border border-slate-200 bg-white pl-9 pr-3 text-base text-slate-900 placeholder:text-slate-500 outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 md:h-10 md:text-sm"
+          />
+        </div>
+        <div className="ml-auto flex flex-none items-center gap-2">
+          <DepartmentActionBar />
+        </div>
+      </div>
+
+      {body}
+
+      <DepartmentDrawer
+        department={selected}
+        onClose={() => setSelectedId(null)}
+        onDelete={(d) => {
+          setSelectedId(null);
+          setDeleting(d);
         }}
       />
-
-      {/* Modal Sửa phòng ban */}
-      <DepartmentFormModal
-        isOpen={isEditOpen}
-        onClose={() => {
-          setIsEditOpen(false);
-          setSelectedDept(null);
-        }}
-        title="Sửa phòng ban"
-        submitText="Xác nhận lưu"
-        initialData={
-          selectedDept
-            ? {
-                id: Number(selectedDept.id),
-                name: selectedDept.name,
-                code: selectedDept.code,
-              }
-            : undefined
-        }
-      />
-
-      {/* Modal Xác nhận xóa phòng ban */}
-      <Modal
-        isOpen={isDeleteOpen}
-        onClose={() => {
-          setIsDeleteOpen(false);
-          setDeptToDelete(null);
-        }}
-        title="Xác nhận xóa phòng ban"
-        className="m-2 max-w-md w-full"
-      >
-        <div className="flex gap-4 items-center py-2">
-          <div className="flex flex-col gap-1.5">
-            <p className="text-gray-600 text-sm leading-relaxed">
-              Bạn có chắc chắn muốn xóa phòng ban <strong className="text-gray-900 font-semibold">{deptToDelete?.name}</strong>
-            </p>
-          </div>
-        </div>
-        <div className="flex gap-3 justify-end w-full mt-6">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setIsDeleteOpen(false);
-              setDeptToDelete(null);
-            }}
-            disabled={isPending}
-          >
-            Hủy
-          </Button>
-          <Button
-            variant="danger"
-            size="sm"
-            onClick={() => {
-              if (deptToDelete) {
-                deletDepartmentm(deptToDelete.id);
-              }
-            }}
-            loading={isPending}
-          >
-            Xác nhận xóa
-          </Button>
-        </div>
-      </Modal>
-
-
+      <DeleteDepartmentModal department={deleting} isPending={isPending} onClose={() => setDeleting(null)} onConfirm={remove} />
     </div>
   );
 };

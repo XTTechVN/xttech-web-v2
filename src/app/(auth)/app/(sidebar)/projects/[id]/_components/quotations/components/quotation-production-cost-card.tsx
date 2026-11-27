@@ -14,9 +14,9 @@ interface QuotationProductionCostCardProps {
   accessoryMode: 'combined' | 'separated';
 }
 
-const TH_CLASS = 'py-2.5 px-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider';
+const TH_CLASS = 'py-2.5 px-3 text-[11px] font-bold text-slate-500';
 const TD_LABEL_CLASS = 'py-2 px-3 text-slate-600 pl-6';
-const TD_NUM_CLASS = 'py-2 px-3 text-right font-mono tabular-nums text-slate-700';
+const TD_NUM_CLASS = 'py-2 px-3 text-right tabular-nums text-slate-700';
 
 export function QuotationProductionCostCard({
   costBreakdown,
@@ -30,11 +30,11 @@ export function QuotationProductionCostCard({
   };
 
   return (
-    <div className="rounded-xl border border-slate-200/80 bg-white shadow-xs overflow-hidden">
+    <div className="rounded-block border border-slate-200/80 bg-white shadow-xs overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-b border-slate-200/80 bg-slate-50/40">
         <div className="flex items-center gap-2">
           <BarChart3 size={16} className="text-primary shrink-0" />
-          <h3 className="text-xs font-bold uppercase tracking-wide text-slate-800">
+          <h3 className="text-xs font-bold tracking-wide text-slate-800">
             PHÂN TÍCH CẤU THÀNH GIÁ SẢN XUẤT
           </h3>
         </div>
@@ -75,13 +75,13 @@ export function QuotationProductionCostCard({
             ))}
             <tr className="border-b border-slate-200/80 bg-slate-50/40 font-bold text-slate-800">
               <td className="py-2 px-3 pl-6">CỘNG VẬT TƯ</td>
-              <td className="py-2 px-3 text-right font-mono tabular-nums">
+              <td className="py-2 px-3 text-right tabular-nums">
                 {costBreakdown.totalMaterialCost.toLocaleString('vi-VN')}
               </td>
-              <td className="py-2 px-3 text-right font-mono tabular-nums text-slate-600">
+              <td className="py-2 px-3 text-right tabular-nums text-slate-600">
                 {costBreakdown.materialRatioPercent.toFixed(1)}%
               </td>
-              <td className="py-2 px-3 text-right font-mono tabular-nums">
+              <td className="py-2 px-3 text-right tabular-nums">
                 {costBreakdown.materialCostPerM2.toLocaleString('vi-VN')}
               </td>
             </tr>
@@ -114,13 +114,13 @@ export function QuotationProductionCostCard({
             })}
             <tr className="border-b border-slate-200/80 bg-slate-50/40 font-bold text-slate-800">
               <td className="py-2 px-3 pl-6">CỘNG NHÂN CÔNG</td>
-              <td className="py-2 px-3 text-right font-mono tabular-nums">
+              <td className="py-2 px-3 text-right tabular-nums">
                 {costBreakdown.totalLaborCost.toLocaleString('vi-VN')}
               </td>
-              <td className="py-2 px-3 text-right font-mono tabular-nums text-slate-600">
+              <td className="py-2 px-3 text-right tabular-nums text-slate-600">
                 {costBreakdown.laborRatioPercent.toFixed(1)}%
               </td>
-              <td className="py-2 px-3 text-right font-mono tabular-nums">
+              <td className="py-2 px-3 text-right tabular-nums">
                 {costBreakdown.laborCostPerM2.toLocaleString('vi-VN')}
               </td>
             </tr>
@@ -128,11 +128,11 @@ export function QuotationProductionCostCard({
           <tfoot>
             <tr className="bg-primary/5 border-t-2 border-primary/40 text-primary font-bold">
               <td className="py-2.5 px-3">TỔNG GIÁ GỐC DỰ TOÁN</td>
-              <td className="py-2.5 px-3 text-right font-mono tabular-nums text-sm">
+              <td className="py-2.5 px-3 text-right tabular-nums text-sm">
                 {costBreakdown.totalBaseCost.toLocaleString('vi-VN')}
               </td>
-              <td className="py-2.5 px-3 text-right font-mono tabular-nums">100%</td>
-              <td className="py-2.5 px-3 text-right font-mono tabular-nums">
+              <td className="py-2.5 px-3 text-right tabular-nums">100%</td>
+              <td className="py-2.5 px-3 text-right tabular-nums">
                 {costBreakdown.totalBaseCostPerM2.toLocaleString('vi-VN')} /m²
               </td>
             </tr>

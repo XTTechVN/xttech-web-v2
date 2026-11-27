@@ -8,7 +8,7 @@ import { getMonthRoster, getDepartments } from '@/actions';
 import { Avatar, Select } from '@/components';
 import { getFileUrl, cn } from '@/utils';
 import type { Department, DayRosterSummaryItem } from '@/types';
-import { usePermission } from '@/hooks';
+import { useCan } from '@/hooks';
 import { DayRosterModal } from './modal';
 import { useAuthStore } from '@/stores';
 interface DepartmentCalendarProps {
@@ -27,13 +27,9 @@ const WEEKDAYS = [
   { short: 'CN', full: 'Chủ Nhật' },
 ];
 
-export const DepartmentCalendar: React.FC<DepartmentCalendarProps> = ({
-  departmentId,
-  departmentName,
-  className,
-}) => {
-  const { isManager, isAdmin, isHR } = usePermission();
-  const isHrOrAdmin = isManager || isAdmin || isHR;
+export const DepartmentCalendar: React.FC<DepartmentCalendarProps> = ({ departmentId, departmentName, className }) => {
+  const { can } = useCan();
+  const isHrOrAdmin = can('attendance_report:read');
   const [currentMonth, setCurrentMonth] = useState<Dayjs>(dayjs());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -62,27 +58,26 @@ export const DepartmentCalendar: React.FC<DepartmentCalendarProps> = ({
     return map;
   }, [monthDays]);
 
-
   const { data: departments } = useQuery({
-      queryKey: ['departments'],
-      queryFn: () => getDepartments({ limit: 100 }),
-      enabled: isHrOrAdmin,
-    });
-    const departmentItems = departments?.items;
+    queryKey: ['departments'],
+    queryFn: () => getDepartments({ limit: 100 }),
+    enabled: (isHrOrAdmin) && can('department:read'),
+  });
+  const departmentItems = departments?.items;
   const selectedDepartmentName = React.useMemo(() => {
     if (!selectedDeptId || !departmentItems) return undefined;
     const found = departmentItems.find((d: Department) => d.id === selectedDeptId);
     return found?.name;
   }, [selectedDeptId, departmentItems]);
   const departmentOptions = React.useMemo(() => {
-      if (!departmentItems) return [];
-      return [
-        ...departmentItems.map((d: Department) => ({
-          value: String(d.id),
-          label: d.name,
-        })),
-      ];
-    }, [departmentItems]);
+    if (!departmentItems) return [];
+    return [
+      ...departmentItems.map((d: Department) => ({
+        value: String(d.id),
+        label: d.name,
+      })),
+    ];
+  }, [departmentItems]);
 
   // Tạo lưới ngày trong tháng (bắt đầu từ Thứ 2)
   const calendarDays = useMemo(() => {
@@ -147,32 +142,28 @@ export const DepartmentCalendar: React.FC<DepartmentCalendarProps> = ({
   };
 
   return (
-    <div className={cn('w-full flex flex-col gap-4 bg-white rounded-2xl border border-slate-200/80 p-3 sm:p-5 shadow-xs', className)}>
+    <div className={cn('w-full flex flex-col gap-4 bg-white rounded-block border border-slate-200/80 p-3 sm:p-5 shadow-xs', className)}>
       {/* 1. Header Lịch: Tháng/Năm & Nút điều hướng */}
       <div className="flex flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 pb-3 sm:pb-4">
         {/* Hàng 1 trên Mobile: [Tháng MM / YYYY] và [ < ] [ Hôm nay ] [ > ] phân bổ 2 bên cân xứng */}
         <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-3 w-full sm:w-auto">
-
-
-          <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50/80 p-0.5 shrink-0">
+          <div className="flex items-center gap-1 rounded-block border border-slate-200 bg-slate-50/80 p-0.5 shrink-0">
             <button
               type="button"
               onClick={handlePrevMonth}
               aria-label="Tháng trước"
-              className="p-1.5 rounded-lg text-slate-600 hover:bg-white hover:text-slate-900 transition shadow-xs"
+              className="p-1.5 rounded-control text-slate-600 hover:bg-white hover:text-slate-900 transition shadow-xs"
             >
               <ChevronLeft size={16} />
             </button>
-            <span
-              className="px-1 py-1 text-xs font-semibold rounded-lg text-slate-600 hover:bg-white hover:text-slate-900 transition whitespace-nowrap"
-            >
+            <span className="px-1 py-1 text-xs font-semibold rounded-control text-slate-600 hover:bg-white hover:text-slate-900 transition whitespace-nowrap">
               Tháng {currentMonth.format('MM / YYYY')}
             </span>
             <button
               type="button"
               onClick={handleNextMonth}
               aria-label="Tháng sau"
-              className="p-1.5 rounded-lg text-slate-600 hover:bg-white hover:text-slate-900 transition shadow-xs"
+              className="p-1.5 rounded-control text-slate-600 hover:bg-white hover:text-slate-900 transition shadow-xs"
             >
               <ChevronRight size={16} />
             </button>
@@ -187,7 +178,7 @@ export const DepartmentCalendar: React.FC<DepartmentCalendarProps> = ({
             </div>
             <div className="flex-1 sm:w-56">
               <Select
-               className=''
+                className=""
                 value={selectedDeptId ? String(selectedDeptId) : ''}
                 onChange={(e) => {
                   const val = e.target.value;
@@ -201,17 +192,11 @@ export const DepartmentCalendar: React.FC<DepartmentCalendarProps> = ({
       </div>
 
       {/* 2. Lưới Lịch Tháng (Calendar Grid) */}
-      <div className="w-full overflow-hidden rounded-xl border border-slate-200/70 bg-white">
+      <div className="w-full overflow-hidden rounded-block border border-slate-200/70 bg-white">
         {/* Hàng Tiêu Đề Các Thứ */}
         <div className="grid grid-cols-7 border-b border-slate-200/70 bg-slate-50/70 text-center">
           {WEEKDAYS.map((day, idx) => (
-            <div
-              key={day.short}
-              className={cn(
-                'py-2 sm:py-2.5 text-xs font-bold tracking-tight',
-                idx === 6 ? 'text-rose-500' : 'text-slate-600'
-              )}
-            >
+            <div key={day.short} className={cn('py-2 sm:py-2.5 text-xs font-bold tracking-tight', idx === 6 ? 'text-rose-500' : 'text-slate-600')}>
               <span className="sm:hidden">{day.short}</span>
               <span className="hidden sm:inline">{day.full}</span>
             </div>
@@ -236,26 +221,26 @@ export const DepartmentCalendar: React.FC<DepartmentCalendarProps> = ({
                 className={cn(
                   'group relative flex flex-col items-center sm:items-start justify-between sm:justify-start aspect-square sm:aspect-auto sm:min-h-[110px] p-1.5 sm:p-3 text-left transition-all',
                   item.isCurrentMonth ? 'bg-white hover:bg-teal-50/40' : 'bg-slate-50/40 text-slate-400',
-                  item.isToday && 'bg-teal-50/25 ring-1 ring-inset ring-teal-200/60'
+                  item.isToday && 'bg-teal-50/25 ring-1 ring-inset ring-teal-200/60',
                 )}
               >
                 {/* Header ngày: Số ngày + Badge Hôm nay */}
                 <div className="flex items-center justify-center sm:justify-between w-full">
                   <span
                     className={cn(
-                      'flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-lg text-xs sm:text-sm font-semibold transition',
+                      'flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-control text-xs sm:text-sm font-semibold transition',
                       item.isToday
                         ? 'bg-[#045863] text-white shadow-xs'
                         : item.isCurrentMonth
-                        ? 'text-slate-800 group-hover:text-[#045863]'
-                        : 'text-slate-400'
+                          ? 'text-slate-800 group-hover:text-[#045863]'
+                          : 'text-slate-400',
                     )}
                   >
                     {item.date.format('D')}
                   </span>
 
                   {item.isToday && (
-                    <span className="hidden sm:inline-block text-[9px] font-bold text-[#045863] bg-teal-50 px-1.5 py-0.5 rounded-md border border-teal-100">
+                    <span className="hidden sm:inline-block text-[9px] font-bold text-[#045863] bg-teal-50 px-1.5 py-0.5 rounded-control border border-teal-100">
                       Hôm nay
                     </span>
                   )}
@@ -271,28 +256,26 @@ export const DepartmentCalendar: React.FC<DepartmentCalendarProps> = ({
                             <>
                               <span
                                 className={cn(
-                                  'inline-flex items-center gap-1 rounded-md px-1 sm:px-1.5 py-0.5 text-[9px] sm:text-[10px] font-semibold border',
+                                  'inline-flex items-center gap-1 rounded-control px-1 sm:px-1.5 py-0.5 text-[9px] sm:text-[10px] font-semibold border',
                                   actualAbsentCount > 0
                                     ? 'bg-emerald-50 text-emerald-800 border-emerald-200/80'
-                                    : 'bg-emerald-50 text-emerald-700 border-emerald-200/60'
+                                    : 'bg-emerald-50 text-emerald-700 border-emerald-200/60',
                                 )}
                               >
                                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
                                 <span className="hidden sm:inline">
                                   {actualPresentCount}/{workingCount} có mặt
                                 </span>
-                                <span className="sm:hidden font-bold">
-                                  {actualPresentCount}
-                                </span>
+                                <span className="sm:hidden font-bold">{actualPresentCount}</span>
                               </span>
                               {actualAbsentCount > 0 && (
-                                <span className="hidden sm:inline-flex items-center rounded-md bg-rose-50 px-1 py-0.5 text-[9px] sm:text-[10px] font-medium text-rose-700 border border-rose-200/60">
+                                <span className="hidden sm:inline-flex items-center rounded-control bg-rose-50 px-1 py-0.5 text-[9px] sm:text-[10px] font-medium text-rose-700 border border-rose-200/60">
                                   {actualAbsentCount} vắng
                                 </span>
                               )}
                             </>
                           ) : (
-                            <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-1 sm:px-1.5 py-0.5 text-[9px] sm:text-[10px] font-semibold text-emerald-700 border border-emerald-200/60">
+                            <span className="inline-flex items-center gap-1 rounded-control bg-emerald-50 px-1 sm:px-1.5 py-0.5 text-[9px] sm:text-[10px] font-semibold text-emerald-700 border border-emerald-200/60">
                               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
                               <span className="hidden sm:inline">{workingCount} người đi làm</span>
                               <span className="sm:hidden font-bold">{workingCount}</span>
@@ -321,7 +304,7 @@ export const DepartmentCalendar: React.FC<DepartmentCalendarProps> = ({
                       </>
                     ) : (
                       <div className="flex items-center pt-0.5">
-                        <span className="hidden sm:inline-flex items-center gap-1 rounded-md bg-slate-100/90 px-1.5 py-0.5 text-[9px] sm:text-[10px] font-medium text-slate-500">
+                        <span className="hidden sm:inline-flex items-center gap-1 rounded-control bg-slate-100/90 px-1.5 py-0.5 text-[9px] sm:text-[10px] font-medium text-slate-500">
                           <Coffee size={10} className="text-slate-400 shrink-0" />
                           <span>Nghỉ ca</span>
                         </span>

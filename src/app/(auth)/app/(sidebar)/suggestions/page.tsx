@@ -1,46 +1,20 @@
 'use client';
 
-import React, { useRef, useState, useEffect, Suspense } from 'react';
-import { Heading } from '@/components';
-import { StatCards, SuggestionTable, SuggestionModal } from './_components';
-import { usePermission } from '@/hooks';
+import { AccessDenied } from '@/components/access-denied';
+import { PageHeading } from '@/components-remake';
+import { useCan } from '@/hooks';
+import SuggestionTable from './_components/list/table';
 
-function SuggestionsPageContent() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [containerWidth, setContainerWidth] = useState<number>(0);
-
-  const { user, isManager } = usePermission();
-
-  useEffect(() => {
-    if (!containerRef.current) return;
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        setContainerWidth(entry.contentRect.width);
-      }
-    });
-    observer.observe(containerRef.current);
-    return () => observer.disconnect();
-  }, []);
-
+const Page = () => {
+  const { can, isReady } = useCan();
+  if (!isReady) return null;
+  if (!can('suggestion:read')) return <AccessDenied />;
   return (
-    <div ref={containerRef} className="w-full flex flex-col gap-4 p-4">
-
-      {/* Statistical Metrics Cards */}
-      {isManager && <StatCards containerWidth={containerWidth} />}
-
-      {/* Suggestions Data Grid / Table */}
-      <SuggestionTable isManager={isManager} currentUserId={user?.id} />
-
-      {/* Modals & Dialogs */}
-      <SuggestionModal isManager={isManager} currentUserId={user?.id} />
+    <div className="p-4 font-body md:p-6 [&_h1]:font-heading [&_h2]:font-heading [&_h3]:font-heading">
+      <PageHeading title="Đề xuất" description="Gửi và xem xét đề xuất, sáng kiến." />
+      <SuggestionTable />
     </div>
   );
-}
+};
 
-export default function SuggestionsPage() {
-  return (
-    <Suspense fallback={<div className="w-full flex items-center justify-center min-h-100 text-slate-500">Đang tải dữ liệu...</div>}>
-      <SuggestionsPageContent />
-    </Suspense>
-  );
-}
+export default Page;

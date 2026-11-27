@@ -1,5 +1,6 @@
 'use client';
 
+import { useCan } from '@/hooks';
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Building2, Eye, ShieldCheck, Calendar } from 'lucide-react';
@@ -11,8 +12,6 @@ import type { AttendanceReportItem, Department } from '@/types';
 import { ReportDetailModal } from './detail-modal';
 import { useQueryParams, useQueryParam } from '@/hooks';
 import { getFileUrl } from '@/utils';
-
-
 
 // Helper format date YYYY-MM-DD
 export const formatDateStr = (d: Date): string => {
@@ -32,16 +31,14 @@ export const getDefaultDateRange = () => {
   };
 };
 
-const POLICY_BADGES: Record<
-  string,
-  { label: string; variant: 'primary' | 'info' | 'warning' | 'default' }
-> = {
+const POLICY_BADGES: Record<string, { label: string; variant: 'primary' | 'info' | 'warning' | 'default' }> = {
   administrative: { label: 'Hành chính', variant: 'primary' },
   seasonal: { label: 'Thời vụ', variant: 'info' },
   part_time: { label: 'Part-time', variant: 'warning' },
 };
 
 export function ReportTable() {
+  const { can } = useCan();
   const defaultRange = useMemo(() => getDefaultDateRange(), []);
   const [fromDate] = useQueryParam('fromDate', defaultRange.from);
   const [toDate] = useQueryParam('toDate', defaultRange.to);
@@ -57,6 +54,7 @@ export function ReportTable() {
   const { data: departmentsData } = useQuery({
     queryKey: ['departments', 'table-filter-list'],
     queryFn: () => getDepartments({ limit: 100 }),
+    enabled: can('department:read'),
   });
   const departments: Department[] = departmentsData?.items || [];
 
@@ -96,9 +94,7 @@ export function ReportTable() {
         key: 'index',
         label: 'STT',
         minWidth: '50px',
-        cell: (_, index) => (
-          <span className="text-gray-400 font-medium text-xs">{(index ?? 0) + 1}</span>
-        ),
+        cell: (_, index) => <span className="text-gray-400 font-medium text-xs">{(index ?? 0) + 1}</span>,
       },
       {
         key: 'user',
@@ -106,14 +102,8 @@ export function ReportTable() {
         minWidth: '220px',
         cell: (row) => (
           <div className="flex items-center gap-3">
-            <Avatar
-              src={getFileUrl(row.avatar)}
-              name={row.fullName || row.username || 'NV'}
-              size="sm"
-            />
-            <span className="font-semibold text-gray-900 text-sm truncate">
-              {row.fullName || row.username}
-            </span>
+            <Avatar src={getFileUrl(row.avatar)} name={row.fullName || row.username || 'NV'} size="sm" />
+            <span className="font-semibold text-gray-900 text-sm truncate">{row.fullName || row.username}</span>
           </div>
         ),
       },
@@ -123,9 +113,7 @@ export function ReportTable() {
         minWidth: '150px',
         cell: (row) =>
           row.departmentName ? (
-            <span className="text-sm text-slate-700">
-              {row.departmentName}
-            </span>
+            <span className="text-sm text-slate-700">{row.departmentName}</span>
           ) : (
             <span className="text-xs text-gray-400 italic">Chưa gán</span>
           ),
@@ -139,7 +127,11 @@ export function ReportTable() {
             label: row.attendancePolicy || 'Hành chính',
             variant: 'default',
           };
-          return <Badge variant={policyInfo.variant} size="sm">{policyInfo.label}</Badge>;
+          return (
+            <Badge variant={policyInfo.variant} size="sm">
+              {policyInfo.label}
+            </Badge>
+          );
         },
       },
       {
@@ -150,7 +142,7 @@ export function ReportTable() {
           row.attendancePolicy === 'part_time' ? (
             <span className="text-xs text-slate-400 italic">Theo giờ</span>
           ) : (
-            <span className="font-bold text-teal-700 bg-teal-50 px-2.5 py-1 rounded-lg border border-teal-100 text-xs">
+            <span className="font-bold text-teal-700 bg-teal-50 px-2.5 py-1 rounded-control border border-teal-100 text-xs">
               {row.workDays ?? 0} công
             </span>
           ),
@@ -168,14 +160,8 @@ export function ReportTable() {
         cell: (row) =>
           row.lateDays && row.lateDays > 0 ? (
             <div className="flex flex-col items-center">
-              <span className="text-xs font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                {row.lateDays} ngày
-              </span>
-              {row.lateMinutes ? (
-                <span className="text-[10px] text-amber-600 mt-0.5">
-                  ({row.lateMinutes}p)
-                </span>
-              ) : null}
+              <span className="text-xs font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">{row.lateDays} ngày</span>
+              {row.lateMinutes ? <span className="text-[10px] text-amber-600 mt-0.5">({row.lateMinutes}p)</span> : null}
             </div>
           ) : (
             <span className="text-xs text-gray-400">—</span>
@@ -191,11 +177,7 @@ export function ReportTable() {
               <span className="text-xs font-bold text-orange-700 bg-orange-50 px-2 py-0.5 rounded border border-orange-200">
                 {row.earlyLeaveDays} ngày
               </span>
-              {row.earlyLeaveMinutes ? (
-                <span className="text-[10px] text-orange-600 mt-0.5">
-                  ({row.earlyLeaveMinutes}p)
-                </span>
-              ) : null}
+              {row.earlyLeaveMinutes ? <span className="text-[10px] text-orange-600 mt-0.5">({row.earlyLeaveMinutes}p)</span> : null}
             </div>
           ) : (
             <span className="text-xs text-gray-400">—</span>
@@ -208,14 +190,8 @@ export function ReportTable() {
         cell: (row) =>
           row.overtimeDays && row.overtimeDays > 0 ? (
             <div className="flex flex-col items-center">
-              <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-                {row.overtimeDays} buổi
-              </span>
-              {row.overtimeHours ? (
-                <span className="text-[10px] text-blue-600 mt-0.5">
-                  ({row.overtimeHours}h)
-                </span>
-              ) : null}
+              <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">{row.overtimeDays} buổi</span>
+              {row.overtimeHours ? <span className="text-[10px] text-blue-600 mt-0.5">({row.overtimeHours}h)</span> : null}
             </div>
           ) : (
             <span className="text-xs text-gray-400">—</span>
@@ -235,7 +211,7 @@ export function ReportTable() {
                   setIsDetailOpen(true);
                 }}
                 title="Xem chi tiết chấm công"
-                className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors cursor-pointer"
+                className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-control transition-colors cursor-pointer"
               >
                 <Eye size={17} />
               </button>
@@ -244,7 +220,7 @@ export function ReportTable() {
         },
       },
     ],
-    []
+    [],
   );
 
   // Render Card cho thiết bị di động
@@ -256,18 +232,12 @@ export function ReportTable() {
     const isPartTime = row.attendancePolicy === 'part_time';
 
     return (
-      <div key={row.userId || index} className="p-4 rounded-xl border border-gray-200 bg-white flex flex-col gap-3 shadow-xs">
+      <div key={row.userId || index} className="p-4 rounded-block border border-gray-200 bg-white flex flex-col gap-3 shadow-xs">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <Avatar
-              src={getFileUrl(row.avatar)}
-              name={row.fullName || row.username || 'NV'}
-              size="md"
-            />
+            <Avatar src={getFileUrl(row.avatar)} name={row.fullName || row.username || 'NV'} size="md" />
             <div className="flex flex-col min-w-0">
-              <span className="font-semibold text-gray-900 text-sm truncate">
-                {row.fullName || row.username}
-              </span>
+              <span className="font-semibold text-gray-900 text-sm truncate">{row.fullName || row.username}</span>
               <div className="flex items-center gap-2 mt-1">
                 <Badge variant={policyInfo.variant} size="sm">
                   {policyInfo.label}
@@ -283,7 +253,7 @@ export function ReportTable() {
                 setSelectedEmployee(row);
                 setIsDetailOpen(true);
               }}
-              className="p-2 text-gray-500 hover:text-primary hover:bg-primary/5 rounded-lg border border-gray-200 cursor-pointer"
+              className="p-2 text-gray-500 hover:text-primary hover:bg-primary/5 rounded-control border border-gray-200 cursor-pointer"
               title="Xem chi tiết"
             >
               <Eye size={18} />
@@ -292,33 +262,23 @@ export function ReportTable() {
         </div>
 
         <div className="grid grid-cols-3 gap-2 pt-2 border-t border-gray-100 text-center">
-          <div className="bg-slate-50 p-2 rounded-lg">
-            <span className="text-[10px] font-bold text-gray-400 uppercase block">
-              Ngày công
-            </span>
-            <span className="text-xs font-bold text-teal-700">
-              {isPartTime ? 'Theo giờ' : `${row.workDays ?? 0} công`}
-            </span>
+          <div className="bg-slate-50 p-2 rounded-control">
+            <span className="text-[10px] font-bold text-gray-400 block">Ngày công</span>
+            <span className="text-xs font-bold text-teal-700">{isPartTime ? 'Theo giờ' : `${row.workDays ?? 0} công`}</span>
           </div>
 
-          <div className="bg-slate-50 p-2 rounded-lg">
-            <span className="text-[10px] font-bold text-gray-400 uppercase block">
-              Tổng giờ
-            </span>
+          <div className="bg-slate-50 p-2 rounded-control">
+            <span className="text-[10px] font-bold text-gray-400 block">Tổng giờ</span>
             <span className="text-xs font-bold text-gray-900">{row.totalHours}h</span>
           </div>
 
-          <div className="bg-slate-50 p-2 rounded-lg">
-            <span className="text-[10px] font-bold text-gray-400 uppercase block">
-              Tăng ca (OT)
-            </span>
-            <span className="text-xs font-bold text-blue-700">
-              {row.overtimeDays && row.overtimeDays > 0 ? `${row.overtimeDays} lần` : '0'}
-            </span>
+          <div className="bg-slate-50 p-2 rounded-control">
+            <span className="text-[10px] font-bold text-gray-400 block">Tăng ca (OT)</span>
+            <span className="text-xs font-bold text-blue-700">{row.overtimeDays && row.overtimeDays > 0 ? `${row.overtimeDays} lần` : '0'}</span>
           </div>
         </div>
 
-        {((row.lateDays ?? 0) > 0 || (row.earlyLeaveDays ?? 0) > 0) ? (
+        {(row.lateDays ?? 0) > 0 || (row.earlyLeaveDays ?? 0) > 0 ? (
           <div className="flex items-center gap-2 text-xs">
             {(row.lateDays ?? 0) > 0 ? (
               <span className="text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 font-semibold">

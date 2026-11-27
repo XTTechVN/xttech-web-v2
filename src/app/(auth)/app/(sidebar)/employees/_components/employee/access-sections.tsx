@@ -19,8 +19,9 @@ const refresh = () => {
 // Phòng ban, chức vụ: ô chọn; vai trò (nhiều giá trị): ô tích ở cuối. Lưu ngay khi chọn. Thiếu quyền thì chỉ hiện chữ.
 export function AccessSection({ employee }: { employee: Employee }) {
   const { can } = useCan();
-  const roleEditable = can('user:assign_role');
-  const posEditable = can('user:assign_position') && can('department:read');
+  // Chọn vai trò cần đọc được danh sách vai trò; chọn chức vụ cần đọc được phòng ban và chức vụ (thiếu thì API trả 403)
+  const roleEditable = can('user:assign_role') && can('role:read');
+  const posEditable = can('user:assign_position') && can('department:read') && can('position:read');
   const name = employee.fullName || employee.username;
 
   const roleIds = (employee.roles ?? []).map((r) => String(r.id));

@@ -12,7 +12,7 @@ interface StaffListProps {
   staffLocations: StaffLiveLocation[];
   selectedStaff: StaffLiveLocation | null;
   onSelectStaff: (staff: StaffLiveLocation) => void;
-  onViewRoute: (staff: StaffLiveLocation) => void;
+  onViewRoute?: (staff: StaffLiveLocation) => void;
   isLoading?: boolean;
   onRefresh?: () => void;
 }
@@ -49,12 +49,12 @@ export function StaffList({ staffLocations, selectedStaff, onSelectStaff, onView
   const stationaryCount = staffLocations.filter((s) => s.status === 'stationary').length;
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+    <div className="flex flex-col h-full bg-white rounded-block border border-slate-200 shadow-xs overflow-hidden">
       {/* Header Danh sách */}
       <div className="p-4 border-b border-slate-100 space-y-3 shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+            <div className="w-8 h-8 rounded-control bg-primary/10 text-primary flex items-center justify-center">
               <Users size={18} />
             </div>
             <div>
@@ -78,7 +78,7 @@ export function StaffList({ staffLocations, selectedStaff, onSelectStaff, onView
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Tìm theo tên hoặc phòng ban..."
-            className="pl-8 h-8 text-xs rounded-lg bg-slate-50 border-slate-200 focus:bg-white"
+            className="pl-8 h-8 text-xs rounded-control bg-slate-50 border-slate-200 focus:bg-white"
           />
         </div>
 
@@ -86,7 +86,7 @@ export function StaffList({ staffLocations, selectedStaff, onSelectStaff, onView
         <div className="flex items-center gap-1 overflow-x-auto pb-1 text-[11px]">
           <button
             onClick={() => setStatusFilter('all')}
-            className={`px-1.5 py-0.5 rounded-md font-medium transition-colors cursor-pointer shrink-0 ${
+            className={`px-1.5 py-0.5 rounded-control font-medium transition-colors cursor-pointer shrink-0 ${
               statusFilter === 'all' ? 'bg-primary text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
@@ -94,7 +94,7 @@ export function StaffList({ staffLocations, selectedStaff, onSelectStaff, onView
           </button>
           <button
             onClick={() => setStatusFilter('moving')}
-            className={`px-1.5 py-0.5 rounded-md font-medium transition-colors cursor-pointer shrink-0 ${
+            className={`px-1.5 py-0.5 rounded-control font-medium transition-colors cursor-pointer shrink-0 ${
               statusFilter === 'moving' ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
@@ -102,7 +102,7 @@ export function StaffList({ staffLocations, selectedStaff, onSelectStaff, onView
           </button>
           <button
             onClick={() => setStatusFilter('stationary')}
-            className={`px-1.5 py-0.5 rounded-md font-medium transition-colors cursor-pointer shrink-0 ${
+            className={`px-1.5 py-0.5 rounded-control font-medium transition-colors cursor-pointer shrink-0 ${
               statusFilter === 'stationary' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
@@ -114,7 +114,7 @@ export function StaffList({ staffLocations, selectedStaff, onSelectStaff, onView
               onClick={onRefresh}
               disabled={isLoading}
               title="Làm mới danh sách"
-              className="ml-auto p-1.5 rounded-lg text-slate-500 hover:text-primary hover:bg-slate-100 active:scale-95 transition-all cursor-pointer shrink-0 disabled:opacity-50"
+              className="ml-auto p-1.5 rounded-control text-slate-500 hover:text-primary hover:bg-slate-100 active:scale-95 transition-all cursor-pointer shrink-0 disabled:opacity-50"
             >
               <RefreshCw size={13} className={isLoading ? 'animate-spin text-primary' : ''} />
             </button>
@@ -141,7 +141,7 @@ export function StaffList({ staffLocations, selectedStaff, onSelectStaff, onView
               <div
                 key={uniqueKey}
                 onClick={() => onSelectStaff(staff)}
-                className={`p-2.5 rounded-xl border transition-all cursor-pointer flex flex-col gap-2 ${
+                className={`p-2.5 rounded-block border transition-all cursor-pointer flex flex-col gap-2 ${
                   isSelected
                     ? 'border-primary bg-primary/5 shadow-xs'
                     : isOffline
@@ -180,7 +180,7 @@ export function StaffList({ staffLocations, selectedStaff, onSelectStaff, onView
                       {/* Badge trạng thái trực quan */}
                       {isOffline ? (
                         <span
-                          className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-md border shrink-0 ${
+                          className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-control border shrink-0 ${
                             isAppClosed
                               ? 'bg-rose-50 text-rose-600 border-rose-200'
                               : 'bg-slate-100 text-slate-500 border-slate-200'
@@ -189,12 +189,12 @@ export function StaffList({ staffLocations, selectedStaff, onSelectStaff, onView
                           {STAFF_LIVE_STATUS_MAP[staff.status]}
                         </span>
                       ) : isMoving ? (
-                        <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200 shrink-0 flex items-center gap-1">
+                        <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-control bg-amber-50 text-amber-700 border border-amber-200 shrink-0 flex items-center gap-1">
                           <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
                           Di chuyển
                         </span>
                       ) : (
-                        <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0 flex items-center gap-1">
+                        <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-control bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0 flex items-center gap-1">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                           Đứng yên
                         </span>
@@ -244,23 +244,25 @@ export function StaffList({ staffLocations, selectedStaff, onSelectStaff, onView
                         e.stopPropagation();
                         openGoogleMapsNavigation(staff.latitude, staff.longitude);
                       }}
-                      className="p-1 px-1.5 rounded-md bg-slate-100 hover:bg-emerald-50 hover:text-emerald-600 text-slate-500 font-medium transition-colors flex items-center justify-center cursor-pointer"
+                      className="p-1 px-1.5 rounded-control bg-slate-100 hover:bg-emerald-50 hover:text-emerald-600 text-slate-500 font-medium transition-colors flex items-center justify-center cursor-pointer"
                       title="Mở Google Maps chỉ đường tới đây"
                     >
                       <Compass size={11} />
                     </button>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onViewRoute(staff);
-                      }}
-                      className="p-1 px-2 rounded-md bg-slate-100 hover:bg-primary hover:text-white text-slate-700 font-medium transition-colors flex items-center gap-1 cursor-pointer"
-                      title="Xem lộ trình trong ngày"
-                    >
-                      <Navigation size={10} />
-                      <span>Lộ trình</span>
-                    </button>
+                    {onViewRoute && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onViewRoute(staff);
+                        }}
+                        className="p-1 px-2 rounded-control bg-slate-100 hover:bg-primary hover:text-white text-slate-700 font-medium transition-colors flex items-center gap-1 cursor-pointer"
+                        title="Xem lộ trình trong ngày"
+                      >
+                        <Navigation size={10} />
+                        <span>Lộ trình</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

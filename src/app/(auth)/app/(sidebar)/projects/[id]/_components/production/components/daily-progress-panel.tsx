@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useMemo, useState } from 'react';
-import { ROLE_CODES, usePermission } from '@/hooks';
+import { useCan } from '@/hooks';
 import { cn } from '@/utils/cn';
 import type {
   ProgressMatrixItem,
@@ -38,10 +38,10 @@ export function DailyProgressPanel({
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [isRevertModalOpen, setIsRevertModalOpen] = useState(false);
-  const { isAdmin, hasRole } = usePermission();
+  const { can } = useCan();
 
-  const canManageOutsourcedProcurement =
-    isAdmin || hasRole([ROLE_CODES.SALE, ROLE_CODES.ACCOUNTANT, ROLE_CODES.TECHNICIAN]);
+  // Cửa nhập NCC chuyển sang bước "đang sản xuất" = mua hàng, cần đúng quyền đặt mốc này
+  const canManageOutsourcedProcurement = can('door_progress:set_status:producing');
 
   const matrixItemMap = useMemo(() => {
     const map = new Map<number, ProgressMatrixItem>();
@@ -154,7 +154,7 @@ export function DailyProgressPanel({
             <div className="flex flex-wrap items-center gap-2.5">
               <span
                 className={cn(
-                  'rounded-md border px-2.5 py-1 text-xs font-bold uppercase tracking-wider',
+                  'rounded-control border px-2.5 py-1 text-xs font-bold',
                   config.badgeClass,
                 )}
               >
@@ -169,7 +169,7 @@ export function DailyProgressPanel({
                   <button
                     type="button"
                     onClick={() => handleSelectOutsourcedSurveyed(stepDoors)}
-                    className="cursor-pointer rounded-md border border-primary/25 bg-primary/5 px-2 py-0.5 text-[11px] font-semibold text-primary hover:bg-primary/10"
+                    className="cursor-pointer rounded-control border border-primary/25 bg-primary/5 px-2 py-0.5 text-[11px] font-semibold text-primary hover:bg-primary/10"
                   >
                     Chọn nhanh cửa NCC ({outsourcedInStep.length})
                   </button>
@@ -199,7 +199,7 @@ export function DailyProgressPanel({
                 ))}
               </div>
             ) : (
-              <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50/60 py-4 text-center text-xs text-slate-400">
+              <div className="rounded-control border border-dashed border-slate-200 bg-slate-50/60 py-4 text-center text-xs text-slate-400">
                 Không có cửa nào trong giai đoạn này
               </div>
             )}
@@ -216,7 +216,7 @@ export function DailyProgressPanel({
           blockedHint={actionState.blockedHint}
           hideAdvanceButton={actionState.hideAdvanceButton}
           isPending={advance.isPending}
-          isAdmin={isAdmin}
+          canRevert={can('door_progress:revert')}
           onAdvance={() => {
             if (!actionState.nextStep || advance.isPending) return;
             advance.mutate({ positionIds: selectedIds, targetStep: actionState.nextStep });

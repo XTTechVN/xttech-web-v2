@@ -1,49 +1,33 @@
-// Icons thư viện lucide - react
-import { TrendingDown, TrendingUp } from 'lucide-react';
 import { useCan } from '@/hooks';
 
 const StatCart = ({
   title,
   value,
   icon,
-  trend,
-  trendDirection = 'up',
   onClick,
   requires,
 }: {
   title: string;
   value: string;
   icon: React.ReactNode;
-  trend?: number;
-  trendDirection?: 'up' | 'down';
   onClick?: () => void;
-  /** Mã quyền cần có để thấy thẻ (số liệu và trang đích của thẻ đều là dữ liệu quản lý) */
+  /** Mã quyền cần có ở phạm vi toàn doanh nghiệp để thấy thẻ (số liệu và trang đích của thẻ đều là dữ liệu quản lý) */
   requires?: string;
 }) => {
-  const { can } = useCan();
-  if (requires && !can(requires)) return null;
-  const isUp = trendDirection === 'up';
+  const { scopeOf } = useCan();
+  if (requires && scopeOf(requires) !== 'org') return null;
 
   return (
     <div
-      className="bg-white rounded-block shadow-xs p-3 md:p-4 flex flex-col gap-2 md:gap-4 hover:shadow-sm transition w-full cursor-pointer border border-gray-100"
+      className="bg-white rounded-block p-3 md:p-4 flex flex-col gap-3 md:gap-4 hover:border-gray-300 transition-colors w-full cursor-pointer border border-gray-100"
       onClick={onClick}
     >
-      <div className="flex items-center relative">
-        <div className={`p-2 md:p-3 rounded-control bg-primary/5 text-primary [&>svg]:w-4 [&>svg]:h-4 md:[&>svg]:w-5 md:[&>svg]:h-5`}>
-          {icon}
-        </div>
-        {trend !== undefined && (
-          <div
-            className={`px-2 py-0.5 absolute right-0 top-0 rounded-full text-[10px] md:text-xs font-semibold flex items-center gap-0.5 md:gap-1 ${isUp ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}
-          >
-            {isUp ? <TrendingUp className="w-3 h-3 md:w-4 md:h-4" /> : <TrendingDown className="w-3 h-3 md:w-4 md:h-4" />} {Math.abs(trend)}%
-          </div>
-        )}
+      <div className="self-start p-2 md:p-3 rounded-control bg-primary/5 text-primary [&>svg]:w-4 [&>svg]:h-4 md:[&>svg]:w-5 md:[&>svg]:h-5">
+        {icon}
       </div>
-      <div className="flex flex-col gap-1 md:gap-3">
-        <span className="font-heading text-gray-500 text-[10px] md:text-xs font-medium truncate whitespace-nowrap overflow-hidden">{title}</span>
-        <span className="text-lg md:text-2xl font-bold text-primary">{value}</span>
+      <div className="flex flex-col gap-1 md:gap-2">
+        <span className="font-heading text-gray-500 text-xs font-medium truncate">{title}</span>
+        <span className="text-lg md:text-2xl font-medium tabular-nums text-primary">{value}</span>
       </div>
     </div>
   );

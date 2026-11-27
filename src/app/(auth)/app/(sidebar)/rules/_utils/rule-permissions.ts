@@ -2,7 +2,8 @@ import type { DocumentItem } from '@/types';
 
 export interface RuleActionContext {
   currentUserId: string;
-  isManager: boolean; // super/admin/hr
+  isManager: boolean; // có document:publish
+  canApprove: boolean; // có document:approve
 }
 
 export interface RuleAvailableActions {
@@ -35,7 +36,7 @@ export const getRuleActions = (doc: DocumentItem, ctx: RuleActionContext): RuleA
     canEdit: isDraft && (isCreator || ctx.isManager),
     canDelete: (isDraft && isCreator) || (ctx.isManager && (isUnapproved || ctx.isManager)),
     canSubmit: isDraft && (isCreator || ctx.isManager),
-    canReview: isPending && ctx.isManager && !isCreator && isApprover,
+    canReview: isPending && ctx.canApprove && !isCreator && isApprover,
     canPublish: (isApproved || isDraft || isPending) && ctx.isManager,
     canReplace: isPublished && ctx.isManager,
     canAcknowledge:

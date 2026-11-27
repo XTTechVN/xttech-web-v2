@@ -71,7 +71,7 @@ export function EvidenceUploader({ projectId, value, onChange, label, required }
           {value.map((media, index) => (
             <div key={`${media.url}-${index}`} className="group relative">
               {media.type === 'video' ? (
-                <div className="flex h-16 w-16 items-center justify-center rounded-md border border-slate-200 bg-slate-100 text-[10px] text-slate-500">
+                <div className="flex h-16 w-16 items-center justify-center rounded-control border border-slate-200 bg-slate-100 text-[10px] text-slate-500">
                   Video
                 </div>
               ) : (
@@ -79,7 +79,7 @@ export function EvidenceUploader({ projectId, value, onChange, label, required }
                 <img
                   src={mediaUrl(media.url)}
                   alt={media.name ?? 'Minh chứng'}
-                  className="h-16 w-16 rounded-md border border-slate-200 object-cover"
+                  className="h-16 w-16 rounded-control border border-slate-200 object-cover"
                 />
               )}
               <button

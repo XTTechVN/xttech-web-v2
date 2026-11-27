@@ -2,6 +2,8 @@
 
 import React, { Suspense, useCallback } from 'react';
 import dynamic from 'next/dynamic';
+import { AccessDenied } from '@/components/access-denied';
+import { useCan } from '@/hooks';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
@@ -20,7 +22,7 @@ import {
 import { Badge, Skeleton } from '@/components';
 import { PROJECT_STATUS_MAP } from '@/config';
 
-const TabFallback = () => <Skeleton className="h-64 w-full rounded-xl" />;
+const TabFallback = () => <Skeleton className="h-64 w-full rounded-block" />;
 
 const TabPositions = dynamic(
   () => import('./_components/positions').then((m) => m.TabPositions),
@@ -58,6 +60,16 @@ const PROJECT_TABS = [
   { value: 'warranty', label: 'Bảo hành', icon: <ShieldCheck size={14} /> },
 ];
 
+// Mỗi tab cần quyền xem riêng; tab Thông tin chỉ cần quyền xem dự án (đã chặn ở menu)
+const TAB_PERMISSIONS: Record<string, string[]> = {
+  positions: ['project_door_position:read', 'door:read'],
+  quotations: ['quotation:read'],
+  contracts: ['contract:read'],
+  production: ['production_order:read', 'door_progress:read'],
+  acceptance: ['acceptance:read'],
+  warranty: ['warranty:read'],
+};
+
 const VALID_TABS = new Set(PROJECT_TABS.map((t) => t.value));
 
 interface ProjectDetailPageProps {
@@ -68,9 +80,11 @@ function ProjectDetailContent({ projectId }: { projectId: number }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { can, canAny, isReady } = useCan();
+  const visibleTabs = PROJECT_TABS.filter((t) => !TAB_PERMISSIONS[t.value] || canAny(TAB_PERMISSIONS[t.value]));
 
   const rawTab = searchParams.get('tab');
-  const activeTab = rawTab && VALID_TABS.has(rawTab) ? rawTab : 'overview';
+  const activeTab = rawTab && VALID_TABS.has(rawTab) && visibleTabs.some((t) => t.value === rawTab) ? rawTab : 'overview';
 
   const handleSelectTab = useCallback(
     (nextTab: string) => {
@@ -85,8 +99,11 @@ function ProjectDetailContent({ projectId }: { projectId: number }) {
   const { data: project, isLoading, error } = useQuery({
     queryKey: ['project', projectId],
     queryFn: () => getProject(projectId),
-    enabled: Boolean(projectId),
+    enabled: isReady && can('project:read') && Boolean(projectId),
   });
+
+  if (!isReady) return <TabFallback />;
+  if (!can('project:read')) return <AccessDenied />;
 
   if (isLoading) {
     return (
@@ -103,7 +120,7 @@ function ProjectDetailContent({ projectId }: { projectId: number }) {
         <p className="text-slate-600 mb-4 text-sm font-medium">Không tìm thấy dự án</p>
         <Link
           href="/app/projects"
-          className="px-4 py-2 bg-primary text-white rounded-lg text-xs font-semibold hover:brightness-110 transition-all"
+          className="px-4 py-2 bg-primary text-white rounded-control text-xs font-semibold hover:brightness-110 transition-all"
         >
           Quay lại danh sách
         </Link>
@@ -154,8 +171,8 @@ function ProjectDetailContent({ projectId }: { projectId: number }) {
           </div>
         </div>
 
-        <div className="inline-flex p-1 bg-slate-100/90 rounded-md border border-slate-200/70 gap-1 overflow-x-auto shrink-0">
-          {PROJECT_TABS.map((tab) => {
+        <div className="inline-flex p-1 bg-slate-100/90 rounded-control border border-slate-200/70 gap-1 overflow-x-auto shrink-0">
+          {visibleTabs.map((tab) => {
             const isActive = tab.value === activeTab;
             return (
               <button

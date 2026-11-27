@@ -175,13 +175,13 @@ export function CreateProductionOrderModal({
           </div>
 
           {outsourcedCount > 0 && (
-            <div className="mb-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-1.5 text-[11px] text-primary">
+            <div className="mb-2 rounded-control border border-primary/20 bg-primary/5 px-3 py-1.5 text-[11px] text-primary">
               Đã ẩn <span className="font-bold">{outsourcedCount}</span> cửa nhập nguyên bộ NCC
               (không lập lệnh sản xuất tại xưởng).
             </div>
           )}
 
-          <div className="max-h-[380px] overflow-y-auto rounded-lg border border-slate-200 bg-slate-50/40 p-3 space-y-4">
+          <div className="max-h-[380px] overflow-y-auto rounded-control border border-slate-200 bg-slate-50/40 p-3 space-y-4">
             {inHousePositions.length === 0 ? (
               <div className="py-8 text-center text-xs text-slate-400">
                 {positions.length === 0
@@ -199,7 +199,7 @@ export function CreateProductionOrderModal({
 
                 return Object.entries(grouped).map(([floorName, floorPositions]) => (
                   <div key={floorName} className="space-y-2">
-                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200 pb-1">
+                    <h4 className="text-xs font-bold text-slate-500 border-b border-slate-200 pb-1">
                       {floorName}
                     </h4>
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">

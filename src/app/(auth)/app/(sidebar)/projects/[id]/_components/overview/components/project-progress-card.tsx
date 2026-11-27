@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Loader2, Pencil, Check, X } from 'lucide-react';
 import type { ProjectDetail, ProjectUpdate } from '@/types';
+import { useCan } from '@/hooks';
 
 interface ProjectProgressCardProps {
   project: ProjectDetail;
@@ -10,11 +11,8 @@ interface ProjectProgressCardProps {
   onUpdate: (field: string, payload: Partial<ProjectUpdate>) => void;
 }
 
-export function ProjectProgressCard({
-  project,
-  updatingField,
-  onUpdate,
-}: ProjectProgressCardProps) {
+export function ProjectProgressCard({ project, updatingField, onUpdate }: ProjectProgressCardProps) {
+  const { can } = useCan();
   const [isEditingNote, setIsEditingNote] = useState(false);
   const [noteInput, setNoteInput] = useState('');
 
@@ -33,14 +31,12 @@ export function ProjectProgressCard({
 
   return (
     <div className="space-y-1.5">
-      <h3 className="text-xs font-semibold text-slate-700 font-lexend block">
-        Tiến độ &amp; Phụ trách
-      </h3>
+      <h3 className="text-xs font-semibold text-slate-700 font-lexend block">Tiến độ &amp; Phụ trách</h3>
 
-      <div className="bg-white rounded-md border border-slate-200/80 p-3.5 shadow-2xs space-y-2.5 text-xs">
+      <div className="bg-white rounded-control border border-slate-200/80 p-3.5 shadow-2xs space-y-2.5 text-xs">
         <div className="flex items-center justify-between">
           <span className="text-slate-500">Mã công trình</span>
-          <span className="font-mono font-semibold text-slate-700 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200/70 text-[11px]">
+          <span className="tabular-nums font-semibold text-slate-700 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200/70 text-[11px]">
             {project.code || `DA-${project.id}`}
           </span>
         </div>
@@ -119,11 +115,7 @@ export function ProjectProgressCard({
                 className="p-1 text-primary hover:bg-primary/10 rounded transition-colors cursor-pointer"
                 title="Lưu"
               >
-                {updatingField === 'note' ? (
-                  <Loader2 size={12} className="animate-spin" />
-                ) : (
-                  <Check size={12} />
-                )}
+                {updatingField === 'note' ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
               </button>
               <button
                 type="button"
@@ -134,6 +126,10 @@ export function ProjectProgressCard({
                 <X size={12} />
               </button>
             </div>
+          ) : !can('project:update') ? (
+            <span className="font-semibold text-primary truncate text-xs max-w-[200px]" title={project.note || undefined}>
+              {project.note || '—'}
+            </span>
           ) : (
             <button
               type="button"
@@ -147,10 +143,7 @@ export function ProjectProgressCard({
               <span className="font-semibold text-primary truncate text-xs" title={project.note || 'Thêm ghi chú'}>
                 {project.note || <span className="text-slate-400 italic font-normal">Thêm ghi chú...</span>}
               </span>
-              <Pencil
-                size={10}
-                className="text-slate-400 group-hover:text-primary shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-              />
+              <Pencil size={10} className="text-slate-400 group-hover:text-primary shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
             </button>
           )}
         </div>
@@ -158,4 +151,3 @@ export function ProjectProgressCard({
     </div>
   );
 }
-

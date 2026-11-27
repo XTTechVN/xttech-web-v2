@@ -18,7 +18,7 @@ export function QuotationStatusBanner({ quotation, isSyncing, onSync }: Quotatio
 
   if (quotation.isLocked) {
     return (
-      <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
+      <div className="flex items-center gap-2 rounded-control border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
         <Lock size={14} className="shrink-0 text-amber-500" />
         <span>
           Báo giá <b>{quotation.code}</b> (v{quotation.version}) đang khóa theo hợp đồng đã ký. Muốn
@@ -29,7 +29,7 @@ export function QuotationStatusBanner({ quotation, isSyncing, onSync }: Quotatio
   }
 
   return (
-    <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs text-emerald-700">
+    <div className="flex items-center gap-2 rounded-control border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs text-emerald-700">
       <CheckCircle2 size={14} className="shrink-0" />
       <span>
         Báo giá <b>{quotation.code}</b> (v{quotation.version}) đang khớp với dữ liệu cửa của dự án.
@@ -44,7 +44,7 @@ function OutdatedBanner({ quotation, isSyncing, onSync }: QuotationStatusBannerP
     : 'Đồng bộ sẽ tính lại giá theo dữ liệu cửa mới nhất, giữ nguyên cấu hình giá và giá sửa tay.';
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-control border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
       <div className="flex items-start gap-2">
         <AlertTriangle size={15} className="shrink-0 mt-0.5 text-amber-600" />
         <div className="space-y-0.5">

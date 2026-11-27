@@ -150,7 +150,7 @@ function OutsourcedRfqModalInner({
           </Button>
         </div>
 
-        <div className="max-h-72 overflow-y-auto border border-slate-200 rounded-xl divide-y divide-slate-100">
+        <div className="max-h-72 overflow-y-auto border border-slate-200 rounded-block divide-y divide-slate-100">
           {filteredPositions.length === 0 ? (
             <div className="py-10 text-center text-xs text-slate-400">
               Không có bộ cửa nhập NCC nào phù hợp bộ lọc.
@@ -176,7 +176,7 @@ function OutsourcedRfqModalInner({
                     )}
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-bold text-slate-900">{pos.code}</span>
+                        <span className="tabular-nums text-xs font-bold text-slate-900">{pos.code}</span>
                         <span className="text-xs text-slate-600 truncate">
                           {pos.description || pos.supplierDoor?.name || 'Cửa nhập NCC'}
                         </span>

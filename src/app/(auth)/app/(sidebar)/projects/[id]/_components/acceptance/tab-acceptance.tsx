@@ -1,5 +1,7 @@
 'use client';
 
+import { useCan } from '@/hooks';
+
 import React, { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { CheckCircle2, ClipboardCheck, Link2, PenLine, Play, Plus, XCircle } from 'lucide-react';
@@ -39,6 +41,7 @@ interface TabAcceptanceProps {
 }
 
 export function TabAcceptance({ projectId }: TabAcceptanceProps) {
+  const { can } = useCan();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [signing, setSigning] = useState<ProjectAcceptance | null>(null);
   const [previewVideoUrl, setPreviewVideoUrl] = useState<string | null>(null);
@@ -88,11 +91,11 @@ export function TabAcceptance({ projectId }: TabAcceptanceProps) {
     onError: (error) => showErrorToast(error, 'Không hủy được biên bản'),
   });
 
-  if (isLoading) return <Skeleton className="h-48 w-full rounded-xl" />;
+  if (isLoading) return <Skeleton className="h-48 w-full rounded-block" />;
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-slate-200 bg-white p-3">
         <div className="space-y-0.5">
           <div className="flex items-center gap-1.5 text-sm font-bold text-slate-800">
             <ClipboardCheck size={16} className="text-primary" /> Nghiệm thu bàn giao
@@ -102,18 +105,20 @@ export function TabAcceptance({ projectId }: TabAcceptanceProps) {
             đạt&rdquo; sẽ giữ trạng thái Đã lắp đặt để lập biên bản nghiệm thu lại vào đợt sau.
           </p>
         </div>
-        <Button
-          size="sm"
-          leftIcon={<Plus size={14} />}
-          disabled={installedPositions.length === 0}
-          onClick={() => setIsFormOpen(true)}
-        >
-          Lập biên bản ({installedPositions.length} cửa chờ nghiệm thu)
-        </Button>
+        {can('acceptance:create') && (
+          <Button
+            size="sm"
+            leftIcon={<Plus size={14} />}
+            disabled={installedPositions.length === 0}
+            onClick={() => setIsFormOpen(true)}
+          >
+            Lập biên bản ({installedPositions.length} cửa chờ nghiệm thu)
+          </Button>
+        )}
       </div>
 
       {acceptances.length === 0 && (
-        <div className="rounded-lg border border-dashed border-slate-300 py-10 text-center text-xs text-slate-400">
+        <div className="rounded-control border border-dashed border-slate-300 py-10 text-center text-xs text-slate-400">
           Chưa có biên bản nghiệm thu nào.
         </div>
       )}
@@ -125,10 +130,10 @@ export function TabAcceptance({ projectId }: TabAcceptanceProps) {
         const failedCount = items.filter((it) => it.result === 'failed').length;
 
         return (
-          <div key={acceptance.id} className="space-y-3 rounded-lg border border-slate-200 bg-white p-3">
+          <div key={acceptance.id} className="space-y-3 rounded-control border border-slate-200 bg-white p-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="font-mono text-sm font-bold text-slate-800">{acceptance.code}</span>
+                <span className="tabular-nums text-sm font-bold text-slate-800">{acceptance.code}</span>
                 <Badge variant={status.variant}>{status.label}</Badge>
                 {items.length > 0 && (
                   <>
@@ -148,26 +153,32 @@ export function TabAcceptance({ projectId }: TabAcceptanceProps) {
               </div>
               {acceptance.status === 'awaiting_customer' && (
                 <div className="flex flex-wrap gap-1.5">
-                  <Button size="xs" leftIcon={<PenLine size={12} />} onClick={() => setSigning(acceptance)}>
-                    Khách ký tại chỗ
-                  </Button>
-                  <Button
-                    size="xs"
-                    variant="outline"
-                    leftIcon={<Link2 size={12} />}
-                    loading={sendLink.isPending && sendLink.variables === acceptance.id}
-                    onClick={() => sendLink.mutate(acceptance.id)}
-                  >
-                    Gửi / sao chép link ký
-                  </Button>
-                  <Button
-                    size="xs"
-                    variant="ghost"
-                    leftIcon={<XCircle size={12} />}
-                    onClick={() => cancel.mutate(acceptance.id)}
-                  >
-                    Hủy
-                  </Button>
+                  {can('acceptance:sign') && (
+                    <Button size="xs" leftIcon={<PenLine size={12} />} onClick={() => setSigning(acceptance)}>
+                      Khách ký tại chỗ
+                    </Button>
+                  )}
+                  {can('acceptance:send') && (
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      leftIcon={<Link2 size={12} />}
+                      loading={sendLink.isPending && sendLink.variables === acceptance.id}
+                      onClick={() => sendLink.mutate(acceptance.id)}
+                    >
+                      Gửi / sao chép link ký
+                    </Button>
+                  )}
+                  {can('acceptance:cancel') && (
+                    <Button
+                      size="xs"
+                      variant="ghost"
+                      leftIcon={<XCircle size={12} />}
+                      onClick={() => cancel.mutate(acceptance.id)}
+                    >
+                      Hủy
+                    </Button>
+                  )}
                 </div>
               )}
             </div>
@@ -179,7 +190,7 @@ export function TabAcceptance({ projectId }: TabAcceptanceProps) {
                   return (
                     <div
                       key={item.positionId}
-                      className={`flex items-start justify-between gap-2 rounded-md border px-2.5 py-1.5 text-xs ${
+                      className={`flex items-start justify-between gap-2 rounded-control border px-2.5 py-1.5 text-xs ${
                         isPassed
                           ? 'border-emerald-200/70 bg-emerald-50/20'
                           : 'border-red-200 bg-red-50/40'
@@ -231,7 +242,7 @@ export function TabAcceptance({ projectId }: TabAcceptanceProps) {
                       <div
                         key={photo.url || pIdx}
                         onClick={() => setPreviewVideoUrl(url)}
-                        className="group relative flex h-16 w-16 cursor-pointer items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-slate-900 text-white transition hover:border-primary"
+                        className="group relative flex h-16 w-16 cursor-pointer items-center justify-center overflow-hidden rounded-control border border-slate-200 bg-slate-900 text-white transition hover:border-primary"
                         title={photo.name ?? 'Xem video nghiệm thu'}
                       >
                         <video src={url} className="h-full w-full object-cover opacity-70" />
@@ -245,7 +256,7 @@ export function TabAcceptance({ projectId }: TabAcceptanceProps) {
                   return (
                     <div
                       key={photo.url || pIdx}
-                      className="h-16 w-16 overflow-hidden rounded-md border border-slate-200 [&_.ant-image]:h-full [&_.ant-image]:w-full"
+                      className="h-16 w-16 overflow-hidden rounded-control border border-slate-200 [&_.ant-image]:h-full [&_.ant-image]:w-full"
                     >
                       <AntdImage
                         src={url}
@@ -264,7 +275,7 @@ export function TabAcceptance({ projectId }: TabAcceptanceProps) {
               {(['company', 'customer'] as const).map((party) => {
                 const signature = acceptance.signatures.find((s) => s.party === party);
                 return (
-                  <div key={party} className="rounded-md border border-slate-200 p-2 text-center">
+                  <div key={party} className="rounded-control border border-slate-200 p-2 text-center">
                     {signature ? (
                       <>
                         <img src={signature.signatureImage} alt={signature.signerName} className="mx-auto h-12 object-contain" />
@@ -310,7 +321,7 @@ export function TabAcceptance({ projectId }: TabAcceptanceProps) {
             src={previewVideoUrl}
             controls
             autoPlay
-            className="max-h-[75vh] w-full rounded-lg bg-black"
+            className="max-h-[75vh] w-full rounded-control bg-black"
           />
         )}
       </AntdModal>

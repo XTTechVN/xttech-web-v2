@@ -129,7 +129,7 @@ function ContractForm({
     <div className="grid h-full grid-cols-1 grid-rows-[minmax(0,1fr)] lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] gap-4">
       <div className="space-y-4 min-w-0 min-h-0 overflow-y-auto no-scrollbar">
         {quotation && (
-          <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-lg text-xs flex flex-wrap items-center justify-between gap-2">
+          <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-control text-xs flex flex-wrap items-center justify-between gap-2">
             <span className="text-slate-600">
               Báo giá áp dụng:{' '}
               <strong className="text-slate-800">
@@ -141,7 +141,7 @@ function ContractForm({
         )}
 
         {isOutdated && (
-          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 space-y-1">
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-control text-xs text-amber-800 space-y-1">
             <div className="font-bold flex items-center gap-1.5">
               <RefreshCw size={14} className="text-amber-600" /> Báo giá đã cũ so với danh sách cửa
             </div>
@@ -150,7 +150,7 @@ function ContractForm({
         )}
 
         {liveContract && (
-          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800 space-y-1">
+          <div className="p-3 bg-blue-50 border border-blue-200 rounded-control text-xs text-blue-800 space-y-1">
             <div className="font-bold flex items-center gap-1.5">
               <AlertCircle size={14} className="text-blue-600" /> Hợp đồng {liveContract.contractCode} sẽ bị hủy và thay thế
             </div>

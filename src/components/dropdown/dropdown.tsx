@@ -18,6 +18,7 @@ export interface DropdownProps {
   triggerOn?: 'click' | 'hover';
   className?: string;
   menuClassName?: string;
+  triggerClassName?: string;
 }
 
 const Dropdown: React.FC<DropdownProps> = ({
@@ -27,6 +28,7 @@ const Dropdown: React.FC<DropdownProps> = ({
   triggerOn = 'click',
   className,
   menuClassName,
+  triggerClassName,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -52,7 +54,7 @@ const Dropdown: React.FC<DropdownProps> = ({
       onMouseEnter={isHover ? () => setIsOpen(true) : undefined}
       onMouseLeave={isHover ? () => setIsOpen(false) : undefined}
     >
-      <div onClick={() => setIsOpen(!isOpen)} className="inline-flex cursor-pointer">
+      <div onClick={() => setIsOpen(!isOpen)} className={cn('inline-flex cursor-pointer', triggerClassName)}>
         {trigger}
       </div>
 

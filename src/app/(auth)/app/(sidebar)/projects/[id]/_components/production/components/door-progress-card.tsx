@@ -36,7 +36,7 @@ export function DoorProgressCard({
     <div
       onClick={() => onToggle(position.id)}
       className={cn(
-        'group relative flex cursor-pointer select-none flex-col overflow-hidden rounded-xl border bg-white text-left transition-all duration-200',
+        'group relative flex cursor-pointer select-none flex-col overflow-hidden rounded-block border bg-white text-left transition-all duration-200',
         isSelected
           ? 'border-primary bg-primary/[0.02] shadow-sm ring-2 ring-primary/20'
           : 'border-slate-200/80 hover:border-primary/50 hover:shadow-md',
@@ -96,7 +96,7 @@ export function DoorProgressCard({
           {doorName}
         </p>
 
-        <div className="flex items-center justify-between text-[11px] text-slate-500 font-mono tabular-nums">
+        <div className="flex items-center justify-between text-[11px] text-slate-500 tabular-nums">
           <span>
             {position.width} × {position.height} mm
           </span>

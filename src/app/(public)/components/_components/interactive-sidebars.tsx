@@ -95,12 +95,6 @@ export function InteractiveSidebars() {
             role: 'Product Designer',
             avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80',
           }}
-          cta={{
-            title: "Let's start!",
-            description: "Creating or adding new tasks couldn't be easier",
-            buttonText: "Add New Task",
-            onButtonClick: () => toast.success('Click thêm Task mới!'),
-          }}
         />
       </div>
 

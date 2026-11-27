@@ -5,7 +5,8 @@ import { Modal, Button, Input, Textarea, Select } from '@/components';
 import { Clock, Send } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { showErrorToast } from '@/utils';
-import { usePermission } from '@/hooks';
+import { useCan } from '@/hooks';
+import { useAuthStore } from '@/stores';
 import { createAdjustmentRequest, getUsers } from '@/actions';
 import { useQuery } from '@tanstack/react-query';
 import type { AttendanceAdjustmentRequestCreate } from '@/types';
@@ -17,8 +18,11 @@ interface OvertimeModalProps {
 }
 
 export function OvertimeModal({ open, onClose, onSuccess }: OvertimeModalProps) {
-  // Chỉ cho phép admin, super, hr chọn nhân viên khác; các role khác chỉ được đăng ký cho chính mình
-  const { user: currentUser, isManager: canSelectOtherUser } = usePermission();
+  const { can } = useCan();
+  // Phạm vi tạo chấm công dept/org mới được chọn nhân viên khác; phạm vi own chỉ đăng ký cho chính mình
+  const currentUser = useAuthStore((s) => s.user);
+  const { isWide } = useCan();
+  const canSelectOtherUser = isWide('attendance:create');
 
   const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
 
@@ -33,7 +37,7 @@ export function OvertimeModal({ open, onClose, onSuccess }: OvertimeModalProps) 
   const { data: usersList } = useQuery({
     queryKey: ['users-list-for-overtime'],
     queryFn: () => getUsers({ limit: 999, offset: 0 }),
-    enabled: Boolean(canSelectOtherUser && open),
+    enabled: (Boolean(canSelectOtherUser && open)) && can('user:read'),
   });
 
   const employeeOptions = useMemo(() => {
@@ -127,14 +131,7 @@ export function OvertimeModal({ open, onClose, onSuccess }: OvertimeModalProps) 
           <Button variant="outline" size="sm" type="button" onClick={onClose} disabled={isSubmitting}>
             Hủy
           </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            type="submit"
-            form="overtime-form"
-            loading={isSubmitting}
-            leftIcon={<Send size={15} />}
-          >
+          <Button variant="primary" size="sm" type="submit" form="overtime-form" loading={isSubmitting} leftIcon={<Send size={15} />}>
             Gửi yêu cầu
           </Button>
         </div>
@@ -142,56 +139,34 @@ export function OvertimeModal({ open, onClose, onSuccess }: OvertimeModalProps) 
     >
       <form id="overtime-form" onSubmit={handleSubmit} className="space-y-4 py-1">
         {/* Banner thông tin */}
-        <div className="p-3 bg-amber-50/80 border border-amber-200/80 rounded-xl text-xs text-amber-900 leading-relaxed">
-          Yêu cầu đăng ký tăng ca sẽ được gửi tới Quản lý / Bộ phận nhân sự phê duyệt. Sau khi được duyệt, số giờ tăng ca sẽ tự động cộng vào bảng công.
+        <div className="p-3 bg-amber-50/80 border border-amber-200/80 rounded-block text-xs text-amber-900 leading-relaxed">
+          Yêu cầu đăng ký tăng ca sẽ được gửi tới Quản lý / Bộ phận nhân sự phê duyệt. Sau khi được duyệt, số giờ tăng ca sẽ tự động cộng vào bảng
+          công.
         </div>
 
         {/* Nhân sự */}
         {canSelectOtherUser ? (
-          <Select
-            label="Nhân sự đăng ký *"
-            value={userId}
-            onChange={(e) => setUserId(e.target.value)}
-            options={employeeOptions}
-          />
+          <Select label="Nhân sự đăng ký *" value={userId} onChange={(e) => setUserId(e.target.value)} options={employeeOptions} />
         ) : (
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-gray-700 select-none">Nhân sự</label>
-            <div className="h-10 px-3 flex items-center text-sm font-medium bg-gray-50 border border-gray-200 rounded-md text-gray-800">
+            <div className="h-10 px-3 flex items-center text-sm font-medium bg-gray-50 border border-gray-200 rounded-control text-gray-800">
               {currentUser?.fullName || currentUser?.username} ({currentUser?.email})
             </div>
           </div>
         )}
 
         {/* Ngày tăng ca */}
-        <Input
-          label="Ngày tăng ca *"
-          type="date"
-          fullWidth
-          value={workDate}
-          onChange={(e) => setWorkDate(e.target.value)}
-        />
+        <Input label="Ngày tăng ca *" type="date" fullWidth value={workDate} onChange={(e) => setWorkDate(e.target.value)} />
 
         {/* Khung giờ */}
         <div className="grid grid-cols-2 gap-3">
-          <Input
-            label="Giờ bắt đầu OT *"
-            type="time"
-            fullWidth
-            value={startTime}
-            onChange={(e) => setStartTime(e.target.value)}
-          />
-          <Input
-            label="Giờ kết thúc OT *"
-            type="time"
-            fullWidth
-            value={endTime}
-            onChange={(e) => setEndTime(e.target.value)}
-          />
+          <Input label="Giờ bắt đầu OT *" type="time" fullWidth value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+          <Input label="Giờ kết thúc OT *" type="time" fullWidth value={endTime} onChange={(e) => setEndTime(e.target.value)} />
         </div>
 
         {/* Dự kiến thời gian */}
-        <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200/70 rounded-lg text-xs">
+        <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200/70 rounded-control text-xs">
           <span className="text-slate-600">Thời gian tăng ca dự kiến:</span>
           <span className="font-bold text-amber-700 bg-amber-100/60 px-2 py-0.5 rounded border border-amber-200">
             {estimatedHours > 0 ? `${estimatedHours} giờ` : 'Khung giờ không hợp lệ'}

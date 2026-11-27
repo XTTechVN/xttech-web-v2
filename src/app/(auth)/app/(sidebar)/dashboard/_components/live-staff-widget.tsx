@@ -19,10 +19,10 @@ export const LiveStaffWidget: React.FC = () => {
   const staffList = Array.isArray(liveStaff) ? liveStaff : [];
 
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col gap-3.5">
+    <div className="bg-white border border-gray-100 rounded-block p-4 sm:p-5 shadow-xs flex flex-col gap-3.5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="p-2 rounded-xl bg-primary/10 text-primary">
+          <div className="p-2 rounded-block bg-primary/10 text-primary">
             <Navigation size={18} />
           </div>
           <div className="flex flex-col">
@@ -44,10 +44,10 @@ export const LiveStaffWidget: React.FC = () => {
           Đang tải dữ liệu thực địa...
         </div>
       ) : staffList.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-6 text-center text-gray-400 gap-1.5 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+        <div className="flex flex-col items-center justify-center py-6 text-center text-gray-400 gap-1.5 bg-gray-50/50 rounded-block border border-dashed border-gray-200">
           <Signal size={22} className="text-gray-300" />
           <span className="text-xs font-medium text-gray-500">Chưa có nhân sự nào bật GPS hôm nay</span>
-          <span className="text-[10px] text-gray-400">Tọa độ sẽ tự động cập nhật khi nhân viên vào ca</span>
+          <span className="text-xs text-gray-400">Tọa độ sẽ tự động cập nhật khi nhân viên vào ca</span>
         </div>
       ) : (
         <div className="flex flex-col gap-2 max-h-56 overflow-y-auto pr-1">
@@ -57,7 +57,7 @@ export const LiveStaffWidget: React.FC = () => {
             return (
               <div
                 key={staff.userId || idx}
-                className="flex items-center justify-between p-2 rounded-xl bg-gray-50/70 hover:bg-gray-100/70 transition"
+                className="flex items-center justify-between p-2 rounded-block bg-gray-50/70 hover:bg-gray-100/70 transition"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="relative w-8 h-8 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center shrink-0">
@@ -80,7 +80,7 @@ export const LiveStaffWidget: React.FC = () => {
                     <span className="text-xs font-bold text-gray-800 truncate">
                       {displayName}
                     </span>
-                    <span className="text-[10px] text-gray-500 flex items-center gap-1 truncate">
+                    <span className="text-xs text-gray-500 flex items-center gap-1 truncate">
                       <MapPin size={10} className="text-emerald-500 shrink-0" />
                       {`${staff.latitude?.toFixed(4)}, ${staff.longitude?.toFixed(4)}`}
                     </span>
@@ -89,7 +89,7 @@ export const LiveStaffWidget: React.FC = () => {
 
                 <div className="flex items-center gap-1.5 shrink-0 pl-2">
                   <PlatformBadge platform={staff.platform} variant="minimal" />
-                  <span className="text-[10px] text-gray-400 font-mono">
+                  <span className="text-xs text-gray-400 ">
                     {staff.updatedAt
                       ? new Date(staff.updatedAt).toLocaleTimeString('vi-VN', {
                           hour: '2-digit',

@@ -72,7 +72,7 @@ export function PositionEditModal({
             <select
               value={floorId}
               onChange={(e) => setFloorId(Number(e.target.value))}
-              className="w-full h-10 px-3 text-base md:text-sm bg-white border border-gray-200 rounded-md outline-none hover:border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 text-gray-900 transition-all duration-200"
+              className="w-full h-10 px-3 text-base md:text-sm bg-white border border-gray-200 rounded-control outline-none hover:border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 text-gray-900 transition-all duration-200"
             >
               {floors.map((fl) => (
                 <option key={fl.id} value={fl.id}>
@@ -98,7 +98,7 @@ export function PositionEditModal({
             <select
               value={doorType}
               onChange={(e) => setDoorType(e.target.value)}
-              className="w-full h-10 px-3 text-base md:text-sm bg-white border border-gray-200 rounded-md outline-none hover:border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 text-gray-900 transition-all duration-200"
+              className="w-full h-10 px-3 text-base md:text-sm bg-white border border-gray-200 rounded-control outline-none hover:border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 text-gray-900 transition-all duration-200"
             >
               <option value="door">Cửa đi</option>
               <option value="window">Cửa sổ</option>

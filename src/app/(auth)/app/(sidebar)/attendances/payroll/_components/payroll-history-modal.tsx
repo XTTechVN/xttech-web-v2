@@ -1,14 +1,9 @@
+import { useCan } from '@/hooks';
 import { includesSearchText } from '@/utils';
 import { useState } from 'react';
 import { Modal, Button, Badge, Avatar, Input, Select, TableData, TableAction, ITableColumn } from '@/components';
 import { toast } from 'react-hot-toast';
-import {
-  History,
-  Search,
-  CheckCircle2,
-  FileSpreadsheet,
-  TrendingUp,
-} from 'lucide-react';
+import { History, Search, CheckCircle2, FileSpreadsheet, TrendingUp } from 'lucide-react';
 
 export interface TransferHistoryRecord {
   id: string;
@@ -122,14 +117,13 @@ interface Props {
 }
 
 export default function PayrollTransferHistoryModal({ open, onClose }: Props) {
+  const { can } = useCan();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
   const filteredData = mockTransferHistory.filter((item) => {
     const matchSearch =
-      includesSearchText(item.code, search) ||
-      includesSearchText(item.period, search) ||
-      includesSearchText(item.executor.name, search);
+      includesSearchText(item.code, search) || includesSearchText(item.period, search) || includesSearchText(item.executor.name, search);
     const matchStatus = statusFilter === 'all' || item.status === statusFilter;
     return matchSearch && matchStatus;
   });
@@ -240,7 +234,7 @@ export default function PayrollTransferHistoryModal({ open, onClose }: Props) {
   ];
 
   const renderCard = (row: TransferHistoryRecord, index: number) => (
-    <div key={row.id || index} className="p-4 rounded-xl border border-slate-200 bg-white flex flex-col gap-2.5 shadow-xs">
+    <div key={row.id || index} className="p-4 rounded-block border border-slate-200 bg-white flex flex-col gap-2.5 shadow-xs">
       <div className="flex items-center justify-between">
         <div>
           <span className="font-bold text-slate-900 text-sm block">{row.code}</span>
@@ -250,10 +244,16 @@ export default function PayrollTransferHistoryModal({ open, onClose }: Props) {
         {row.status === 'processing' && <Badge variant="warning">Đang xử lý</Badge>}
         {row.status === 'cancelled' && <Badge variant="danger">Đã hủy</Badge>}
       </div>
-      <div className="text-xs text-slate-600 space-y-1 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
-        <p><strong>Người thực hiện:</strong> {row.executor.name} ({row.executor.role})</p>
-        <p><strong>Thời gian:</strong> {row.transferDate}</p>
-        <p><strong>Tổng NV / Công / OT:</strong> {row.totalEmployees} NV | {row.totalWorkdays.toFixed(1)} ngày | OT: {row.totalOT.toFixed(1)}h</p>
+      <div className="text-xs text-slate-600 space-y-1 bg-slate-50 p-2.5 rounded-control border border-slate-100">
+        <p>
+          <strong>Người thực hiện:</strong> {row.executor.name} ({row.executor.role})
+        </p>
+        <p>
+          <strong>Thời gian:</strong> {row.transferDate}
+        </p>
+        <p>
+          <strong>Tổng NV / Công / OT:</strong> {row.totalEmployees} NV | {row.totalWorkdays.toFixed(1)} ngày | OT: {row.totalOT.toFixed(1)}h
+        </p>
       </div>
       <div className="flex justify-end">
         <Button
@@ -277,14 +277,11 @@ export default function PayrollTransferHistoryModal({ open, onClose }: Props) {
         <Button variant="outline" onClick={onClose} className="border-slate-200">
           Đóng
         </Button>
-        <Button
-          variant="primary"
-          className="gap-2"
-          onClick={handleCreateNewTransfer}
-          leftIcon={<TrendingUp size={16} />}
-        >
-          Tạo đợt kết chuyển mới
-        </Button>
+        {can('attendance_report:close_period') && (
+          <Button variant="primary" className="gap-2" onClick={handleCreateNewTransfer} leftIcon={<TrendingUp size={16} />}>
+            Tạo đợt kết chuyển mới
+          </Button>
+        )}
       </div>
     </div>
   );
@@ -304,7 +301,7 @@ export default function PayrollTransferHistoryModal({ open, onClose }: Props) {
     >
       <div className="space-y-5">
         {/* Filters Header */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200/80">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50 p-3.5 rounded-block border border-slate-200/80">
           <div className="relative w-full sm:w-72">
             <Input
               placeholder="Tìm mã phiên, kỳ công, người kết chuyển..."
@@ -353,12 +350,13 @@ export default function PayrollTransferHistoryModal({ open, onClose }: Props) {
         />
 
         {/* Informational Banner */}
-        <div className="rounded-xl border border-teal-100 bg-teal-50/60 p-3.5 text-xs text-teal-800 flex items-start gap-2.5">
+        <div className="rounded-block border border-teal-100 bg-teal-50/60 p-3.5 text-xs text-teal-800 flex items-start gap-2.5">
           <CheckCircle2 size={16} className="text-[#005c53] mt-0.5 shrink-0" />
           <div>
             <p className="font-bold">Lưu ý về dữ liệu kết chuyển:</p>
             <p className="text-teal-700/90 mt-0.5">
-              Mỗi phiên kết chuyển sẽ chụp lại toàn bộ snapshot ngày công, giờ tăng ca, số phút vi phạm và trạng thái đối soát của toàn bộ nhân viên tại thời điểm thực hiện.
+              Mỗi phiên kết chuyển sẽ chụp lại toàn bộ snapshot ngày công, giờ tăng ca, số phút vi phạm và trạng thái đối soát của toàn bộ nhân viên
+              tại thời điểm thực hiện.
             </p>
           </div>
         </div>

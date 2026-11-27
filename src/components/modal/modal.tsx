@@ -1,11 +1,12 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Heading } from '@/components';
+import { isTopLayer, lockScroll, popLayer, pushLayer, unlockScroll } from '@/components-remake/layers';
 import { motion, AnimatePresence } from 'motion/react';
 
 export interface ModalProps {
@@ -51,28 +52,25 @@ const Modal: React.FC<ModalProps> = ({
     setMounted(true);
   }, []);
 
-  // Khóa cuộn trang khi Modal mở
+  // Khóa cuộn trang và đứng vào ngăn xếp lớp nổi: Esc chỉ đóng lớp trên cùng, không kéo theo drawer bên dưới
+  const closeRef = useRef({ onClose, disabled });
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [isOpen]);
-
-  // Đóng Modal khi nhấn phím Escape
+    closeRef.current = { onClose, disabled };
+  });
   useEffect(() => {
+    if (!isOpen) return;
+    const layer = pushLayer();
+    lockScroll();
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen && !disabled) {
-        onClose();
-      }
+      if (e.key === 'Escape' && isTopLayer(layer) && !closeRef.current.disabled) closeRef.current.onClose();
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose, disabled]);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      popLayer(layer);
+      unlockScroll();
+    };
+  }, [isOpen]);
 
   if (!mounted) return null;
 

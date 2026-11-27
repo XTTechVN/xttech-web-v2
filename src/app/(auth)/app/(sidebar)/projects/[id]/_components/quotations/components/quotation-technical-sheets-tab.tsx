@@ -86,15 +86,15 @@ export function QuotationTechnicalSheetsTab({
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-24 w-full rounded-xl" />
-        <Skeleton className="h-96 w-full rounded-xl" />
+        <Skeleton className="h-24 w-full rounded-block" />
+        <Skeleton className="h-96 w-full rounded-block" />
       </div>
     );
   }
 
   if (isError) {
     return (
-      <div className="rounded-xl border border-red-200/80 bg-red-50/50 p-6 text-center text-xs text-red-600">
+      <div className="rounded-block border border-red-200/80 bg-red-50/50 p-6 text-center text-xs text-red-600">
         Không thể tải hồ sơ kỹ thuật các bộ cửa. Vui lòng thử lại.
       </div>
     );
@@ -118,7 +118,7 @@ export function QuotationTechnicalSheetsTab({
       />
 
       {displayedSheets.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-slate-200/80 bg-white p-10 text-center text-xs text-slate-400">
+        <div className="flex flex-col items-center justify-center gap-2 rounded-block border border-slate-200/80 bg-white p-10 text-center text-xs text-slate-400">
           <ClipboardList size={28} className="text-slate-300" />
           <p>
             {sheets.length === 0

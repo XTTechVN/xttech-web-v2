@@ -91,7 +91,6 @@ export const EmployeeDashboard = () => {
               title={stat.title}
               value={stat.value}
               icon={stat.icon}
-              trend={0}
               onClick={stat.onClick}
               requires={stat.requires}
             />

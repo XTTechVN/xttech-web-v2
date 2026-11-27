@@ -14,7 +14,7 @@ export function ProductionSheetLeftTables({
 }) {
   return (
     <>
-      <div className="overflow-hidden rounded-md border border-slate-200">
+      <div className="overflow-hidden rounded-control border border-slate-200">
         <div className="flex items-center justify-between gap-2 bg-sky-50/80 px-2.5 py-1 text-[11px] font-bold text-sky-900">
           <span className="flex items-center gap-1.5">
             <span>🪟</span> KÍNH
@@ -35,11 +35,11 @@ export function ProductionSheetLeftTables({
               sheet.glasses.map((glass, gIdx) => (
                 <tr key={gIdx} className="hover:bg-slate-50/50">
                   <td className="px-2 py-1">{glass.glassName}</td>
-                  <td className="px-2 py-1 font-mono">
+                  <td className="px-2 py-1 tabular-nums">
                     {Math.round(glass.widthMm)} × {Math.round(glass.heightMm)}
                   </td>
                   <td className="px-1 py-1 text-center font-bold">{glass.quantity}</td>
-                  <td className="px-2 py-1 text-right font-mono tabular-nums">
+                  <td className="px-2 py-1 text-right tabular-nums">
                     {glass.areaM2.toFixed(2)}m²
                   </td>
                 </tr>
@@ -55,7 +55,7 @@ export function ProductionSheetLeftTables({
         </table>
       </div>
 
-      <div className="overflow-hidden rounded-md border border-slate-200">
+      <div className="overflow-hidden rounded-control border border-slate-200">
         <div className="flex items-center justify-between gap-2 bg-purple-50/80 px-2.5 py-1 text-[11px] font-bold text-purple-900">
           <span className="flex items-center gap-1.5">
             <span>➰</span> ROAN
@@ -74,11 +74,11 @@ export function ProductionSheetLeftTables({
             {sheet.gaskets.length > 0 ? (
               sheet.gaskets.map((gasket, kIdx) => (
                 <tr key={kIdx} className="hover:bg-slate-50/50">
-                  <td className="px-2 py-1 font-mono text-[10px] text-slate-600">
+                  <td className="px-2 py-1 tabular-nums text-[10px] text-slate-600">
                     {gasket.code || '—'}
                   </td>
                   <td className="px-2 py-1">{gasket.name || 'Roan'}</td>
-                  <td className="px-2 py-1 text-right font-mono tabular-nums font-bold">
+                  <td className="px-2 py-1 text-right tabular-nums font-bold">
                     {(gasket.lengthM || 0).toFixed(2)}
                   </td>
                 </tr>
@@ -94,7 +94,7 @@ export function ProductionSheetLeftTables({
         </table>
       </div>
 
-      <div className="overflow-hidden rounded-md border border-slate-200">
+      <div className="overflow-hidden rounded-control border border-slate-200">
         <div className="flex items-center justify-between gap-2 bg-amber-50/80 px-2.5 py-1 text-[11px] font-bold text-amber-900">
           <span className="flex items-center gap-1.5">
             <Wrench size={12} /> PHỤ KIỆN - VẬT TƯ PHỤ
@@ -113,9 +113,9 @@ export function ProductionSheetLeftTables({
             {combinedAccessories.length > 0 ? (
               combinedAccessories.map((acc, aIdx) => (
                 <tr key={aIdx} className="hover:bg-slate-50/50">
-                  <td className="px-2 py-1 font-mono text-[10px] text-slate-600">{acc.code}</td>
+                  <td className="px-2 py-1 tabular-nums text-[10px] text-slate-600">{acc.code}</td>
                   <td className="px-2 py-1">{acc.name}</td>
-                  <td className="px-2 py-1 text-right font-mono tabular-nums font-bold">
+                  <td className="px-2 py-1 text-right tabular-nums font-bold">
                     {acc.quantity}
                   </td>
                 </tr>
@@ -156,7 +156,7 @@ const renderDirectionBadge = (direction?: string | null, name?: string) => {
 
 export function ProductionSheetProfilesTable({ sheet }: { sheet: ProductionSheet }) {
   return (
-    <div className="overflow-hidden rounded-md border border-slate-200">
+    <div className="overflow-hidden rounded-control border border-slate-200">
       <div className="flex items-center justify-between gap-2 bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-800">
         <span className="flex items-center gap-1.5">
           <Scissors size={13} className="text-primary" /> PROFILE CẮT NHÔM &amp; NẸP
@@ -177,7 +177,7 @@ export function ProductionSheetProfilesTable({ sheet }: { sheet: ProductionSheet
           {sheet.profiles.length > 0 ? (
             sheet.profiles.map((profile, pIdx) => (
               <tr key={pIdx} className="hover:bg-slate-50/60">
-                <td className="px-2.5 py-2 font-mono font-bold text-primary">
+                <td className="px-2.5 py-2 tabular-nums font-bold text-primary">
                   {profile.profileCode}
                 </td>
                 <td className="px-2.5 py-2">
@@ -189,13 +189,13 @@ export function ProductionSheetProfilesTable({ sheet }: { sheet: ProductionSheet
                     <span className="text-[10px] text-slate-400">({profile.stockSource})</span>
                   )}
                 </td>
-                <td className="px-2 py-2 text-right font-mono tabular-nums font-bold text-slate-900">
+                <td className="px-2 py-2 text-right tabular-nums font-bold text-slate-900">
                   {profile.cutLengthMm.toFixed(1)}
                 </td>
-                <td className="px-2 py-2 text-center font-mono text-[10px] text-slate-600">
+                <td className="px-2 py-2 text-center tabular-nums text-[10px] text-slate-600">
                   {profile.cutAngle}
                 </td>
-                <td className="px-2 py-2 text-center font-mono tabular-nums font-bold text-slate-800">
+                <td className="px-2 py-2 text-center tabular-nums font-bold text-slate-800">
                   {profile.quantity}
                 </td>
               </tr>

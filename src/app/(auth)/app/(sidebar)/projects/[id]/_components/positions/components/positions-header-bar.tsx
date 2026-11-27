@@ -1,5 +1,7 @@
 'use client';
 
+import { useCan } from '@/hooks';
+
 import React from 'react';
 import { FileSpreadsheet, PenTool, Plus, Store } from 'lucide-react';
 import { Button } from '@/components';
@@ -23,6 +25,7 @@ export function PositionsHeaderBar({
   onOpenSupplierPicker,
   onOpenRfqModal,
 }: PositionsHeaderBarProps) {
+  const { can } = useCan();
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
       <div>
@@ -33,7 +36,7 @@ export function PositionsHeaderBar({
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        {hasOutsourcedDoors && (
+        {hasOutsourcedDoors && can('door:create') && (
           <Button
             variant="outline"
             size="sm"
@@ -44,33 +47,39 @@ export function PositionsHeaderBar({
             Xuất RFQ NCC
           </Button>
         )}
-        <Button
-          variant="outline"
-          size="sm"
-          leftIcon={<Store size={14} />}
-          onClick={onOpenSupplierPicker}
-          className="h-8 text-xs font-semibold border-primary/30 text-primary hover:bg-primary/5"
-        >
-          Thêm cửa NCC
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          leftIcon={<PenTool size={14} />}
-          onClick={onOpenDrawInit}
-          className="h-8 text-xs font-semibold border-primary/30 text-primary hover:bg-primary/5"
-        >
-          Vẽ cửa
-        </Button>
-        <Button
-          variant="primary"
-          size="sm"
-          leftIcon={<Plus size={14} />}
-          onClick={onOpenTemplatePicker}
-          className="h-8 text-xs font-semibold"
-        >
-          Mẫu cửa
-        </Button>
+        {can('door:create') && (
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={<Store size={14} />}
+            onClick={onOpenSupplierPicker}
+            className="h-8 text-xs font-semibold border-primary/30 text-primary hover:bg-primary/5"
+          >
+            Thêm cửa NCC
+          </Button>
+        )}
+        {can('door:create') && (
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={<PenTool size={14} />}
+            onClick={onOpenDrawInit}
+            className="h-8 text-xs font-semibold border-primary/30 text-primary hover:bg-primary/5"
+          >
+            Vẽ cửa
+          </Button>
+        )}
+        {can('door:create') && (
+          <Button
+            variant="primary"
+            size="sm"
+            leftIcon={<Plus size={14} />}
+            onClick={onOpenTemplatePicker}
+            className="h-8 text-xs font-semibold"
+          >
+            Mẫu cửa
+          </Button>
+        )}
       </div>
     </div>
   );

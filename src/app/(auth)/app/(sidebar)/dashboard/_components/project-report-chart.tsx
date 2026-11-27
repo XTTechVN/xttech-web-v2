@@ -58,26 +58,26 @@ const ReportChartTooltip: React.FC<CustomTooltipProps> = ({ active, payload, dat
   const unitLabel = dataMode === 'doors' ? 'bộ cửa' : 'công trình';
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white/95 px-3 py-2.5 text-xs shadow-md backdrop-blur-xs">
+    <div className="rounded-block border border-slate-200 bg-white/95 px-3 py-2.5 text-xs shadow-md backdrop-blur-xs">
       <div className="mb-1.5 font-semibold text-slate-900">{item.label}</div>
       <div className="space-y-1 text-slate-600">
         <div className="flex items-center justify-between gap-4">
           <span>Số lượng:</span>
-          <span className="font-mono font-bold tabular-nums text-slate-900">
+          <span className="font-bold tabular-nums text-slate-900">
             {item.count} {unitLabel}
           </span>
         </div>
         {dataMode === 'doors' && typeof item.areaM2 === 'number' && (
           <div className="flex items-center justify-between gap-4">
             <span>Khối lượng:</span>
-            <span className="font-mono font-semibold tabular-nums text-primary">
+            <span className="font-semibold tabular-nums text-primary">
               {item.areaM2.toFixed(2)} m²
             </span>
           </div>
         )}
         <div className="flex items-center justify-between gap-4">
           <span>Tỷ trọng:</span>
-          <span className="font-mono font-semibold tabular-nums text-slate-800">
+          <span className="font-semibold tabular-nums text-slate-800">
             {item.percent.toFixed(1)}%
           </span>
         </div>
@@ -168,14 +168,14 @@ const PieChartView: React.FC<{
           </PieChart>
         </ResponsiveContainer>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          <span className="font-mono text-base font-bold leading-tight tabular-nums text-slate-900">
+          <span className="text-base font-bold leading-tight tabular-nums text-slate-900">
             {totalCount}
           </span>
-          <span className="text-[10px] font-medium text-slate-500">
+          <span className="text-xs font-medium text-slate-500">
             {dataMode === 'doors' ? 'bộ cửa' : 'dự án'}
           </span>
           {dataMode === 'doors' && typeof totalAreaM2 === 'number' && (
-            <span className="font-mono text-[10px] font-semibold tabular-nums text-primary">
+            <span className="text-xs font-semibold tabular-nums text-primary">
               {totalAreaM2.toFixed(1)} m²
             </span>
           )}
@@ -186,7 +186,7 @@ const PieChartView: React.FC<{
         {items.map((item, idx) => (
           <div
             key={item.key}
-            className="flex items-center justify-between gap-2 rounded-lg bg-slate-50/80 px-2.5 py-1.5 text-xs"
+            className="flex items-center justify-between gap-2 rounded-control bg-slate-50/80 px-2.5 py-1.5 text-xs"
           >
             <div className="flex min-w-0 items-center gap-2">
               <span
@@ -197,7 +197,7 @@ const PieChartView: React.FC<{
                 {item.label}
               </span>
             </div>
-            <div className="flex shrink-0 items-center gap-2 font-mono tabular-nums">
+            <div className="flex shrink-0 items-center gap-2 tabular-nums">
               <span className="font-semibold text-slate-900">{item.count}</span>
               {dataMode === 'doors' && typeof item.areaM2 === 'number' && (
                 <span className="text-[11px] text-slate-500">({item.areaM2.toFixed(1)} m²)</span>
@@ -263,7 +263,7 @@ export const ProjectReportChart: React.FC<ProjectReportChartProps> = memo(
   ({ chartType, dataMode, items, totalCount, totalAreaM2 }) => {
     if (items.length === 0) {
       return (
-        <div className="flex h-60 w-full items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/50 text-xs text-slate-400">
+        <div className="flex h-60 w-full items-center justify-center rounded-block border border-dashed border-slate-200 bg-slate-50/50 text-xs text-slate-400">
           Chưa có dữ liệu thống kê ở chế độ này
         </div>
       );

@@ -1,3 +1,5 @@
+import { createCan } from '@/hooks/use-can';
+import { useMeStore } from '@/stores';
 import type { DocumentItem } from '@/types';
 
 const AVATAR_STYLES = [
@@ -104,7 +106,7 @@ function hasRecipientEditRight(
   return rPerm === 'edit' || rPerm === 'EDIT' || (myRec as any)?.canEdit === true;
 }
 
-export function getDocumentPermissions(
+function computeDocumentPermissions(
   doc: DocumentItem | null | undefined,
   currentUser?: { id?: string | number; email?: string } | null,
   context?: {
@@ -170,3 +172,19 @@ export const getApproverRoleBadge = (emp: any): string => {
   if (emp?.role && typeof emp.role === 'object') return emp.role.name || emp.role.code || '';
   return 'Cán bộ duyệt';
 };
+
+// Quyền theo bản ghi (chủ sở hữu, thư mục chia sẻ) còn phải có quyền hành động tương ứng của vai trò
+export function getDocumentPermissions(...args: Parameters<typeof computeDocumentPermissions>): DocumentPermissionsResult {
+  const result = computeDocumentPermissions(...args);
+  const { can } = createCan(useMeStore.getState().me?.permissions ?? []);
+  return {
+    ...result,
+    canEdit: result.canEdit && can('document:update'),
+    canMove: result.canMove && can('document:update'),
+    canDelete: result.canDelete && can('document:delete'),
+    canShare: result.canShare && can('document:share'),
+  };
+}
+
+// Hàm kiểm quyền cho code không phải hook (menu dựng ở hàm thuần)
+export const currentCan = () => createCan(useMeStore.getState().me?.permissions ?? []).can;

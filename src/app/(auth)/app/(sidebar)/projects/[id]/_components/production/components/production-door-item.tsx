@@ -42,7 +42,7 @@ export function ProductionDoorItem({
       onClick={() => onToggle(position)}
       title={tooltip}
       className={cn(
-        'group relative flex select-none flex-col overflow-hidden rounded-xl border bg-white text-left transition-all duration-200',
+        'group relative flex select-none flex-col overflow-hidden rounded-block border bg-white text-left transition-all duration-200',
         !isAvailable && 'cursor-not-allowed border-slate-200/60 bg-slate-50/70 opacity-60',
         isAvailable && !isSelected && 'cursor-pointer border-slate-200/90 hover:border-primary/50 hover:shadow-md',
         isAvailable && isSelected && 'cursor-pointer border-primary bg-primary/[0.03] shadow-sm ring-2 ring-primary/20',
@@ -122,10 +122,10 @@ export function ProductionDoorItem({
         </p>
 
         <div className="flex items-center justify-between text-[11px] text-slate-500">
-          <span className="font-medium font-mono tabular-nums">
+          <span className="font-medium tabular-nums">
             {position.width} × {position.height} mm
           </span>
-          <span className="font-mono tabular-nums text-[10px] text-slate-400">
+          <span className="tabular-nums text-[10px] text-slate-400">
             {(position.areaM2 ?? 0).toFixed(2)} m²
           </span>
         </div>

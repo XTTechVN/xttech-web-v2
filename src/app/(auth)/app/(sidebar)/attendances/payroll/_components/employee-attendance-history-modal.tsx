@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Modal, Button, Badge, Avatar, Select, Input, TableData, ITableColumn } from '@/components';
 import { getAttendanceStatusLabel, getAttendanceStatusVariant } from '@/types';
 import { toast } from 'react-hot-toast';
-import { Calendar,FileSpreadsheet,Search } from 'lucide-react';
+import { Calendar, FileSpreadsheet, Search } from 'lucide-react';
 
 export interface DailyAttendanceRecord {
   id: string;
@@ -163,10 +163,7 @@ export default function EmployeeAttendanceHistoryModal({ open, employee, onClose
   const dailyLogs = generateMockDailyLogs(employee.code);
 
   const filteredLogs = dailyLogs.filter((log) => {
-    const matchSearch =
-      log.date.includes(search) ||
-      includesSearchText(log.shiftName, search) ||
-      (log.note && includesSearchText(log.note, search));
+    const matchSearch = log.date.includes(search) || includesSearchText(log.shiftName, search) || (log.note && includesSearchText(log.note, search));
     const matchStatus = statusFilter === 'all' || log.status === statusFilter;
     return matchSearch && matchStatus;
   });
@@ -178,11 +175,7 @@ export default function EmployeeAttendanceHistoryModal({ open, employee, onClose
   const getStatusBadge = (status: DailyAttendanceRecord['status']) => {
     if (!status) return <Badge variant="default">-</Badge>;
     if (status === 'leave') return <Badge variant="info">Nghỉ phép / Nghỉ tuần</Badge>;
-    return (
-      <Badge variant={getAttendanceStatusVariant(status)}>
-        {getAttendanceStatusLabel(status)}
-      </Badge>
-    );
+    return <Badge variant={getAttendanceStatusVariant(status)}>{getAttendanceStatusLabel(status)}</Badge>;
   };
 
   const attendanceColumns: ITableColumn<DailyAttendanceRecord>[] = [
@@ -209,7 +202,7 @@ export default function EmployeeAttendanceHistoryModal({ open, employee, onClose
       label: 'Check In',
       minWidth: '100px',
       cell: (row) => (
-        <span className="font-mono">
+        <span className="tabular-nums">
           {row.checkIn ? (
             <span className={`font-semibold ${row.penaltyMinutes > 0 ? 'text-red-600' : 'text-slate-800'}`}>{row.checkIn}</span>
           ) : (
@@ -223,7 +216,7 @@ export default function EmployeeAttendanceHistoryModal({ open, employee, onClose
       label: 'Check Out',
       minWidth: '100px',
       cell: (row) => (
-        <span className="font-mono">
+        <span className="tabular-nums">
           {row.checkOut ? <span className="font-semibold text-slate-800">{row.checkOut}</span> : <span className="text-slate-300">-</span>}
         </span>
       ),
@@ -264,14 +257,14 @@ export default function EmployeeAttendanceHistoryModal({ open, employee, onClose
   ];
 
   const renderCard = (row: DailyAttendanceRecord, index: number) => (
-    <div key={row.id || index} className="p-3.5 rounded-xl border border-slate-200 bg-white flex flex-col gap-2 shadow-xs">
+    <div key={row.id || index} className="p-3.5 rounded-block border border-slate-200 bg-white flex flex-col gap-2 shadow-xs">
       <div className="flex items-center justify-between">
         <span className="font-bold text-slate-900 text-xs">
           {row.date} ({row.dayOfWeek})
         </span>
         {getStatusBadge(row.status)}
       </div>
-      <div className="text-xs text-slate-600 space-y-1 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+      <div className="text-xs text-slate-600 space-y-1 bg-slate-50 p-2.5 rounded-control border border-slate-100">
         <p>
           <strong>Ca làm:</strong> {row.shiftName}
         </p>
@@ -296,11 +289,7 @@ export default function EmployeeAttendanceHistoryModal({ open, employee, onClose
         <Button variant="outline" onClick={onClose} className="border-slate-200">
           Đóng
         </Button>
-        <Button
-          variant="primary"
-          onClick={handleExportIndividualReport}
-          leftIcon={<FileSpreadsheet size={16} />}
-        >
+        <Button variant="primary" onClick={handleExportIndividualReport} leftIcon={<FileSpreadsheet size={16} />}>
           Xuất bảng công cá nhân
         </Button>
       </div>
@@ -329,29 +318,29 @@ export default function EmployeeAttendanceHistoryModal({ open, employee, onClose
       <div className="space-y-5">
         {/* Top Metric Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="rounded-xl border border-slate-200 bg-teal-50/40 p-3.5 space-y-1">
-            <span className="text-[11px] font-bold text-teal-800 uppercase tracking-wider block">CÔNG THỰC TẾ</span>
+          <div className="rounded-block border border-slate-200 bg-teal-50/40 p-3.5 space-y-1">
+            <span className="text-[11px] font-bold text-teal-800 block">CÔNG THỰC TẾ</span>
             <div className="text-xl font-black text-slate-900">
               {employee.actualWorkdays.toFixed(1)} <span className="text-xs font-normal text-slate-500">/ {employee.standardWorkdays} ngày</span>
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-sky-50/40 p-3.5 space-y-1">
-            <span className="text-[11px] font-bold text-sky-800 uppercase tracking-wider block">NGHỈ PHÉP</span>
+          <div className="rounded-block border border-slate-200 bg-sky-50/40 p-3.5 space-y-1">
+            <span className="text-[11px] font-bold text-sky-800 block">NGHỈ PHÉP</span>
             <div className="text-xl font-black text-slate-900">
               {employee.leaveDays.toFixed(1)} <span className="text-xs font-normal text-slate-500">ngày</span>
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-amber-50/40 p-3.5 space-y-1">
-            <span className="text-[11px] font-bold text-amber-800 uppercase tracking-wider block">TĂNG CA (OT)</span>
+          <div className="rounded-block border border-slate-200 bg-amber-50/40 p-3.5 space-y-1">
+            <span className="text-[11px] font-bold text-amber-800 block">TĂNG CA (OT)</span>
             <div className="text-xl font-black text-[#005c53]">
               {employee.overtimeHours.toFixed(1)} <span className="text-xs font-normal text-slate-500">giờ</span>
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-red-50/40 p-3.5 space-y-1">
-            <span className="text-[11px] font-bold text-red-800 uppercase tracking-wider block">VI PHẠM (ĐI MUỘN)</span>
+          <div className="rounded-block border border-slate-200 bg-red-50/40 p-3.5 space-y-1">
+            <span className="text-[11px] font-bold text-red-800 block">VI PHẠM (ĐI MUỘN)</span>
             <div className="text-xl font-black text-red-600">
               {employee.penaltyMinutes} <span className="text-xs font-normal text-slate-500">phút</span>
             </div>
@@ -359,9 +348,9 @@ export default function EmployeeAttendanceHistoryModal({ open, employee, onClose
         </div>
 
         {/* Filter Controls */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200/80">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50 p-3.5 rounded-block border border-slate-200/80">
           <div className="flex items-center gap-3 w-full sm:w-auto">
-            <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-700 font-medium">
+            <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-control px-3 py-1.5 text-xs text-slate-700 font-medium">
               <Calendar size={14} className="text-slate-400" />
               <span>Tháng 11, 2024</span>
             </div>

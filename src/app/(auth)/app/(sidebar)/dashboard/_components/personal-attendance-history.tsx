@@ -99,7 +99,7 @@ export const PersonalAttendanceHistory: React.FC = () => {
         <div className="flex flex-col items-center justify-center py-6 text-center text-gray-400 gap-1.5 bg-gray-50/50 rounded-block border border-dashed border-gray-200">
           <CalendarX size={24} className="text-gray-300" />
           <span className="text-xs font-medium text-gray-600">Chưa có lịch sử chấm công</span>
-          <span className="text-[10px] text-gray-400">
+          <span className="text-xs text-gray-400">
             Dữ liệu sẽ xuất hiện sau khi bạn check-in ca làm
           </span>
         </div>
@@ -133,7 +133,7 @@ export const PersonalAttendanceHistory: React.FC = () => {
                         {formattedDate}
                       </span>
                       {item.isLate && (
-                        <span className="text-[10px] text-amber-600 font-medium flex items-center gap-0.5">
+                        <span className="text-xs text-amber-600 font-medium flex items-center gap-0.5">
                           <AlertTriangle size={10} /> +{item.lateMinutes || 0}p
                         </span>
                       )}
@@ -152,14 +152,14 @@ export const PersonalAttendanceHistory: React.FC = () => {
 
                 <div className="flex flex-col items-end gap-1">
                   <span
-                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-control border ${getStatusBadgeClass(
+                    className={`text-xs font-semibold px-2 py-0.5 rounded-control border ${getStatusBadgeClass(
                       statusInfo.variant
                     )}`}
                   >
                     {statusInfo.label}
                   </span>
                   {typeof item.totalHours === 'number' && item.totalHours > 0 && (
-                    <span className="text-[10px] text-gray-400 font-medium">
+                    <span className="text-xs text-gray-400 font-medium">
                       {item.totalHours.toFixed(1)}h công
                     </span>
                   )}

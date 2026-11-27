@@ -17,6 +17,8 @@ import {
   MessageSquarePlus,
   Smartphone,
   UserCircle,
+  ShieldCheck,
+  UserCog,
   Loader2,
 } from 'lucide-react';
 import { cn } from '@/utils';
@@ -44,6 +46,8 @@ const ICON_MAP: Record<string, React.ElementType> = {
   MessageSquarePlus,
   Smartphone,
   UserCircle,
+  ShieldCheck,
+  UserCog,
   Loader2,
 };
 

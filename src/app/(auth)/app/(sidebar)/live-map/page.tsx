@@ -3,6 +3,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { getLiveLocations } from '@/actions';
+import { useCan } from '@/hooks';
+import { AccessDenied } from '@/components/access-denied';
 import { StaffLiveLocation, STAFF_LIVE_STATUS_MAP } from '@/types';
 import { BASE_WS_URL } from '@/config';
 import { useAuthStore } from '@/stores';
@@ -15,7 +17,7 @@ const LiveMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="h-full w-full rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 text-sm">
+      <div className="h-full w-full rounded-block bg-slate-100 flex items-center justify-center text-slate-400 text-sm">
         Đang tải bản đồ...
       </div>
     ),
@@ -32,7 +34,9 @@ const mergeLiveStaff = (previous: StaffLiveLocation, next: StaffLiveLocation): S
   diagnostics: next.diagnostics ?? previous.diagnostics,
 });
 
-export default function AttendanceLiveMapPage() {
+function LiveMapView() {
+  const { can } = useCan();
+  const canRoute = can('live_map:route');
   const [staffLocations, setStaffLocations] = useState<StaffLiveLocation[]>([]);
   const [selectedStaff, setSelectedStaff] = useState<StaffLiveLocation | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -218,7 +222,7 @@ export default function AttendanceLiveMapPage() {
     };
   }, []);
 
-  const handleOpenRoute = (staff: StaffLiveLocation) => {
+  const openRoute = (staff: StaffLiveLocation) => {
     setRouteModalState({
       isOpen: true,
       userId: staff.userId,
@@ -228,28 +232,28 @@ export default function AttendanceLiveMapPage() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-100px)] gap-3">
+    <div className="flex h-full flex-col gap-4 p-4 font-body [&_h1]:font-heading [&_h2]:font-heading [&_h3]:font-heading [&_h4]:font-heading">
       {/* Main Content: Sidebar List (Desktop) + Map View (Full screen on mobile) */}
-      <div className="flex-1 flex flex-col md:flex-row gap-3 min-h-0 relative">
+      <div className="flex-1 flex flex-col md:flex-row gap-4 min-h-0 relative">
         {/* 1. Danh sách nhân viên trên Desktop (ẩn trên mobile) */}
         <div className="hidden md:block w-80 lg:w-96 shrink-0 h-full">
           <StaffList
             staffLocations={staffLocations}
             selectedStaff={selectedStaff}
             onSelectStaff={(staff) => setSelectedStaff({ ...staff, _selectedAt: Date.now() } as any)}
-            onViewRoute={handleOpenRoute}
+            onViewRoute={canRoute ? openRoute : undefined}
             isLoading={isLoading}
             onRefresh={() => fetchLocations(false)}
           />
         </div>
 
         {/* 2. Bản đồ trực tiếp (Toàn màn hình trên Mobile) */}
-        <div className="flex-1 h-full min-h-[350px] relative z-0 isolate rounded-2xl overflow-hidden">
+        <div className="flex-1 h-full min-h-[350px] relative z-0 isolate rounded-block overflow-hidden">
           <LiveMap
             staffLocations={staffLocations}
             selectedStaff={selectedStaff}
             onSelectStaff={(staff) => setSelectedStaff({ ...staff, _selectedAt: Date.now() } as any)}
-            onViewRoute={handleOpenRoute}
+            onViewRoute={canRoute ? openRoute : undefined}
           />
 
           {/* Nút nổi mở danh sách trên Mobile (Floating Pill) */}
@@ -268,8 +272,8 @@ export default function AttendanceLiveMapPage() {
 
           {/* Floating Selected Staff Card mini ở đáy trên Mobile khi chọn nhân viên */}
           {selectedStaff && (
-            <div className="md:hidden absolute bottom-3 inset-x-3 z-[900] bg-white/95 backdrop-blur-md rounded-2xl p-3 shadow-xl border border-slate-200 flex items-center justify-between gap-2 animate-in slide-in-from-bottom duration-200">
-              <div className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer" onClick={() => handleOpenRoute(selectedStaff)}>
+            <div className="md:hidden absolute bottom-3 inset-x-3 z-[900] bg-white/95 backdrop-blur-md rounded-block p-3 shadow-xl border border-slate-200 flex items-center justify-between gap-2 animate-in slide-in-from-bottom duration-200">
+              <div className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer" onClick={canRoute ? () => openRoute(selectedStaff) : undefined}>
                 <div className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center font-bold text-xs text-slate-700">
                   {selectedStaff.avatar ? (
                     <img
@@ -285,7 +289,7 @@ export default function AttendanceLiveMapPage() {
                   <div className="flex items-center gap-1.5">
                     <h4 className="text-xs font-bold text-slate-800 truncate">{selectedStaff.userName || 'Nhân viên'}</h4>
                     <span
-                      className={`text-[9px] font-semibold px-1.5 py-0.2 rounded-md ${
+                      className={`text-[9px] font-semibold px-1.5 py-0.2 rounded-control ${
                         selectedStaff.status === 'offline'
                           ? 'bg-slate-100 text-slate-500'
                           : selectedStaff.status === 'app_closed'
@@ -305,18 +309,20 @@ export default function AttendanceLiveMapPage() {
               </div>
 
               <div className="flex items-center gap-1.5 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => handleOpenRoute(selectedStaff)}
-                  className="px-2.5 py-1.5 bg-primary text-white text-[11px] font-semibold rounded-xl hover:bg-primary/90 flex items-center gap-1 shadow-xs cursor-pointer active:scale-95 transition-all"
-                >
-                  <Route size={12} />
-                  <span>Lộ trình</span>
-                </button>
+                {canRoute && (
+                  <button
+                    type="button"
+                    onClick={() => openRoute(selectedStaff)}
+                    className="px-2.5 py-1.5 bg-primary text-white text-[11px] font-semibold rounded-block hover:bg-primary/90 flex items-center gap-1 shadow-xs cursor-pointer active:scale-95 transition-all"
+                  >
+                    <Route size={12} />
+                    <span>Lộ trình</span>
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => setSelectedStaff(null)}
-                  className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+                  className="p-1.5 text-slate-400 hover:text-slate-600 rounded-control hover:bg-slate-100 transition-colors cursor-pointer"
                   title="Đóng"
                 >
                   <X size={15} />
@@ -331,7 +337,7 @@ export default function AttendanceLiveMapPage() {
       {isMobileStaffListOpen && (
         <div className="fixed inset-0 z-[1100] md:hidden flex flex-col justify-end bg-slate-900/40 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="flex-1" onClick={() => setIsMobileStaffListOpen(false)} />
-          <div className="w-full max-h-[82vh] bg-white rounded-t-3xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-300">
+          <div className="w-full max-h-[82vh] bg-white rounded-t-block shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-300">
             {/* Handle bar & Close */}
             <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b border-slate-100 shrink-0">
               <div className="flex-1" />
@@ -356,10 +362,14 @@ export default function AttendanceLiveMapPage() {
                   setSelectedStaff({ ...staff, _selectedAt: Date.now() } as any);
                   setIsMobileStaffListOpen(false);
                 }}
-                onViewRoute={(staff) => {
-                  setIsMobileStaffListOpen(false);
-                  handleOpenRoute(staff);
-                }}
+                onViewRoute={
+                  canRoute
+                    ? (staff) => {
+                        setIsMobileStaffListOpen(false);
+                        openRoute(staff);
+                      }
+                    : undefined
+                }
                 isLoading={isLoading}
               />
             </div>
@@ -368,7 +378,7 @@ export default function AttendanceLiveMapPage() {
       )}
 
       {/* Modal phát lại lộ trình */}
-      {routeModalState.isOpen && (
+      {canRoute && routeModalState.isOpen && (
         <RoutePlaybackModal
           isOpen={routeModalState.isOpen}
           onClose={() => setRouteModalState((prev) => ({ ...prev, isOpen: false }))}
@@ -379,4 +389,11 @@ export default function AttendanceLiveMapPage() {
       )}
     </div>
   );
+}
+
+export default function AttendanceLiveMapPage() {
+  const { can, isReady } = useCan();
+  if (!isReady) return null;
+  // Không kết nối WebSocket hay gọi API khi thiếu quyền xem bản đồ trực tiếp
+  return can('live_map:read') ? <LiveMapView /> : <AccessDenied />;
 }

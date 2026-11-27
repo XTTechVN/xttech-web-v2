@@ -5,14 +5,21 @@ import { CustomerInfo } from './_components/customer-info';
 import { InteractionLogs } from './_components/interaction-logs';
 import { useQuery } from '@tanstack/react-query';
 import { getCustomer } from '@/actions';
+import { AccessDenied } from '@/components/access-denied';
+import { useCan } from '@/hooks';
 
 const CustomerLogsPage = ({ params }: { params: Promise<{ id: string }> }) => {
   const { id } = React.use(params);
+  const { can, isReady } = useCan();
 
   const { data: customer, isLoading } = useQuery({
     queryKey: ['customer', id],
     queryFn: () => getCustomer(Number(id)),
+    enabled: isReady && can('customer:read'),
   });
+
+  if (!isReady) return null;
+  if (!can('customer:read')) return <AccessDenied />;
 
   if (isLoading) {
     return <div className="p-8 text-center text-gray-500 font-medium">Đang tải dữ liệu khách hàng...</div>;

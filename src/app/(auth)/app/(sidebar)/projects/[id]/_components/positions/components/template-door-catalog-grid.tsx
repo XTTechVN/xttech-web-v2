@@ -27,7 +27,7 @@ function TemplateDoorCard({ door, onSelect }: TemplateDoorCardProps) {
   return (
     <div
       onClick={() => onSelect(door)}
-      className="group bg-white rounded-xl border border-slate-200/90 hover:border-amber-400 hover:shadow-md transition-all overflow-hidden flex flex-col justify-between cursor-pointer"
+      className="group bg-white rounded-block border border-slate-200/90 hover:border-amber-400 hover:shadow-md transition-all overflow-hidden flex flex-col justify-between cursor-pointer"
     >
       <div className="aspect-[4/3] w-full bg-slate-50/60 flex items-center justify-center overflow-hidden relative p-2.5 border-b border-slate-100">
         {hasSvg ? (
@@ -57,7 +57,7 @@ function TemplateDoorCard({ door, onSelect }: TemplateDoorCardProps) {
       <div className="p-3 space-y-1 bg-white">
         <div>
           <span
-            className="inline-block px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-mono text-[11px] font-semibold truncate max-w-full"
+            className="inline-block px-2 py-0.5 rounded bg-slate-100 text-slate-600 tabular-nums text-[11px] font-semibold truncate max-w-full"
             title={door.code || `#${door.id}`}
           >
             {door.code || `#${door.id}`}
@@ -94,7 +94,7 @@ export function TemplateDoorCatalogGrid({
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {Array.from({ length: 8 }).map((_, idx) => (
-          <div key={idx} className="animate-pulse rounded-xl border border-slate-200 bg-white overflow-hidden">
+          <div key={idx} className="animate-pulse rounded-block border border-slate-200 bg-white overflow-hidden">
             <div className="aspect-[4/3] bg-slate-100" />
             <div className="p-3 space-y-2">
               <div className="h-4 w-24 bg-slate-100 rounded" />

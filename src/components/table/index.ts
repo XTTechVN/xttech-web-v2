@@ -8,3 +8,4 @@ export * from './table-pagination';
 export * from './types';
 export { default as TableAction } from './table-action';
 export * from './bulk-delete-toolbar-actions';
+export * from './table-filter-panel';

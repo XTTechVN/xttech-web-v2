@@ -7,9 +7,14 @@ export function createCan(permissions: MePermission[], isPlatformAdmin = false) 
   const can = (code: string) => permissions.some((p) => p.code === code);
   const canAny = (codes: string[]) => codes.some(can);
   const scopeOf = (code: string) => permissions.find((p) => p.code === code)?.scope ?? null;
+  // Phạm vi rộng (dept/org): thấy và thao tác trên dữ liệu của người khác = chế độ quản lý
+  const isWide = (code: string) => {
+    const scope = scopeOf(code);
+    return scope === 'dept' || scope === 'org';
+  };
   // Cấu hình menu/route cần đúng hai thứ này
   const access = { canAny, isPlatformAdmin, scopeOf };
-  return { can, canAny, scopeOf, access };
+  return { can, canAny, scopeOf, isWide, access };
 }
 
 const NO_PERMISSIONS: MePermission[] = [];

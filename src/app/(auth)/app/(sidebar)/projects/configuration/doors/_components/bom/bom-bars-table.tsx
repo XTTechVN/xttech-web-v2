@@ -37,7 +37,7 @@ export const BomBarsTable: React.FC<BomBarsTableProps> = ({ bars }) => {
   return (
     <table className="w-full text-left text-xs border-collapse">
       <thead>
-        <tr className="border-b border-slate-200 text-slate-500 font-semibold bg-slate-50/50 text-[10px] sm:text-[11px] uppercase tracking-wider">
+        <tr className="border-b border-slate-200 text-slate-500 font-semibold bg-slate-50/50 text-[10px] sm:text-[11px]">
           <th className="py-2.5 px-2.5 sm:px-3">Chi tiết thanh nhôm</th>
           <th className="py-2.5 px-2 text-right whitespace-nowrap">Dài (mm)</th>
           <th className="py-2.5 px-2 text-center whitespace-nowrap">Góc cắt</th>
@@ -53,22 +53,18 @@ export const BomBarsTable: React.FC<BomBarsTableProps> = ({ bars }) => {
                 <span>{bar.name}</span>
                 {renderDirectionBadge(bar.openDirection, bar.name)}
               </div>
-              <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] text-slate-500 font-mono mt-0.5 flex-wrap">
+              <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] text-slate-500 tabular-nums mt-0.5 flex-wrap">
                 {bar.profileCode && (
-                  <span className="font-semibold text-blue-700 bg-blue-50 px-1 py-0.5 rounded border border-blue-100/60">
-                    {bar.profileCode}
-                  </span>
+                  <span className="font-semibold text-blue-700 bg-blue-50 px-1 py-0.5 rounded border border-blue-100/60">{bar.profileCode}</span>
                 )}
                 <span className="text-slate-300">·</span>
-                <span className="font-sans text-slate-400">
-                  {CATEGORY_MAP[bar.category] || bar.category}
-                </span>
+                <span className=" text-slate-400">{CATEGORY_MAP[bar.category] || bar.category}</span>
               </div>
             </td>
-            <td className="py-2.5 px-2 text-right font-bold text-blue-600 font-mono text-xs sm:text-sm whitespace-nowrap">
+            <td className="py-2.5 px-2 text-right font-bold text-blue-600 tabular-nums text-xs sm:text-sm whitespace-nowrap">
               {bar.length.toLocaleString('vi-VN')}
             </td>
-            <td className="py-2.5 px-2 text-center font-mono text-xs text-slate-700 whitespace-nowrap">
+            <td className="py-2.5 px-2 text-center tabular-nums text-xs text-slate-700 whitespace-nowrap">
               {bar.goc1}°/{bar.goc2}°
             </td>
             <td className="py-2.5 px-2 text-center whitespace-nowrap">
@@ -76,9 +72,7 @@ export const BomBarsTable: React.FC<BomBarsTableProps> = ({ bars }) => {
                 {bar.qty}
               </span>
             </td>
-            <td className="py-2.5 px-3 text-right text-slate-400 font-mono text-[11px] hidden sm:table-cell">
-              {bar.formula || '—'}
-            </td>
+            <td className="py-2.5 px-3 text-right text-slate-400 tabular-nums text-[11px] hidden sm:table-cell">{bar.formula || '—'}</td>
           </tr>
         ))}
       </tbody>

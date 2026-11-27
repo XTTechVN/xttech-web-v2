@@ -86,7 +86,7 @@ export function ProjectPipelineCard({
         </span>
       </div>
 
-      <div className="rounded-md border border-slate-200/80 bg-white p-3.5 shadow-2xs space-y-3">
+      <div className="rounded-control border border-slate-200/80 bg-white p-3.5 shadow-2xs space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-5 gap-2.5">
           {stages.map((stage, idx) => {
             const isDone = idx < currentStepIdx;
@@ -98,7 +98,7 @@ export function ProjectPipelineCard({
                 key={stage.id}
                 type="button"
                 onClick={() => onSelectTab?.(stage.tab)}
-                className={`group relative rounded-lg border p-2.5 text-left transition-all cursor-pointer ${
+                className={`group relative rounded-control border p-2.5 text-left transition-all cursor-pointer ${
                   isCurrent
                     ? 'border-primary bg-primary/[0.04] text-slate-900 ring-1 ring-primary/25 shadow-2xs'
                     : isDone
@@ -108,7 +108,7 @@ export function ProjectPipelineCard({
               >
                 <div className="mb-1.5 flex items-center justify-between">
                   <div
-                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${
+                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-control ${
                       isCurrent
                         ? 'bg-primary text-white'
                         : isDone

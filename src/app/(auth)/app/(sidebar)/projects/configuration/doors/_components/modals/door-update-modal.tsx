@@ -34,14 +34,14 @@ const DOOR_TYPE_OPTIONS = [
   { value: 'composite', label: 'Tổng hợp' },
 ];
 
-export function DoorUpdateModal({
-  isOpen,
-  onClose,
-  title,
-  submitText = 'Xác nhận lưu',
-  initialData,
-}: DoorUpdateModalProps) {
-  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<DoorUpdateFormValues>();
+export function DoorUpdateModal({ isOpen, onClose, title, submitText = 'Xác nhận lưu', initialData }: DoorUpdateModalProps) {
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { errors },
+  } = useForm<DoorUpdateFormValues>();
 
   const [existingImages, setExistingImages] = useState<DoorImage[]>([]);
   const [deletedImageIds, setDeletedImageIds] = useState<number[]>([]);
@@ -84,7 +84,7 @@ export function DoorUpdateModal({
       setNewImages([]);
       setSelectedNewPrimaryIdx(null);
       const primary = images.find((img) => img.isPrimary);
-      setPrimaryImageId(primary ? primary.id : images[0]?.id ?? null);
+      setPrimaryImageId(primary ? primary.id : (images[0]?.id ?? null));
     }
   }, [isOpen, initialData, reset]);
 
@@ -169,15 +169,23 @@ export function DoorUpdateModal({
           <div className="md:col-span-5 flex flex-col items-center gap-3 w-full">
             <div className="w-full flex items-center justify-between">
               <span className="text-gray-700 text-xs font-semibold self-start">Hình ảnh ({totalImageCount})</span>
-              {totalImageCount > 0 && <span className="text-[11px] text-primary bg-primary/10 px-2 py-0.5 rounded-md font-medium">Đã chọn ảnh chính</span>}
+              {totalImageCount > 0 && (
+                <span className="text-[11px] text-primary bg-primary/10 px-2 py-0.5 rounded-control font-medium">Đã chọn ảnh chính</span>
+              )}
             </div>
 
-            <div className="w-full aspect-square max-w-50 rounded-xl border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center relative group">
-              {currentMainPreview ? <img src={currentMainPreview} alt="Preview" className="w-full h-full object-cover" /> : <Columns className="w-10 h-10 text-gray-300" />}
-              {currentMainPreview && <div className="absolute top-2 left-2 bg-primary text-white text-[10px] font-medium px-2 py-0.5 rounded shadow">Ảnh chính</div>}
+            <div className="w-full aspect-square max-w-50 rounded-block border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center relative group">
+              {currentMainPreview ? (
+                <img src={currentMainPreview} alt="Preview" className="w-full h-full object-cover" />
+              ) : (
+                <Columns className="w-10 h-10 text-gray-300" />
+              )}
+              {currentMainPreview && (
+                <div className="absolute top-2 left-2 bg-primary text-white text-[10px] font-medium px-2 py-0.5 rounded shadow">Ảnh chính</div>
+              )}
             </div>
 
-            <label className="flex items-center gap-2 px-3 py-1.5 border border-gray-300 rounded-lg cursor-pointer bg-white hover:bg-gray-50 text-sm font-medium text-gray-700 transition shadow-xs w-full justify-center">
+            <label className="flex items-center gap-2 px-3 py-1.5 border border-gray-300 rounded-control cursor-pointer bg-white hover:bg-gray-50 text-sm font-medium text-gray-700 transition shadow-xs w-full justify-center">
               <Upload size={16} />
               <span>Thêm ảnh mới</span>
               <input type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
@@ -186,7 +194,7 @@ export function DoorUpdateModal({
             {totalImageCount > 0 && (
               <div className="w-full flex flex-col gap-1.5 mt-1">
                 <span className="text-[11px] text-gray-500">Nhấn vào ảnh để chọn làm ảnh chính:</span>
-                <div className="grid grid-cols-3 gap-2.5 max-h-52 overflow-y-auto p-1.5 border border-gray-100 rounded-lg bg-gray-50/50">
+                <div className="grid grid-cols-3 gap-2.5 max-h-52 overflow-y-auto p-1.5 border border-gray-100 rounded-control bg-gray-50/50">
                   {existingImages.map((img) => {
                     const isPrimary = primaryImageId === img.id && selectedNewPrimaryIdx === null;
                     return (
@@ -196,12 +204,18 @@ export function DoorUpdateModal({
                           setPrimaryImageId(img.id);
                           setSelectedNewPrimaryIdx(null);
                         }}
-                        className={`relative aspect-square rounded-xl border overflow-hidden cursor-pointer group transition-all ${
-                          isPrimary ? 'border-primary ring-2 ring-primary/40 shadow-xs' : 'border-gray-200 hover:border-gray-400 opacity-85 hover:opacity-100'
+                        className={`relative aspect-square rounded-block border overflow-hidden cursor-pointer group transition-all ${
+                          isPrimary
+                            ? 'border-primary ring-2 ring-primary/40 shadow-xs'
+                            : 'border-gray-200 hover:border-gray-400 opacity-85 hover:opacity-100'
                         }`}
                       >
                         <img src={getFileUrl(img.imagePath)} alt={img.name || 'Door'} className="w-full h-full object-cover" />
-                        {isPrimary && <div className="absolute inset-x-0 bottom-0 bg-primary/95 text-white text-[10px] text-center font-medium py-0.5 leading-none">Chính</div>}
+                        {isPrimary && (
+                          <div className="absolute inset-x-0 bottom-0 bg-primary/95 text-white text-[10px] text-center font-medium py-0.5 leading-none">
+                            Chính
+                          </div>
+                        )}
                         <button
                           type="button"
                           onClick={(e) => {
@@ -226,15 +240,21 @@ export function DoorUpdateModal({
                           setSelectedNewPrimaryIdx(idx);
                           setPrimaryImageId(null);
                         }}
-                        className={`relative aspect-square rounded-xl border overflow-hidden cursor-pointer group transition-all ${
-                          isPrimary ? 'border-primary ring-2 ring-primary/40 shadow-xs' : 'border-blue-200 hover:border-blue-400 opacity-90 hover:opacity-100'
+                        className={`relative aspect-square rounded-block border overflow-hidden cursor-pointer group transition-all ${
+                          isPrimary
+                            ? 'border-primary ring-2 ring-primary/40 shadow-xs'
+                            : 'border-blue-200 hover:border-blue-400 opacity-90 hover:opacity-100'
                         }`}
                       >
                         <img src={img.previewUrl} alt={`New upload ${idx}`} className="w-full h-full object-cover" />
                         {isPrimary ? (
-                          <div className="absolute inset-x-0 bottom-0 bg-primary/95 text-white text-[10px] text-center font-medium py-0.5 leading-none">Chính (Mới)</div>
+                          <div className="absolute inset-x-0 bottom-0 bg-primary/95 text-white text-[10px] text-center font-medium py-0.5 leading-none">
+                            Chính (Mới)
+                          </div>
                         ) : (
-                          <div className="absolute inset-x-0 top-0 bg-emerald-600/85 text-white text-[9px] text-center py-0.5 leading-none font-medium">Mới</div>
+                          <div className="absolute inset-x-0 top-0 bg-emerald-600/85 text-white text-[9px] text-center py-0.5 leading-none font-medium">
+                            Mới
+                          </div>
                         )}
                         <button
                           type="button"
@@ -256,8 +276,20 @@ export function DoorUpdateModal({
           </div>
 
           <div className="md:col-span-7 flex flex-col space-y-4">
-            <Input label="Tên cửa *" placeholder="Nhập tên cửa" fullWidth {...register('name', { required: true })} error={errors.name ? 'Tên cửa không được để trống' : undefined} />
-            <Input label="Mã cửa *" placeholder="Nhập mã sản phẩm cửa" fullWidth {...register('code', { required: true })} error={errors.code ? 'Mã cửa không được để trống' : undefined} />
+            <Input
+              label="Tên cửa *"
+              placeholder="Nhập tên cửa"
+              fullWidth
+              {...register('name', { required: true })}
+              error={errors.name ? 'Tên cửa không được để trống' : undefined}
+            />
+            <Input
+              label="Mã cửa *"
+              placeholder="Nhập mã sản phẩm cửa"
+              fullWidth
+              {...register('code', { required: true })}
+              error={errors.code ? 'Mã cửa không được để trống' : undefined}
+            />
             <Select
               label="Phân loại *"
               placeholder="Chọn phân loại"
@@ -272,8 +304,17 @@ export function DoorUpdateModal({
         </div>
 
         <div className="flex gap-2 justify-end w-full mt-6 pt-4 border-t border-gray-150">
-          <Button variant="outline" size="sm" onClick={onClose}>Hủy</Button>
-          <Button variant="primary" size="sm" leftIcon={<CheckCircle2 size={16} />} type="submit" disabled={updateIsPending} loading={updateIsPending}>
+          <Button variant="outline" size="sm" onClick={onClose}>
+            Hủy
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            leftIcon={<CheckCircle2 size={16} />}
+            type="submit"
+            disabled={updateIsPending}
+            loading={updateIsPending}
+          >
             {submitText}
           </Button>
         </div>

@@ -182,7 +182,7 @@ function PositionDrawInitForm({
 
   return (
     <div className="p-4 space-y-3.5">
-      <div className="p-2.5 rounded-lg bg-primary/5 border border-primary/20 text-xs text-slate-600">
+      <div className="p-2.5 rounded-control bg-primary/5 border border-primary/20 text-xs text-slate-600">
         Chọn <strong className="text-slate-800">Hãng nhôm & Hệ nhôm</strong> ngay từ bước khởi tạo.
         Sau khi vào bàn vẽ CAD, hãng nhôm sẽ được cố định cho bộ cửa này.
       </div>

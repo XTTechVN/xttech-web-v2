@@ -1,5 +1,7 @@
 'use client';
 
+import { useCan } from '@/hooks';
+
 import React, { useState } from 'react';
 import { ChevronDown, CheckCircle2, Link2, Printer } from 'lucide-react';
 import { Badge, Button } from '@/components';
@@ -42,14 +44,14 @@ export function ContractList({
   }
   if (contracts.length === 0) {
     return (
-      <div className="py-8 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-lg">
+      <div className="py-8 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-control">
         Chưa có hợp đồng nào được lập từ báo giá.
       </div>
     );
   }
 
   return (
-    <div className="divide-y divide-slate-100 border border-slate-100 rounded-lg overflow-hidden">
+    <div className="divide-y divide-slate-100 border border-slate-100 rounded-control overflow-hidden">
       {contracts.map((contract) => (
         <ContractRow
           key={contract.id}
@@ -91,6 +93,7 @@ function ContractRow({
   onEditTerms,
   onPreview,
 }: ContractRowProps) {
+  const { can } = useCan();
   const [isExpanded, setIsExpanded] = useState(false);
   const status = CONTRACT_STATUS_MAP[contract.status];
   const isCancelled = contract.status === 'cancelled';
@@ -146,15 +149,17 @@ function ContractRow({
             <Button variant="outline" size="sm" className="h-7 text-[11px] px-2" onClick={() => onPreview(contract)}>
               <Printer size={12} className="mr-1" /> Xem / In
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 text-[11px] px-2"
-              onClick={() => onEditTerms(contract)}
-            >
-              {isDraft ? 'Soạn điều khoản' : 'Xem điều khoản'}
-            </Button>
-            {isAwaitingSignature && (
+            {can('contract:update') && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-[11px] px-2"
+                onClick={() => onEditTerms(contract)}
+              >
+                {isDraft ? 'Soạn điều khoản' : 'Xem điều khoản'}
+              </Button>
+            )}
+            {isAwaitingSignature && can('contract:send') && (
               <Button
                 variant="outline"
                 size="sm"
@@ -167,7 +172,7 @@ function ContractRow({
                 <Link2 size={12} className="mr-1" /> Gửi link ký online
               </Button>
             )}
-            {isAwaitingSignature && (
+            {isAwaitingSignature && can('contract:sign') && (
               <Button
                 variant="primary"
                 size="sm"
@@ -188,7 +193,7 @@ function ContractRow({
                 <CheckCircle2 size={13} /> Đã ký
               </span>
             )}
-            {!isCancelled && (
+            {!isCancelled && can('contract:cancel') && (
               <Button
                 variant="outline"
                 size="sm"

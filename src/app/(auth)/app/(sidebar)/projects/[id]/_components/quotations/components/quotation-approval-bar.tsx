@@ -80,7 +80,7 @@ export function QuotationApprovalBar({ projectId, quotation }: QuotationApproval
   const isBlocked = quotation.isOutdated;
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-xs lg:flex-row lg:items-center lg:justify-between">
+    <div className="flex flex-col gap-3 rounded-control border border-slate-200 bg-white px-4 py-3 shadow-xs lg:flex-row lg:items-center lg:justify-between">
       <div className="flex items-start gap-2 text-xs text-slate-600">
         <ShieldCheck size={15} className="mt-0.5 shrink-0 text-primary" />
         <div className="space-y-1">

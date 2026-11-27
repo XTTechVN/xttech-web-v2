@@ -6,15 +6,12 @@ interface BomGrillesTableProps {
   totalGrillePrice?: number;
 }
 
-export const BomGrillesTable: React.FC<BomGrillesTableProps> = ({
-  grilles = [],
-  totalGrillePrice,
-}) => {
+export const BomGrillesTable: React.FC<BomGrillesTableProps> = ({ grilles = [], totalGrillePrice }) => {
   return (
     <div className="space-y-4">
       <table className="w-full text-left border-collapse text-xs">
         <thead>
-          <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+          <tr className="border-b border-slate-200 text-slate-400 font-bold text-[10px]">
             <th className="py-2 px-2">Ô kính & Bóc tách</th>
             <th className="py-2 px-2">Quy cách nan</th>
             <th className="py-2 px-2 text-center">Bóc tách dài (m)</th>
@@ -27,7 +24,7 @@ export const BomGrillesTable: React.FC<BomGrillesTableProps> = ({
           {grilles.map((g, idx) => (
             <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
               <td className="py-2.5 px-2">
-                <div className="font-bold text-slate-900 font-mono">{g.cellPath}</div>
+                <div className="font-bold text-slate-900 tabular-nums">{g.cellPath}</div>
                 <div className="text-[10px] text-slate-400">
                   Lưới: {g.gridLengthM}m | Viền: {g.borderLengthM}m | Góc: {g.cornerLengthM}m
                 </div>
@@ -37,9 +34,7 @@ export const BomGrillesTable: React.FC<BomGrillesTableProps> = ({
                   Bản {g.barWidthMm}mm ({g.barColor})
                 </span>
               </td>
-              <td className="py-2.5 px-2 text-center font-bold font-mono text-amber-700">
-                {g.totalBarLengthM} m
-              </td>
+              <td className="py-2.5 px-2 text-center font-bold tabular-nums text-amber-700">{g.totalBarLengthM} m</td>
               <td className="py-2.5 px-2 text-center">
                 {g.motifQty > 0 ? (
                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
@@ -49,23 +44,17 @@ export const BomGrillesTable: React.FC<BomGrillesTableProps> = ({
                   <span className="text-slate-400">-</span>
                 )}
               </td>
-              <td className="py-2.5 px-2 text-right font-mono text-slate-600">
-                {g.unitPricePerM.toLocaleString('vi-VN')} đ
-              </td>
-              <td className="py-2.5 px-2 text-right font-bold font-mono text-slate-900">
-                {g.totalPrice.toLocaleString('vi-VN')} đ
-              </td>
+              <td className="py-2.5 px-2 text-right tabular-nums text-slate-600">{g.unitPricePerM.toLocaleString('vi-VN')} đ</td>
+              <td className="py-2.5 px-2 text-right font-bold tabular-nums text-slate-900">{g.totalPrice.toLocaleString('vi-VN')} đ</td>
             </tr>
           ))}
         </tbody>
       </table>
 
       {totalGrillePrice !== undefined && totalGrillePrice > 0 && (
-        <div className="p-3 bg-amber-50/60 border border-amber-200/60 rounded-xl flex items-center justify-between text-xs font-semibold text-amber-900">
+        <div className="p-3 bg-amber-50/60 border border-amber-200/60 rounded-block flex items-center justify-between text-xs font-semibold text-amber-900">
           <span>Tổng chi phí gia công kính nan đồng:</span>
-          <span className="font-bold text-sm text-amber-700 font-mono">
-            {totalGrillePrice.toLocaleString('vi-VN')} đ
-          </span>
+          <span className="font-bold text-sm text-amber-700 tabular-nums">{totalGrillePrice.toLocaleString('vi-VN')} đ</span>
         </div>
       )}
     </div>

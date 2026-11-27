@@ -38,7 +38,7 @@ interface LiveMapProps {
   staffLocations: StaffLiveLocation[];
   selectedStaff: (StaffLiveLocation & { _selectedAt?: number }) | null;
   onSelectStaff: (staff: StaffLiveLocation) => void;
-  onViewRoute: (staff: StaffLiveLocation) => void;
+  onViewRoute?: (staff: StaffLiveLocation) => void;
 }
 
 interface StaffCluster {
@@ -325,7 +325,7 @@ export function LiveMap({
       : [20.770184, 106.734790]; // 941 Phạm văn đồng
 
   return (
-    <div className="relative h-full w-full rounded-2xl overflow-hidden border border-slate-200 shadow-xs bg-slate-100">
+    <div className="relative h-full w-full rounded-block overflow-hidden border border-slate-200 shadow-xs bg-slate-100">
       <MapContainer
         ref={handleMapRef as unknown as React.Ref<L.Map>}
         center={defaultCenter}
@@ -474,7 +474,7 @@ function StaffPopupContent({
   onViewRoute,
 }: {
   staff: StaffLiveLocation;
-  onViewRoute: (staff: StaffLiveLocation) => void;
+  onViewRoute?: (staff: StaffLiveLocation) => void;
 }) {
   return (
     <div className="p-1 space-y-2 min-w-[200px]">
@@ -503,7 +503,7 @@ function StaffPopupContent({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-1.5 text-[11px] text-slate-600 bg-slate-50 p-2 rounded-lg">
+      <div className="grid grid-cols-2 gap-1.5 text-[11px] text-slate-600 bg-slate-50 p-2 rounded-control">
         <div className="flex items-center gap-1">
           <Gauge size={12} className="text-emerald-500" />
           <span>{staff.speed ? `${Math.round(staff.speed * 3.6)} km/h` : 'Đứng yên'}</span>
@@ -528,18 +528,20 @@ function StaffPopupContent({
       <StaffDiagnostics diagnostics={staff.diagnostics} awaitingFirstPing={staff.awaitingFirstPing} />
 
       <div className="flex items-center gap-1.5 pt-0.5">
-        <button
-          type="button"
-          onClick={() => onViewRoute(staff)}
-          className="flex-1 h-7 rounded-lg bg-primary hover:bg-primary/90 text-white text-xs font-medium transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
-        >
-          <Navigation size={12} />
-          <span>Xem lộ trình trong ngày</span>
-        </button>
+        {onViewRoute && (
+          <button
+            type="button"
+            onClick={() => onViewRoute(staff)}
+            className="flex-1 h-7 rounded-control bg-primary hover:bg-primary/90 text-white text-xs font-medium transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+          >
+            <Navigation size={12} />
+            <span>Xem lộ trình trong ngày</span>
+          </button>
+        )}
         <button
           type="button"
           onClick={() => openGoogleMapsNavigation(staff.latitude, staff.longitude)}
-          className="w-7 h-7 shrink-0 rounded-lg bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 border border-emerald-200 transition-colors flex items-center justify-center cursor-pointer shadow-xs"
+          className="w-7 h-7 shrink-0 rounded-control bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 border border-emerald-200 transition-colors flex items-center justify-center cursor-pointer shadow-xs"
           title="Mở Google Maps chỉ đường tới đây"
         >
           <Compass size={14} />

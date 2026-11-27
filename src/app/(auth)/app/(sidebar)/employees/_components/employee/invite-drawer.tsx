@@ -18,12 +18,14 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Mời qua email (người được mời tự đặt tên đăng nhập, mật khẩu) và quản lý lời mời đang chờ.
 export function InviteDrawer({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const { can } = useCan();
+  // Mời cần chọn vai trò cho người được mời nên cần cả quyền đọc vai trò
+  const allowed = can('user:create') && can('role:read');
   const [email, setEmail] = useState('');
   const [roleId, setRoleId] = useState('');
   const [revoking, setRevoking] = useState<Invitation | null>(null);
 
-  const roles = useQuery({ queryKey: ['roles'], queryFn: () => getRoles({ limit: 100 }), enabled: isOpen && can('user:create') });
-  const invitations = useQuery({ queryKey: ['access-invitations'], queryFn: getInvitations, enabled: isOpen });
+  const roles = useQuery({ queryKey: ['roles'], queryFn: () => getRoles({ limit: 100 }), enabled: isOpen && allowed });
+  const invitations = useQuery({ queryKey: ['access-invitations'], queryFn: getInvitations, enabled: isOpen && allowed });
   const pending = invitations.data ?? [];
   const emailError = email && !EMAIL.test(email.trim()) ? 'Email không hợp lệ' : undefined;
 
@@ -61,7 +63,7 @@ export function InviteDrawer({ isOpen, onClose }: { isOpen: boolean; onClose: ()
     onError: (e: Error) => showErrorToast(e?.message || 'Không thu hồi được lời mời'),
   });
 
-  if (!can('user:create')) return null;
+  if (!allowed) return null;
 
   return (
     <>

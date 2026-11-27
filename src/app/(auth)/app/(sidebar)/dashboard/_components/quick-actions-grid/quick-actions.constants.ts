@@ -11,7 +11,6 @@ import {
   MapPin,
   Users,
 } from 'lucide-react';
-import { UserRole } from '@/config';
 
 export type QuickActionBadgeKey =
   | 'pendingLeavesCount'
@@ -23,9 +22,8 @@ export interface QuickActionConfig {
   title: string;
   href: string;
   icon: LucideIcon;
-  bgColor: string;
-  textColor: string;
-  roles?: UserRole[];
+  // Hiện khi có MỘT trong các quyền này (cùng quyền với mục menu tương ứng)
+  permissions: string[];
   badgeKey?: QuickActionBadgeKey;
 }
 
@@ -41,89 +39,76 @@ export const QUICK_ACTIONS_ORDER_EVENT = 'xttech-quick-actions-order-change';
 export const QUICK_ACTIONS_REGISTRY: QuickActionConfig[] = [
   {
     id: 'tasks',
+    permissions: ['staff_task:read'],
     title: 'Công việc',
     href: '/app/tasks',
     icon: ClipboardCheck,
-    bgColor: 'bg-teal-50 group-hover:bg-teal-100/80',
-    textColor: 'text-primary',
     badgeKey: 'pendingTasksCount',
   },
   {
     id: 'live-map',
+    permissions: ['live_map:read'],
     title: 'Bản đồ Live',
     href: '/app/live-map',
     icon: MapPin,
-    bgColor: 'bg-emerald-50 group-hover:bg-emerald-100/80',
-    textColor: 'text-emerald-600',
   },
   {
     id: 'leave-requests',
+    permissions: ['leave_request:read'],
     title: 'Nghỉ phép',
     href: '/app/leave-requests',
     icon: CalendarOff,
-    bgColor: 'bg-amber-50 group-hover:bg-amber-100/80',
-    textColor: 'text-amber-600',
     badgeKey: 'pendingLeavesCount',
   },
   {
     id: 'adjustments',
+    permissions: ['attendance_request:read'],
     title: 'Khiếu nại',
     href: '/app/attendances/adjustments',
     icon: ClockAlert,
-    bgColor: 'bg-blue-50 group-hover:bg-blue-100/80',
-    textColor: 'text-blue-600',
     badgeKey: 'pendingAdjustmentsCount',
   },
   {
     id: 'payroll',
+    permissions: ['attendance:read'],
     title: 'Bảng công',
     href: '/app/attendances/payroll',
     icon: CalendarCheck,
-    bgColor: 'bg-purple-50 group-hover:bg-purple-100/80',
-    textColor: 'text-purple-600',
   },
   {
     id: 'roster',
+    permissions: ['attendance_report:read'],
     title: 'Lịch đi làm',
     href: '/app/attendances/roster',
     icon: CalendarDays,
-    bgColor: 'bg-teal-50 group-hover:bg-teal-100/80',
-    textColor: 'text-teal-700',
   },
   {
     id: 'projects',
+    permissions: ['project:read'],
     title: 'Dự án',
     href: '/app/projects',
     icon: Building2,
-    bgColor: 'bg-cyan-50 group-hover:bg-cyan-100/80',
-    textColor: 'text-cyan-600',
-    roles: ['super', 'admin', 'sale', 'technician'],
   },
   {
     id: 'employees',
+    permissions: ['user:update'],
     title: 'Nhân sự',
     href: '/app/employees',
     icon: Users,
-    bgColor: 'bg-indigo-50 group-hover:bg-indigo-100/80',
-    textColor: 'text-indigo-600',
-    roles: ['super', 'admin', 'hr', 'accountant'],
   },
   {
     id: 'suggestions',
+    permissions: ['suggestion:read'],
     title: 'Góp ý',
     href: '/app/suggestions',
     icon: Lightbulb,
-    bgColor: 'bg-rose-50 group-hover:bg-rose-100/80',
-    textColor: 'text-rose-600',
   },
   {
     id: 'reports',
+    permissions: ['attendance:update'],
     title: 'Báo cáo',
     href: '/app/attendances/reports',
     icon: BarChart3,
-    bgColor: 'bg-orange-50 group-hover:bg-orange-100/80',
-    textColor: 'text-orange-600',
-    roles: ['super', 'admin', 'hr', 'accountant'],
   },
 ];
 

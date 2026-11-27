@@ -27,7 +27,7 @@ export function QuotationPreviewPanel({
   onSave,
 }: QuotationPreviewPanelProps) {
   return (
-    <div className="bg-white rounded-lg border border-slate-200/60 p-5 shadow-xs space-y-4 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
+    <div className="bg-white rounded-control border border-slate-200/60 p-5 shadow-xs space-y-4 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
       <div className="flex items-center justify-between">
         <span className="text-xs font-bold text-slate-700">
           Kết quả tính thử (theo dữ liệu cửa hiện tại)
@@ -73,18 +73,18 @@ function PreviewResult({
   return (
     <div className={`space-y-4 transition-opacity ${isCalculating ? 'opacity-50' : ''}`}>
       {result.isLoss && (
-        <div className="p-2.5 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 flex items-center gap-2">
+        <div className="p-2.5 bg-red-50 border border-red-200 rounded-control text-xs text-red-700 flex items-center gap-2">
           <AlertTriangle size={15} className="shrink-0" />
           <span>Giá bán đang thấp hơn chi phí, bạn sẽ bị lỗ!</span>
         </div>
       )}
       {belowCostCount > 0 && (
-        <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700">
+        <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-control text-xs text-amber-700">
           Có {belowCostCount} bộ cửa đang bán thấp hơn chi phí làm ra.
         </div>
       )}
       {estimatedOutsourcedCount > 0 && (
-        <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 flex items-start gap-2">
+        <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-control text-xs text-amber-800 flex items-start gap-2">
           <AlertTriangle size={15} className="shrink-0 mt-0.5 text-amber-600" />
           <span>
             Có <span className="font-bold">{estimatedOutsourcedCount}</span> cửa nhập nguyên bộ NCC
@@ -95,7 +95,7 @@ function PreviewResult({
       {result.warningFlags.map((flag) => (
         <div
           key={flag}
-          className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700"
+          className="p-2.5 bg-amber-50 border border-amber-200 rounded-control text-xs text-amber-700"
         >
           {flag}
         </div>

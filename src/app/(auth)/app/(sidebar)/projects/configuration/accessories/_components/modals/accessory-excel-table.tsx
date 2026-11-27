@@ -1,22 +1,9 @@
 'use client';
 
 import React from 'react';
-import {
-  AlertTriangle,
-  CheckCircle2,
-  ImagePlus,
-  Loader2,
-  RefreshCw,
-  Trash2,
-  X,
-} from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ImagePlus, Loader2, RefreshCw, Trash2, X } from 'lucide-react';
 import { BASE_MINIO_URL } from '@/config';
-import type {
-  Brand,
-  AccessoryCategory,
-  AccessoryExcelItemData,
-  AccessoryExcelPreviewRow,
-} from '@/types';
+import type { Brand, AccessoryCategory, AccessoryExcelItemData, AccessoryExcelPreviewRow } from '@/types';
 
 const UNIT_OPTIONS = [
   { value: 'set', label: 'Bộ (Set)' },
@@ -64,7 +51,7 @@ export function AccessoryExcelTable({
   return (
     <div className="overflow-x-auto flex-1">
       <table className="w-full text-xs border-collapse min-w-305">
-        <thead className="bg-slate-100 text-slate-700 uppercase font-bold sticky top-0 z-10 border-b border-slate-200">
+        <thead className="bg-slate-100 text-slate-700 font-bold sticky top-0 z-10 border-b border-slate-200">
           <tr>
             <th className="p-2.5 text-center w-12">#</th>
             <th className="p-2.5 text-left w-36">Trạng thái</th>
@@ -92,22 +79,15 @@ export function AccessoryExcelTable({
               : null;
 
             return (
-              <tr
-                key={row.rowIndex}
-                className={
-                  isErr ? 'bg-rose-50/40' : isUpd ? 'bg-blue-50/20' : 'hover:bg-slate-50/70'
-                }
-              >
-                <td className="p-2 text-center font-mono text-slate-400">{row.rowIndex}</td>
+              <tr key={row.rowIndex} className={isErr ? 'bg-rose-50/40' : isUpd ? 'bg-blue-50/20' : 'hover:bg-slate-50/70'}>
+                <td className="p-2 text-center tabular-nums text-slate-400">{row.rowIndex}</td>
                 <td className="p-2">
                   {isErr ? (
                     <div className="flex flex-col gap-0.5">
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-700 w-fit">
                         <AlertTriangle size={11} /> Lỗi
                       </span>
-                      <span className="text-[11px] text-rose-600 font-medium leading-tight">
-                        {row.errors.join(', ')}
-                      </span>
+                      <span className="text-[11px] text-rose-600 font-medium leading-tight">{row.errors.join(', ')}</span>
                     </div>
                   ) : isUpd ? (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 text-blue-700">
@@ -175,16 +155,14 @@ export function AccessoryExcelTable({
                   <input
                     value={row.data.code}
                     onChange={(e) => onUpdateCell(row.rowIndex, { code: e.target.value })}
-                    className={`w-full h-8 px-2 border rounded bg-white text-xs font-mono ${
+                    className={`w-full h-8 px-2 border rounded bg-white text-xs tabular-nums ${
                       isErr && row.errors.some((msg) => msg.toLowerCase().includes('mã'))
                         ? 'border-rose-400 bg-rose-50/40 text-rose-800'
                         : 'border-slate-200'
                     }`}
                   />
                   {isUpd && row.oldData?.code && row.oldData.code !== row.data.code.trim() && (
-                    <div className="text-[10px] text-blue-600 mt-0.5 truncate font-mono">
-                      Mã cũ: {row.oldData.code}
-                    </div>
+                    <div className="text-[10px] text-blue-600 mt-0.5 truncate tabular-nums">Mã cũ: {row.oldData.code}</div>
                   )}
                 </td>
                 <td className="p-1.5">
@@ -194,9 +172,7 @@ export function AccessoryExcelTable({
                     className="w-full h-8 px-2 border border-slate-200 rounded bg-white text-xs"
                   />
                   {isUpd && row.oldData && row.oldData.name !== row.data.name && (
-                    <div className="text-[10px] text-slate-400 mt-0.5 truncate">
-                      Cũ: {row.oldData.name}
-                    </div>
+                    <div className="text-[10px] text-slate-400 mt-0.5 truncate">Cũ: {row.oldData.name}</div>
                   )}
                 </td>
                 <td className="p-1.5">
@@ -264,9 +240,7 @@ export function AccessoryExcelTable({
                 <td className="p-1.5">
                   <input
                     value={row.data.specification ?? ''}
-                    onChange={(e) =>
-                      onUpdateCell(row.rowIndex, { specification: e.target.value || null })
-                    }
+                    onChange={(e) => onUpdateCell(row.rowIndex, { specification: e.target.value || null })}
                     placeholder="Quy cách..."
                     className="w-full h-8 px-2 border border-slate-200 rounded bg-white text-xs"
                   />
@@ -275,15 +249,11 @@ export function AccessoryExcelTable({
                   <input
                     type="number"
                     value={row.data.costPrice}
-                    onChange={(e) =>
-                      onUpdateCell(row.rowIndex, { costPrice: Number(e.target.value) })
-                    }
+                    onChange={(e) => onUpdateCell(row.rowIndex, { costPrice: Number(e.target.value) })}
                     className="w-full h-8 px-2 border border-slate-200 rounded bg-white text-xs text-right"
                   />
                   {isUpd && row.oldData && row.oldData.costPrice !== row.data.costPrice && (
-                    <div className="text-[10px] text-amber-600 text-right mt-0.5">
-                      Cũ: {row.oldData.costPrice.toLocaleString('vi-VN')}
-                    </div>
+                    <div className="text-[10px] text-amber-600 text-right mt-0.5">Cũ: {row.oldData.costPrice.toLocaleString('vi-VN')}</div>
                   )}
                 </td>
                 <td className="p-1.5 text-center">

@@ -87,12 +87,12 @@ export function SupplierDoorInfoStep({
           <ArrowLeft className="w-4 h-4" />
           <span>Quay lại chọn mẫu NCC</span>
         </button>
-        <span className="font-mono text-xs text-slate-500 tabular-nums">Diện tích: {areaM2.toFixed(2)} m²</span>
+        <span className="tabular-nums text-xs text-slate-500">Diện tích: {areaM2.toFixed(2)} m²</span>
       </div>
 
       {selectedDoor && (
-        <div className="flex items-center gap-3 p-2.5 rounded-xl bg-primary/5 border border-primary/20">
-          <div className="w-12 h-12 rounded-lg border border-slate-200 bg-white overflow-hidden shrink-0 flex items-center justify-center">
+        <div className="flex items-center gap-3 p-2.5 rounded-block bg-primary/5 border border-primary/20">
+          <div className="w-12 h-12 rounded-control border border-slate-200 bg-white overflow-hidden shrink-0 flex items-center justify-center">
             {imgRaw ? (
               <img src={getFileUrl(imgRaw)} alt={selectedDoor.name} className="w-full h-full object-cover" />
             ) : (
@@ -105,7 +105,7 @@ export function SupplierDoorInfoStep({
             </p>
             <p className="text-[11px] text-slate-600 truncate">
               {selectedDoor.supplier?.name || 'NCC'} • Tham khảo:{' '}
-              <span className="font-mono font-semibold">
+              <span className="tabular-nums font-semibold">
                 {new Intl.NumberFormat('vi-VN').format(selectedDoor.referenceCostPerSqm || 0)} VNĐ/m²
               </span>
             </p>
@@ -148,7 +148,7 @@ export function SupplierDoorInfoStep({
           min={100}
           value={width || ''}
           onChange={(e) => onChangeWidth(Number(e.target.value) || 0)}
-          className="font-mono tabular-nums text-right"
+          className="tabular-nums text-right"
         />
 
         <Input
@@ -157,7 +157,7 @@ export function SupplierDoorInfoStep({
           min={100}
           value={height || ''}
           onChange={(e) => onChangeHeight(Number(e.target.value) || 0)}
-          className="font-mono tabular-nums text-right"
+          className="tabular-nums text-right"
         />
 
         <div>
@@ -179,7 +179,7 @@ export function SupplierDoorInfoStep({
             min={0}
             value={supplierCostValue}
             onChange={(e) => onChangeSupplierCost(e.target.value)}
-            className="font-mono tabular-nums text-right"
+            className="tabular-nums text-right"
           />
         </div>
 
@@ -190,7 +190,7 @@ export function SupplierDoorInfoStep({
           max={100}
           value={quantity}
           onChange={(e) => onChangeQuantity(Math.max(1, Math.min(100, Number(e.target.value) || 1)))}
-          className="font-mono tabular-nums text-right"
+          className="tabular-nums text-right"
         />
 
         <div>
@@ -201,7 +201,7 @@ export function SupplierDoorInfoStep({
                 key={key}
                 type="button"
                 onClick={() => onChangeCostStatus(key)}
-                className={`px-2.5 py-2 rounded-lg border text-xs font-semibold cursor-pointer ${
+                className={`px-2.5 py-2 rounded-control border text-xs font-semibold cursor-pointer ${
                   costStatus === key
                     ? 'bg-primary text-white border-primary'
                     : 'bg-white text-slate-700 border-slate-200 hover:border-primary/40'
@@ -213,7 +213,7 @@ export function SupplierDoorInfoStep({
           </div>
         </div>
 
-        <div className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 bg-slate-50/70">
+        <div className="flex items-center justify-between rounded-control border border-slate-200 px-3 py-2 bg-slate-50/70">
           <div>
             <p className="text-xs font-semibold text-slate-700">NCC đã bao gồm lắp đặt</p>
             <p className="text-[11px] text-slate-500">Không tính thêm công lắp nội bộ</p>

@@ -115,11 +115,11 @@ export default function ProjectReportCard({ data: externalData }: ProjectReportC
   const activeTotalCount = dataMode === 'doors' ? totalDoors : (data?.totalProjects ?? 0);
 
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col gap-4 min-w-0">
+    <div className="bg-white border border-gray-100 rounded-block p-4 sm:p-5 shadow-xs flex flex-col gap-4 min-w-0">
       {/* 1. Header Row */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="p-2 rounded-xl bg-primary/10 text-primary shrink-0">
+          <div className="p-2 rounded-block bg-primary/10 text-primary shrink-0">
             <FolderKanban size={18} />
           </div>
           <div className="flex flex-col min-w-0">
@@ -127,10 +127,10 @@ export default function ProjectReportCard({ data: externalData }: ProjectReportC
               <h2 className="text-sm sm:text-base font-bold text-slate-900">Báo cáo dự án</h2>
               {data && (
                 <>
-                  <span className="inline-flex items-center rounded-lg bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700 font-mono tabular-nums">
+                  <span className="inline-flex items-center rounded-control bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700 tabular-nums">
                     {data.totalProjects} công trình
                   </span>
-                  <span className="inline-flex items-center rounded-lg bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary font-mono tabular-nums">
+                  <span className="inline-flex items-center rounded-control bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary tabular-nums">
                     {totalDoors} bộ cửa · {totalAreaM2.toFixed(2)} m²
                   </span>
                 </>
@@ -142,14 +142,14 @@ export default function ProjectReportCard({ data: externalData }: ProjectReportC
           </div>
         </div>
 
-        <div className="inline-flex items-center bg-slate-100 p-1 rounded-xl gap-0.5">
+        <div className="inline-flex items-center bg-slate-100 p-1 rounded-block gap-0.5">
           {CHART_SWITCH_OPTIONS.map(({ type, label, icon: Icon }) => (
             <button
               key={type}
               type="button"
               onClick={() => setChartType(type)}
               className={cn(
-                'inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold transition-colors duration-150',
+                'inline-flex items-center gap-1.5 rounded-control px-2.5 py-1 text-xs font-semibold transition-colors duration-150',
                 chartType === type
                   ? 'bg-primary text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
@@ -163,7 +163,7 @@ export default function ProjectReportCard({ data: externalData }: ProjectReportC
       </div>
 
       {isLoading || !data ? (
-        <div className="flex h-64 items-center justify-center rounded-xl bg-slate-50/60 text-xs text-slate-400">
+        <div className="flex h-64 items-center justify-center rounded-block bg-slate-50/60 text-xs text-slate-400">
           Đang tải báo cáo dự án...
         </div>
       ) : (
@@ -171,31 +171,31 @@ export default function ProjectReportCard({ data: externalData }: ProjectReportC
           {/* 2. Dải 3 Thẻ Doanh thu & Thanh Tiến độ Dòng tiền */}
           <div className="space-y-2.5">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3">
+              <div className="bg-slate-50 border border-slate-200/80 rounded-block p-3">
                 <div className="text-[11px] font-medium text-slate-500">Giá trị hợp đồng</div>
-                <div className="mt-1 font-mono text-sm sm:text-base font-bold tabular-nums text-slate-900">
+                <div className="mt-1 text-sm sm:text-base font-bold tabular-nums text-slate-900">
                   {formatVnd(data.contractValue)}
                 </div>
               </div>
-              <div className="bg-primary/5 border border-primary/20 rounded-xl p-3">
+              <div className="bg-primary/5 border border-primary/20 rounded-block p-3">
                 <div className="flex items-center justify-between gap-1">
                   <span className="text-[11px] font-medium text-primary">Đã thu</span>
-                  <span className="rounded-md bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] font-bold tabular-nums text-primary">
+                  <span className="rounded-control bg-primary/10 px-1.5 py-0.5 text-xs font-bold tabular-nums text-primary">
                     {collectedPct}%
                   </span>
                 </div>
-                <div className="mt-1 font-mono text-sm sm:text-base font-bold tabular-nums text-primary">
+                <div className="mt-1 text-sm sm:text-base font-bold tabular-nums text-primary">
                   {formatVnd(data.collected)}
                 </div>
               </div>
-              <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3">
+              <div className="bg-slate-50 border border-slate-200/80 rounded-block p-3">
                 <div className="flex items-center justify-between gap-1">
                   <span className="text-[11px] font-medium text-slate-600">Còn phải thu</span>
-                  <span className="rounded-md bg-slate-200/70 px-1.5 py-0.5 font-mono text-[10px] font-bold tabular-nums text-slate-700">
+                  <span className="rounded-control bg-slate-200/70 px-1.5 py-0.5 text-xs font-bold tabular-nums text-slate-700">
                     {outstandingPct}%
                   </span>
                 </div>
-                <div className="mt-1 font-mono text-sm sm:text-base font-bold tabular-nums text-slate-800">
+                <div className="mt-1 text-sm sm:text-base font-bold tabular-nums text-slate-800">
                   {formatVnd(data.outstanding)}
                 </div>
               </div>
@@ -212,13 +212,13 @@ export default function ProjectReportCard({ data: externalData }: ProjectReportC
                 <span className="inline-flex items-center gap-1.5">
                   <span className="h-2 w-2 rounded-full bg-primary" />
                   <span>
-                    Đã thanh toán: <strong className="font-mono tabular-nums text-slate-900">{collectedPct}%</strong> ({formatVnd(data.collected)})
+                    Đã thanh toán: <strong className="tabular-nums text-slate-900">{collectedPct}%</strong> ({formatVnd(data.collected)})
                   </span>
                 </span>
                 <span className="inline-flex items-center gap-1.5">
                   <span className="h-2 w-2 rounded-full bg-slate-400" />
                   <span>
-                    Công nợ còn lại: <strong className="font-mono tabular-nums text-slate-800">{outstandingPct}%</strong> ({formatVnd(data.outstanding)})
+                    Công nợ còn lại: <strong className="tabular-nums text-slate-800">{outstandingPct}%</strong> ({formatVnd(data.outstanding)})
                   </span>
                 </span>
               </div>
@@ -233,11 +233,11 @@ export default function ProjectReportCard({ data: externalData }: ProjectReportC
                 {projectsItems.map((item) => (
                   <span
                     key={item.key}
-                    className="inline-flex items-center gap-1.5 text-xs font-medium bg-slate-50 border border-slate-200 text-slate-700 rounded-lg px-2.5 py-1"
+                    className="inline-flex items-center gap-1.5 text-xs font-medium bg-slate-50 border border-slate-200 text-slate-700 rounded-control px-2.5 py-1"
                   >
                     <span className="w-1.5 h-1.5 rounded-full bg-primary" />
                     <span>{item.label}:</span>
-                    <strong className="font-mono tabular-nums text-slate-900">{item.count}</strong>
+                    <strong className="tabular-nums text-slate-900">{item.count}</strong>
                   </span>
                 ))}
               </div>
@@ -249,12 +249,12 @@ export default function ProjectReportCard({ data: externalData }: ProjectReportC
           {/* 4. Thanh Tab Chuyển đổi Dữ liệu Biểu đồ & Khu vực Recharts */}
           <div className="space-y-3 border-t border-slate-100 pt-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="inline-flex items-center rounded-xl bg-slate-100 p-1 gap-1">
+              <div className="inline-flex items-center rounded-block bg-slate-100 p-1 gap-1">
                 <button
                   type="button"
                   onClick={() => setDataMode('doors')}
                   className={cn(
-                    'rounded-lg px-3 py-1 text-xs font-semibold transition-colors duration-150',
+                    'rounded-control px-3 py-1 text-xs font-semibold transition-colors duration-150',
                     dataMode === 'doors' ? 'bg-white text-primary shadow-2xs' : 'text-slate-600 hover:text-slate-900'
                   )}
                 >
@@ -264,7 +264,7 @@ export default function ProjectReportCard({ data: externalData }: ProjectReportC
                   type="button"
                   onClick={() => setDataMode('projects')}
                   className={cn(
-                    'rounded-lg px-3 py-1 text-xs font-semibold transition-colors duration-150',
+                    'rounded-control px-3 py-1 text-xs font-semibold transition-colors duration-150',
                     dataMode === 'projects' ? 'bg-white text-primary shadow-2xs' : 'text-slate-600 hover:text-slate-900'
                   )}
                 >
@@ -291,22 +291,22 @@ export default function ProjectReportCard({ data: externalData }: ProjectReportC
           <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 text-xs text-slate-600">
             <div className="flex flex-wrap items-center gap-4">
               <span>
-                Dự án đang bảo hành: <strong className="font-mono tabular-nums text-slate-900">{data.warranty.activeProjects}</strong>
+                Dự án đang bảo hành: <strong className="tabular-nums text-slate-900">{data.warranty.activeProjects}</strong>
               </span>
               <span>
-                Bảo hành sắp tới (7 ngày): <strong className="font-mono tabular-nums text-slate-900">{data.warranty.upcomingVisits7d}</strong>
+                Bảo hành sắp tới (7 ngày): <strong className="tabular-nums text-slate-900">{data.warranty.upcomingVisits7d}</strong>
               </span>
               <span className={data.warranty.overdueVisits > 0 ? 'font-semibold text-red-600' : undefined}>
-                Quá hạn: <strong className="font-mono tabular-nums">{data.warranty.overdueVisits}</strong>
+                Quá hạn: <strong className="tabular-nums">{data.warranty.overdueVisits}</strong>
               </span>
             </div>
             {data.warranty.overdueVisits === 0 ? (
-              <span className="inline-flex items-center gap-1 rounded-lg border border-primary/20 bg-primary/10 px-2.5 py-0.5 text-[11px] font-semibold text-primary">
+              <span className="inline-flex items-center gap-1 rounded-control border border-primary/20 bg-primary/10 px-2.5 py-0.5 text-[11px] font-semibold text-primary">
                 <ShieldCheck size={13} />
                 <span>Đúng hạn 100%</span>
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2.5 py-0.5 text-[11px] font-semibold text-red-600">
+              <span className="inline-flex items-center gap-1 rounded-control border border-red-200 bg-red-50 px-2.5 py-0.5 text-[11px] font-semibold text-red-600">
                 <ShieldAlert size={13} />
                 <span>Cần xử lý {data.warranty.overdueVisits} lịch quá hạn</span>
               </span>

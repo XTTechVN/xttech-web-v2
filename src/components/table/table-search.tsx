@@ -10,7 +10,7 @@ import type { ITableSearchProps } from './types';
 const SEARCH_DEBOUNCE_MS = 500;
 const WRAPPER_CLASSNAME = 'relative flex items-center';
 const INPUT_CLASSNAME =
-  'w-full bg-white border text-gray-700 border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:border-border-focus focus:ring-1 focus:ring-primary/20 transition-all h-9 placeholder:text-gray-400';
+  'w-full bg-white border text-gray-700 border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all h-9 placeholder:text-gray-400';
 
 export function TableSearch({ placeholder, value, onChange, className, showIcon = true }: ITableSearchProps) {
   const [search, setSearch] = useState(value || '');

@@ -3,6 +3,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { AccessDenied } from '@/components/access-denied';
+import { PageHeading } from '@/components-remake';
 import { useCan } from '@/hooks';
 import {
   AdminDashboard,
@@ -30,9 +31,12 @@ const Dashboard = () => {
   if (!isReady) return null;
   if (!can('dashboard:read')) return <AccessDenied />;
 
-  return <div className="p-4 font-body [&_h1]:font-heading [&_h2]:font-heading [&_h3]:font-heading [&_h4]:font-heading">
+  return (
+    <div className="p-4 font-body md:p-6 [&_h1]:font-heading [&_h2]:font-heading [&_h3]:font-heading [&_h4]:font-heading">
+      <PageHeading className="hidden md:block" title="Tổng quan" description="Nhân sự, chấm công, dự án và việc cần xử lý hôm nay." />
       {renderDashboard()}
-    </div>;
+    </div>
+  );
 };
 
 export default Dashboard;

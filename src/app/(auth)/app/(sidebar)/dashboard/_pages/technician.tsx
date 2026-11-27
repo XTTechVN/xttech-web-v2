@@ -84,7 +84,7 @@ export const TechnicianDashboard = () => {
       <div className="hidden md:flex flex-col gap-4">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {statsData.map((stat, index) => (
-            <StatCard key={index} title={stat.title} value={stat.value} icon={stat.icon} trend={0} onClick={stat.onClick}
+            <StatCard key={index} title={stat.title} value={stat.value} icon={stat.icon} onClick={stat.onClick}
               requires={stat.requires} />
           ))}
         </div>

@@ -76,7 +76,7 @@ export function PriceBlock({
   children: React.ReactNode;
 }) {
   return (
-    <section className={`bg-white rounded-lg border border-slate-200/60 p-5 shadow-xs space-y-4 ${className}`}>
+    <section className={`bg-white rounded-control border border-slate-200/60 p-5 shadow-xs space-y-4 ${className}`}>
       <div>
         <span className="text-xs font-bold text-slate-700 block">{title}</span>
         <span className="text-[11px] text-slate-400 block mt-0.5">{description}</span>

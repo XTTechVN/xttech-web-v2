@@ -1,5 +1,7 @@
 'use client';
 
+import { useCan } from '@/hooks';
+
 import React from 'react';
 import { BadgeDollarSign, Copy, Edit, ImageOff, PenTool, QrCode, Ruler, Trash2 } from 'lucide-react';
 import { Badge, DoorThumbnail } from '@/components';
@@ -30,6 +32,7 @@ export function PositionCard({
   onDuplicate,
   onDelete,
 }: PositionCardProps) {
+  const { can } = useCan();
   const sc = (pos.systemConfig || {}) as Record<string, unknown>;
   const isOutsourced = pos.fulfillmentType === 'outsourced';
   const resolvedVisual = resolvePositionVisual({
@@ -47,7 +50,7 @@ export function PositionCard({
   const displayDesc = pos.description || pos.supplierDoor?.name || (pos.doorType === 'window' ? 'Cửa sổ' : 'Cửa đi');
 
   return (
-    <div className="group bg-white rounded-xl border border-slate-200 hover:border-primary hover:shadow-md transition-all flex flex-col justify-between overflow-hidden">
+    <div className="group bg-white rounded-block border border-slate-200 hover:border-primary hover:shadow-md transition-all flex flex-col justify-between overflow-hidden">
       <div className="p-2.5 bg-white border-b border-slate-100 flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 min-w-0">
           <span className="font-semibold text-[11px] text-slate-700 truncate" title={pos.code}>
@@ -101,10 +104,10 @@ export function PositionCard({
         </div>
 
         <div className="flex items-center justify-between text-xs text-slate-600">
-          <span className="font-mono font-medium tabular-nums">
+          <span className="tabular-nums font-medium">
             {pos.width} × {pos.height} mm
           </span>
-          <span className="font-mono text-slate-400 text-[11px] tabular-nums">
+          <span className="tabular-nums text-slate-400 text-[11px]">
             {(pos.areaM2 ?? 0).toFixed(2)} m²
           </span>
         </div>
@@ -123,7 +126,7 @@ export function PositionCard({
             <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${costConfig.badgeClass}`}>
               {costConfig.shortLabel}
             </span>
-            <span className="font-mono text-[11px] font-bold text-slate-800 tabular-nums">
+            <span className="tabular-nums text-[11px] font-bold text-slate-800">
               {new Intl.NumberFormat('vi-VN').format(pos.supplierCostPrice || 0)} đ/bộ
             </span>
           </div>
@@ -140,7 +143,7 @@ export function PositionCard({
             <button
               type="button"
               onClick={() => onOpenStudio(pos)}
-              className="h-7 px-2 flex items-center justify-center gap-1 rounded-md border border-slate-200 text-[11px] font-semibold text-slate-700 hover:border-primary/40 hover:text-primary hover:bg-primary/5 cursor-pointer transition-colors"
+              className="h-7 px-2 flex items-center justify-center gap-1 rounded-control border border-slate-200 text-[11px] font-semibold text-slate-700 hover:border-primary/40 hover:text-primary hover:bg-primary/5 cursor-pointer transition-colors"
             >
               <PenTool size={12} />
               <span className="truncate">Phác thảo 2D</span>
@@ -148,7 +151,7 @@ export function PositionCard({
             <button
               type="button"
               onClick={() => onOpenSupplierQuote(pos)}
-              className="h-7 px-2 flex items-center justify-center gap-1 rounded-md border border-primary/30 bg-primary/5 text-[11px] font-semibold text-primary hover:bg-primary/10 cursor-pointer transition-colors"
+              className="h-7 px-2 flex items-center justify-center gap-1 rounded-control border border-primary/30 bg-primary/5 text-[11px] font-semibold text-primary hover:bg-primary/10 cursor-pointer transition-colors"
             >
               <BadgeDollarSign size={12} />
               <span className="truncate">Báo giá NCC</span>
@@ -157,19 +160,21 @@ export function PositionCard({
         )}
 
         <div className="pt-2 border-t border-slate-100 grid grid-cols-5 gap-1.5">
-          <button
-            type="button"
-            title="Chỉnh sửa thông tin cửa"
-            onClick={() => onEdit(pos)}
-            className="h-7 flex items-center justify-center border border-slate-200 text-slate-600 hover:text-primary hover:border-primary/40 hover:bg-primary/5 rounded-md cursor-pointer transition-colors"
-          >
-            <Edit size={13} />
-          </button>
+          {can('project_door_position:update') && (
+            <button
+              type="button"
+              title="Chỉnh sửa thông tin cửa"
+              onClick={() => onEdit(pos)}
+              className="h-7 flex items-center justify-center border border-slate-200 text-slate-600 hover:text-primary hover:border-primary/40 hover:bg-primary/5 rounded-control cursor-pointer transition-colors"
+            >
+              <Edit size={13} />
+            </button>
+          )}
           <button
             type="button"
             title="Đo đạc ô chờ thực tế"
             onClick={() => onMeasure(pos)}
-            className="h-7 flex items-center justify-center border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-md cursor-pointer transition-colors"
+            className="h-7 flex items-center justify-center border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-control cursor-pointer transition-colors"
           >
             <Ruler size={13} />
           </button>
@@ -177,27 +182,31 @@ export function PositionCard({
             type="button"
             title="Xem mã QR"
             onClick={() => onQrCode(pos)}
-            className="h-7 flex items-center justify-center border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-md cursor-pointer transition-colors"
+            className="h-7 flex items-center justify-center border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-control cursor-pointer transition-colors"
           >
             <QrCode size={13} />
           </button>
-          <button
-            type="button"
-            title="Nhân bản bộ cửa"
-            disabled={isDuplicating}
-            onClick={() => onDuplicate(pos)}
-            className="h-7 flex items-center justify-center border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-md cursor-pointer transition-colors disabled:opacity-50"
-          >
-            <Copy size={13} />
-          </button>
-          <button
-            type="button"
-            title="Xóa bộ cửa"
-            onClick={() => onDelete(pos)}
-            className="h-7 flex items-center justify-center border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 rounded-md cursor-pointer transition-colors"
-          >
-            <Trash2 size={13} />
-          </button>
+          {can('project_door_position:create') && (
+            <button
+              type="button"
+              title="Nhân bản bộ cửa"
+              disabled={isDuplicating}
+              onClick={() => onDuplicate(pos)}
+              className="h-7 flex items-center justify-center border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-control cursor-pointer transition-colors disabled:opacity-50"
+            >
+              <Copy size={13} />
+            </button>
+          )}
+          {can('project_door_position:delete') && (
+            <button
+              type="button"
+              title="Xóa bộ cửa"
+              onClick={() => onDelete(pos)}
+              className="h-7 flex items-center justify-center border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 rounded-control cursor-pointer transition-colors"
+            >
+              <Trash2 size={13} />
+            </button>
+          )}
         </div>
       </div>
     </div>

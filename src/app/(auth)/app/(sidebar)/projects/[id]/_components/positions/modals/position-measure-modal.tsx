@@ -62,7 +62,7 @@ export function PositionMeasureModal({
       className="max-w-md w-full"
     >
       <div className="space-y-4">
-        <div className="p-3 bg-slate-50 rounded-lg text-xs space-y-1">
+        <div className="p-3 bg-slate-50 rounded-control text-xs space-y-1">
           <span className="text-slate-400 block font-semibold">
             Kích thước thiết kế ban đầu:
           </span>
@@ -72,7 +72,7 @@ export function PositionMeasureModal({
         </div>
 
         {measureWarning && (
-          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 flex items-start gap-2">
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-control text-xs text-amber-800 flex items-start gap-2">
             <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
             <span>{measureWarning}</span>
           </div>

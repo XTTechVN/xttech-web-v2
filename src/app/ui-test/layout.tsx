@@ -2,10 +2,10 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { AppHeader, Sidebar, SidebarItemProps, XTLogo } from '@/components';
+import { Sidebar, SidebarItemProps, SidebarMenuButton, XTLogo } from '@/components';
 import { getSidebarSections } from '@/config';
 
-// Layout mockup: dùng đúng Sidebar + AppHeader của hệ thống nhưng không cần đăng nhập/API chấm công.
+// Layout mockup: dùng đúng Sidebar của hệ thống nhưng không cần đăng nhập/API chấm công.
 export default function UiTestLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
@@ -50,7 +50,9 @@ export default function UiTestLayout({ children }: { children: React.ReactNode }
       )}
 
       <div className="flex-1 h-full bg-[#a6c1b733] flex flex-col min-w-0">
-        <AppHeader setActive={setActiveMenu} onMenuClick={() => setIsMobileOpen(true)} />
+        <div className="flex h-12 flex-none items-center border-b border-slate-200 bg-white px-2 md:hidden">
+          <SidebarMenuButton onClick={() => setIsMobileOpen(true)} />
+        </div>
         <div className="flex-1 overflow-y-auto">{children}</div>
       </div>
     </div>

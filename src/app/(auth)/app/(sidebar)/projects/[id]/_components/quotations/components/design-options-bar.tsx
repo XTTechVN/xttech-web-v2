@@ -161,7 +161,7 @@ function CreateOptionForm({
           <p className="text-xs font-semibold text-slate-600">
             Chuyển cửa đang thiết kế vào phương án ({movedIds.length}/{movable.length})
           </p>
-          <div className="max-h-56 divide-y divide-slate-100 overflow-y-auto rounded-lg border border-slate-200 text-xs">
+          <div className="max-h-56 divide-y divide-slate-100 overflow-y-auto rounded-control border border-slate-200 text-xs">
             {movable.map((p) => (
               <label key={p.id} className="flex cursor-pointer items-center gap-2 px-3 py-1.5">
                 <input type="checkbox" checked={movedIds.includes(p.id)} onChange={() => toggle(p.id)} />

@@ -4,7 +4,7 @@ import React from 'react';
 import { useAuthStore } from '@/stores';
 import { getFileUrl } from '@/utils';
 import { getUser } from '@/actions/user';
-import { Sparkles, Calendar } from 'lucide-react';
+import { Calendar } from 'lucide-react';
 import Image from 'next/image';
 
 interface MobileHeaderProps {
@@ -52,7 +52,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({ onRefresh, isRefresh
   };
 
   return (
-    <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs flex flex-col gap-3">
+    <div className="bg-white rounded-block p-4 border border-gray-100 shadow-xs flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="relative w-12 h-12 rounded-full overflow-hidden ring-2 ring-primary/20 bg-primary/10 flex items-center justify-center shrink-0">
@@ -65,7 +65,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({ onRefresh, isRefresh
                 className="object-cover"
               />
             ) : (
-              <span className="text-primary font-bold text-lg uppercase">
+              <span className="text-primary font-bold text-lg">
                 {displayName.charAt(0)}
               </span>
             )}
@@ -75,7 +75,6 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({ onRefresh, isRefresh
           <div className="flex flex-col">
             <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
               <span>{getGreeting()}</span>
-              <Sparkles size={13} className="text-amber-500" />
             </div>
             <h1 className="text-base font-bold text-gray-900 leading-tight line-clamp-1">
               {displayName}
@@ -91,7 +90,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({ onRefresh, isRefresh
           onClick={handleRefresh}
           disabled={isRefreshing}
           aria-label="Làm mới dữ liệu"
-          className="p-2 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-600 transition active:scale-95 shrink-0"
+          className="p-2 rounded-block bg-gray-50 hover:bg-gray-100 text-gray-600 transition active:scale-95 shrink-0"
         >
           <div className={`w-4 h-4 rounded-full border-2 border-primary border-t-transparent ${isRefreshing ? 'animate-spin' : ''}`} />
         </button>

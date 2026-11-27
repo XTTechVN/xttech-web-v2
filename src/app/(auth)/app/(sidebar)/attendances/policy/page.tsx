@@ -1,29 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import {
-  Breadcrumb,
-  Heading,
-  Button,
-  Input,
-  Select,
-  Switch,
-  Checkbox,
-  Badge,
-} from '@/components';
+import { Breadcrumb, Heading, Button, Input, Select, Switch, Checkbox, Badge } from '@/components';
 import { toast } from 'react-hot-toast';
-import {
-  History,
-  Save,
-  Clock,
-  AlertTriangle,
-  Calendar,
-  TrendingUp,
-  FileCheck,
-  Calculator,
-  Info,
-  Search,
-} from 'lucide-react';
+import { History, Save, Clock, AlertTriangle, Calendar, TrendingUp, FileCheck, Calculator, Info, Search } from 'lucide-react';
 
 export default function AttendancePolicyPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -79,20 +59,15 @@ export default function AttendancePolicyPage() {
             className="gap-2 border-slate-200 text-slate-700 hover:bg-slate-100"
             leftIcon={<History size={16} />}
             onClick={() => {
-              toast.loading('Tính năng lịch sử đang được phát triển')
+              toast.loading('Tính năng lịch sử đang được phát triển');
               setTimeout(() => {
-                toast.dismiss()
-              }, 500)
+                toast.dismiss();
+              }, 500);
             }}
           >
             Lịch sử thay đổi
           </Button>
-          <Button
-            variant="primary"
-            className="gap-2"
-            leftIcon={<Save size={16} />}
-            onClick={handleSave}
-          >
+          <Button variant="primary" className="gap-2" leftIcon={<Save size={16} />} onClick={handleSave}>
             Lưu thay đổi
           </Button>
         </div>
@@ -103,18 +78,15 @@ export default function AttendancePolicyPage() {
         <Heading size="h2" className="text-2xl font-bold text-slate-900 flex items-center gap-2">
           Chính sách & Cấu hình Chấm công
         </Heading>
-        <p className="mt-1 text-sm text-slate-500">
-          Thiết lập các quy tắc và phương pháp tính toán thời gian làm việc cho toàn hệ thống sản xuất.
-        </p>
+        <p className="mt-1 text-sm text-slate-500">Thiết lập các quy tắc và phương pháp tính toán thời gian làm việc cho toàn hệ thống sản xuất.</p>
       </div>
 
       {/* Configuration Grid Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
         {/* Card 1: Quy định giờ làm */}
-        <div className="lg:col-span-2 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-5">
+        <div className="lg:col-span-2 rounded-block border border-slate-200/80 bg-white p-6 shadow-sm space-y-5">
           <div className="flex items-center gap-2">
-            <div className="rounded-xl bg-teal-50 p-2.5 text-[#005c53]">
+            <div className="rounded-block bg-teal-50 p-2.5 text-[#005c53]">
               <Clock size={22} />
             </div>
             <div>
@@ -125,46 +97,26 @@ export default function AttendancePolicyPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-                Giờ bắt đầu & Kết thúc
-              </label>
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">Giờ bắt đầu & Kết thúc</label>
               <div className="flex items-center gap-2">
-                <Input
-                  value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
-                  className="text-center font-semibold text-slate-800"
-                />
+                <Input value={startTime} onChange={(e) => setStartTime(e.target.value)} className="text-center font-semibold text-slate-800" />
                 <span className="text-slate-400 font-bold">—</span>
-                <Input
-                  value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                  className="text-center font-semibold text-slate-800"
-                />
+                <Input value={endTime} onChange={(e) => setEndTime(e.target.value)} className="text-center font-semibold text-slate-800" />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-                Thời gian nghỉ trưa
-              </label>
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">Thời gian nghỉ trưa</label>
               <div className="flex items-center gap-2">
-                <Input
-                  value={breakStart}
-                  onChange={(e) => setBreakStart(e.target.value)}
-                  className="text-center font-semibold text-slate-800"
-                />
+                <Input value={breakStart} onChange={(e) => setBreakStart(e.target.value)} className="text-center font-semibold text-slate-800" />
                 <span className="text-slate-400 font-bold">—</span>
-                <Input
-                  value={breakEnd}
-                  onChange={(e) => setBreakEnd(e.target.value)}
-                  className="text-center font-semibold text-slate-800"
-                />
+                <Input value={breakEnd} onChange={(e) => setBreakEnd(e.target.value)} className="text-center font-semibold text-slate-800" />
               </div>
             </div>
           </div>
 
           {/* Info Banner Box */}
-          <div className="rounded-xl bg-blue-50/70 border border-blue-100 p-3.5 flex items-center justify-between">
+          <div className="rounded-block bg-blue-50/70 border border-blue-100 p-3.5 flex items-center justify-between">
             <div className="flex items-center gap-2.5 text-xs text-blue-800 font-medium">
               <Info size={16} className="text-blue-600 shrink-0" />
               <span>Hệ thống sẽ tự động trừ 1.5 giờ nghỉ trưa vào tổng công.</span>
@@ -179,9 +131,9 @@ export default function AttendancePolicyPage() {
         </div>
 
         {/* Card 2: Đi muộn / Về sớm */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-5">
+        <div className="rounded-block border border-slate-200/80 bg-white p-6 shadow-sm space-y-5">
           <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-amber-50 p-2.5 text-amber-600">
+            <div className="rounded-block bg-amber-50 p-2.5 text-amber-600">
               <AlertTriangle size={22} />
             </div>
             <div>
@@ -194,7 +146,9 @@ export default function AttendancePolicyPage() {
             <div>
               <div className="flex items-center justify-between text-xs font-semibold text-slate-700 mb-2">
                 <span>Thời gian ân hạn (phút)</span>
-                <Badge variant="warning" pill className="font-bold px-2.5">{gracePeriod} phút</Badge>
+                <Badge variant="warning" pill className="font-bold px-2.5">
+                  {gracePeriod} phút
+                </Badge>
               </div>
               <input
                 type="range"
@@ -208,9 +162,7 @@ export default function AttendancePolicyPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-                Quy tắc trừ lương
-              </label>
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">Quy tắc trừ lương</label>
               <Select
                 value={deductionRule}
                 onChange={(e) => setDeductionRule(e.target.value)}
@@ -234,9 +186,9 @@ export default function AttendancePolicyPage() {
         </div>
 
         {/* Card 3: Quy định ngày công */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-5">
+        <div className="rounded-block border border-slate-200/80 bg-white p-6 shadow-sm space-y-5">
           <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-teal-50 p-2.5 text-[#005c53]">
+            <div className="rounded-block bg-teal-50 p-2.5 text-[#005c53]">
               <Calendar size={22} />
             </div>
             <div>
@@ -247,46 +199,44 @@ export default function AttendancePolicyPage() {
 
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-2">
-                Số ngày công chuẩn/tháng
-              </label>
+              <label className="block text-xs font-semibold text-slate-600 mb-2">Số ngày công chuẩn/tháng</label>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => setStandardWorkDays('24')}
-                  className={`py-2.5 px-4 rounded-xl font-bold text-sm transition border ${standardWorkDays === '24'
-                    ? 'bg-[#005c53] text-white border-[#005c53] shadow-xs'
-                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                    }`}
+                  className={`py-2.5 px-4 rounded-block font-bold text-sm transition border ${
+                    standardWorkDays === '24'
+                      ? 'bg-[#005c53] text-white border-[#005c53] shadow-xs'
+                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                  }`}
                 >
                   24 ngày
                 </button>
                 <button
                   type="button"
                   onClick={() => setStandardWorkDays('26')}
-                  className={`py-2.5 px-4 rounded-xl font-bold text-sm transition border ${standardWorkDays === '26'
-                    ? 'bg-[#005c53] text-white border-[#005c53] shadow-xs'
-                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                    }`}
+                  className={`py-2.5 px-4 rounded-block font-bold text-sm transition border ${
+                    standardWorkDays === '26'
+                      ? 'bg-[#005c53] text-white border-[#005c53] shadow-xs'
+                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                  }`}
                 >
                   26 ngày
                 </button>
               </div>
             </div>
 
-            <div className="rounded-xl bg-slate-50 border border-slate-200/70 p-3.5 space-y-1">
+            <div className="rounded-block bg-slate-50 border border-slate-200/70 p-3.5 space-y-1">
               <span className="text-xs font-bold text-slate-800 block">Định nghĩa 1 ngày công:</span>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Làm việc tối thiểu 7.5 giờ (không tính nghỉ trưa).
-              </p>
+              <p className="text-xs text-slate-600 leading-relaxed">Làm việc tối thiểu 7.5 giờ (không tính nghỉ trưa).</p>
             </div>
           </div>
         </div>
 
         {/* Card 4: Quy định tăng ca (OT) */}
-        <div className="lg:col-span-2 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-5">
+        <div className="lg:col-span-2 rounded-block border border-slate-200/80 bg-white p-6 shadow-sm space-y-5">
           <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-blue-50 p-2.5 text-blue-600">
+            <div className="rounded-block bg-blue-50 p-2.5 text-blue-600">
               <TrendingUp size={22} />
             </div>
             <div>
@@ -296,7 +246,7 @@ export default function AttendancePolicyPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="rounded-xl bg-slate-50 border border-slate-200/70 p-4">
+            <div className="rounded-block bg-slate-50 border border-slate-200/70 p-4">
               <span className="text-xs font-semibold text-slate-500 block mb-1">Tối thiểu tính OT</span>
               <div className="flex items-baseline gap-1">
                 <Input
@@ -308,7 +258,7 @@ export default function AttendancePolicyPage() {
               </div>
             </div>
 
-            <div className="rounded-xl bg-slate-50 border border-slate-200/70 p-4">
+            <div className="rounded-block bg-slate-50 border border-slate-200/70 p-4">
               <span className="text-xs font-semibold text-slate-500 block mb-1">Hệ số Ngày thường</span>
               <div className="flex items-baseline gap-1">
                 <Input
@@ -320,7 +270,7 @@ export default function AttendancePolicyPage() {
               </div>
             </div>
 
-            <div className="rounded-xl bg-slate-50 border border-slate-200/70 p-4">
+            <div className="rounded-block bg-slate-50 border border-slate-200/70 p-4">
               <span className="text-xs font-semibold text-slate-500 block mb-1">Hệ số Cuối tuần</span>
               <div className="flex items-baseline gap-1">
                 <Input
@@ -334,20 +284,15 @@ export default function AttendancePolicyPage() {
           </div>
 
           <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-            <span className="text-xs font-semibold text-slate-700">
-              Yêu cầu phê duyệt OT bởi quản lý trực tiếp
-            </span>
-            <Switch
-              checked={requireOTApproval}
-              onChange={(e) => setRequireOTApproval(e.target.checked)}
-            />
+            <span className="text-xs font-semibold text-slate-700">Yêu cầu phê duyệt OT bởi quản lý trực tiếp</span>
+            <Switch checked={requireOTApproval} onChange={(e) => setRequireOTApproval(e.target.checked)} />
           </div>
         </div>
 
         {/* Card 5: Quy định nghỉ phép */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-5">
+        <div className="rounded-block border border-slate-200/80 bg-white p-6 shadow-sm space-y-5">
           <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-teal-50 p-2.5 text-[#005c53]">
+            <div className="rounded-block bg-teal-50 p-2.5 text-[#005c53]">
               <FileCheck size={22} />
             </div>
             <div>
@@ -357,9 +302,7 @@ export default function AttendancePolicyPage() {
           </div>
 
           <div className="flex items-center justify-between pt-2">
-            <span className="text-xs font-semibold text-slate-700">
-              Số ngày phép năm mặc định
-            </span>
+            <span className="text-xs font-semibold text-slate-700">Số ngày phép năm mặc định</span>
             <div className="flex items-center gap-2">
               <Input
                 value={defaultAnnualLeave}
@@ -372,9 +315,9 @@ export default function AttendancePolicyPage() {
         </div>
 
         {/* Card 6: Cách tính công & Formula */}
-        <div className="lg:col-span-2 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-5">
+        <div className="lg:col-span-2 rounded-block border border-slate-200/80 bg-white p-6 shadow-sm space-y-5">
           <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-teal-50 p-2.5 text-[#005c53]">
+            <div className="rounded-block bg-teal-50 p-2.5 text-[#005c53]">
               <Calculator size={22} />
             </div>
             <div>
@@ -385,9 +328,7 @@ export default function AttendancePolicyPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-                Phương thức tính
-              </label>
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">Phương thức tính</label>
               <Select
                 value={calcMethod}
                 onChange={(e) => setCalcMethod(e.target.value)}
@@ -400,9 +341,7 @@ export default function AttendancePolicyPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-                Làm tròn thời gian
-              </label>
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">Làm tròn thời gian</label>
               <Select
                 value={roundingMethod}
                 onChange={(e) => setRoundingMethod(e.target.value)}
@@ -415,7 +354,6 @@ export default function AttendancePolicyPage() {
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );

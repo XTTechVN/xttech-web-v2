@@ -1,5 +1,7 @@
 'use client';
 
+import { useCan } from '@/hooks';
+
 import React, { useEffect, useState } from 'react';
 import { Boxes, Plus, RefreshCw } from 'lucide-react';
 import { getProjectGlassOrders, getWarehouseSuppliers } from '@/actions';
@@ -13,6 +15,7 @@ interface ProjectGlassOrdersPanelProps {
 }
 
 export function ProjectGlassOrdersPanel({ projectId }: ProjectGlassOrdersPanelProps) {
+  const { can } = useCan();
   const [glassOrders, setGlassOrders] = useState<GlassOrder[]>([]);
   const [suppliers, setSuppliers] = useState<WarehouseSupplier[]>([]);
   const [loading, setLoading] = useState<boolean>(() => Boolean(projectId));
@@ -58,7 +61,7 @@ export function ProjectGlassOrdersPanel({ projectId }: ProjectGlassOrdersPanelPr
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-4 rounded-block border border-slate-200 shadow-xs">
         <div className="flex items-center gap-2">
           <Boxes className="w-5 h-5 text-primary" />
           <h3 className="text-sm font-bold text-slate-800">
@@ -75,15 +78,17 @@ export function ProjectGlassOrdersPanel({ projectId }: ProjectGlassOrdersPanelPr
           >
             Làm mới
           </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => setShowGenerateModal(true)}
-            leftIcon={<Plus size={14} />}
-            className="text-xs"
-          >
-            Tạo Đơn Đặt Kính
-          </Button>
+          {can('glass_order:create') && (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setShowGenerateModal(true)}
+              leftIcon={<Plus size={14} />}
+              className="text-xs"
+            >
+              Tạo Đơn Đặt Kính
+            </Button>
+          )}
         </div>
       </div>
 

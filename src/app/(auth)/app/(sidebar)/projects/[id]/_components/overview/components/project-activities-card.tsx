@@ -22,7 +22,7 @@ export function ProjectActivitiesCard({ activities, isLoading }: ProjectActiviti
         </span>
       </div>
 
-      <div className="rounded-md border border-slate-200/80 bg-white p-4 shadow-2xs">
+      <div className="rounded-control border border-slate-200/80 bg-white p-4 shadow-2xs">
         {isLoading ? (
           <div className="flex items-center justify-center gap-2 py-8 text-xs text-slate-400">
             <Loader2 size={15} className="animate-spin text-primary" />
@@ -49,7 +49,7 @@ export function ProjectActivitiesCard({ activities, isLoading }: ProjectActiviti
                 <div key={item.id} className="group relative">
                   <span className="absolute top-2 -left-[15px] h-2 w-2 rounded-full bg-primary ring-4 ring-white" />
 
-                  <div className="flex flex-col justify-between gap-1.5 rounded-lg border border-slate-100 bg-slate-50/60 p-2.5 transition-colors hover:bg-slate-50 sm:flex-row sm:items-center">
+                  <div className="flex flex-col justify-between gap-1.5 rounded-control border border-slate-100 bg-slate-50/60 p-2.5 transition-colors hover:bg-slate-50 sm:flex-row sm:items-center">
                     <div className="flex flex-wrap items-center gap-1.5 text-xs">
                       <span className="font-bold text-slate-800">
                         {item.user?.fullName || 'Hệ thống'}

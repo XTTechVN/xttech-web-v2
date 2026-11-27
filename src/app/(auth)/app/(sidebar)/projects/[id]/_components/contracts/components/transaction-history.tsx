@@ -1,5 +1,7 @@
 'use client';
 
+import { useCan } from '@/hooks';
+
 import React, { useState } from 'react';
 import { DollarSign, Image as ImageIcon, Receipt, RotateCcw } from 'lucide-react';
 import { Button, Modal } from '@/components';
@@ -30,7 +32,7 @@ function CollectionProgress({ ledger }: { ledger?: ProjectLedgerSummary }) {
   const percent = total > 0 ? Math.min(100, Math.round((collected / total) * 100)) : 0;
 
   return (
-    <div className="bg-slate-50/80 rounded-lg p-3 border border-slate-100 space-y-1.5">
+    <div className="bg-slate-50/80 rounded-control p-3 border border-slate-100 space-y-1.5">
       <div className="flex items-center justify-between text-xs">
         <span className="text-slate-600 font-medium">Tiến độ thanh toán</span>
         <span className="font-bold text-emerald-600">{percent}%</span>
@@ -58,6 +60,7 @@ function TransactionRow({
   onReverse: (transaction: PaymentTransactionItem) => void;
   onPreviewImage: (transaction: PaymentTransactionItem) => void;
 }) {
+  const { can } = useCan();
   const isNegative = transaction.amount < 0;
   const canReverse = transaction.amount > 0 && !transaction.reversalOfId;
 
@@ -104,7 +107,7 @@ function TransactionRow({
         <div className={`font-bold text-xs ${isNegative ? 'text-red-600' : 'text-emerald-600'}`}>
           {transaction.amount > 0 ? `+${formatCurrency(transaction.amount)}` : formatCurrency(transaction.amount)}
         </div>
-        {canReverse && (
+        {canReverse && can('payment:reverse') && (
           <button
             type="button"
             title="Hoàn tiền cho khoản này"
@@ -127,10 +130,11 @@ export function TransactionHistory({
   onCollect,
   onReverse,
 }: TransactionHistoryProps) {
+  const { can } = useCan();
   const [previewTx, setPreviewTx] = useState<PaymentTransactionItem | null>(null);
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200/70 p-4 shadow-2xs space-y-3.5">
+    <div className="bg-white rounded-control border border-slate-200/70 p-4 shadow-2xs space-y-3.5">
       <div className="flex items-center justify-between gap-3">
         <div>
           <h3 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
@@ -141,17 +145,19 @@ export function TransactionHistory({
           </h3>
           <p className="text-[11px] text-slate-400 mt-0.5">Danh sách các lần thu tiền và hoàn tiền</p>
         </div>
-        <Button
-          variant="primary"
-          size="sm"
-          leftIcon={<DollarSign size={14} />}
-          disabled={!canCollect}
-          title={canCollect ? undefined : 'Cần có hợp đồng đã ký để thu tiền'}
-          onClick={onCollect}
-          className="h-7 text-xs font-semibold px-2.5"
-        >
-          Tạo phiếu thu
-        </Button>
+        {can('payment:create') && (
+          <Button
+            variant="primary"
+            size="sm"
+            leftIcon={<DollarSign size={14} />}
+            disabled={!canCollect}
+            title={canCollect ? undefined : 'Cần có hợp đồng đã ký để thu tiền'}
+            onClick={onCollect}
+            className="h-7 text-xs font-semibold px-2.5"
+          >
+            Tạo phiếu thu
+          </Button>
+        )}
       </div>
 
       <CollectionProgress ledger={ledger} />
@@ -160,13 +166,13 @@ export function TransactionHistory({
         <p className="text-xs text-slate-400 text-center py-6">Đang tải lịch sử thanh toán...</p>
       )}
       {!isLoading && transactions.length === 0 && (
-        <div className="py-8 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-lg">
+        <div className="py-8 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-control">
           <Receipt size={22} className="mx-auto text-slate-300 mb-1.5" />
           Chưa có lượt thu tiền nào.
         </div>
       )}
       {!isLoading && transactions.length > 0 && (
-        <div className="divide-y divide-slate-100 border border-slate-100 rounded-lg overflow-hidden max-h-[460px] overflow-y-auto">
+        <div className="divide-y divide-slate-100 border border-slate-100 rounded-control overflow-hidden max-h-[460px] overflow-y-auto">
           {transactions.map((tx) => (
             <TransactionRow
               key={tx.id}
@@ -186,7 +192,7 @@ export function TransactionHistory({
       >
         {previewTx?.receiptImage && (
           <div className="space-y-3">
-            <div className="flex items-center justify-between text-xs text-slate-600 bg-slate-50 px-3 py-2 rounded-md border border-slate-100">
+            <div className="flex items-center justify-between text-xs text-slate-600 bg-slate-50 px-3 py-2 rounded-control border border-slate-100">
               <span>
                 Số tiền:{' '}
                 <strong className="text-emerald-600">{formatCurrency(previewTx.amount)}</strong>
@@ -195,7 +201,7 @@ export function TransactionHistory({
                 Thời gian: <strong>{formatDateTime(previewTx.transactionDate || previewTx.createdAt)}</strong>
               </span>
             </div>
-            <div className="flex justify-center rounded-lg border border-slate-200 bg-slate-900/5 p-2">
+            <div className="flex justify-center rounded-control border border-slate-200 bg-slate-900/5 p-2">
               <img
                 src={getFileUrl(previewTx.receiptImage)}
                 alt={`Chứng từ ${previewTx.transactionCode}`}

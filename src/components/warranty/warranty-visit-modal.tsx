@@ -1,5 +1,6 @@
 'use client';
 
+import { useCan } from '@/hooks';
 import React, { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { CheckCircle2 } from 'lucide-react';
@@ -52,6 +53,7 @@ function WarrantyVisitForm({
   visit: WarrantyVisit | null;
   onClose: () => void;
 }) {
+  const { can } = useCan();
   const [title, setTitle] = useState(visit?.title || '');
   const [scheduledDate, setScheduledDate] = useState(
     visit?.scheduledDate || new Date().toISOString().slice(0, 10),
@@ -69,6 +71,7 @@ function WarrantyVisitForm({
   const { data: users } = useQuery({
     queryKey: ['users', 'warranty-assignees'],
     queryFn: () => getUsers({ limit: 100 }),
+    enabled: can('user:read'),
     staleTime: 5 * 60 * 1000,
   });
 

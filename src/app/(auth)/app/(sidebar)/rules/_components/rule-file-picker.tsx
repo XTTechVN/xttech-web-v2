@@ -34,9 +34,9 @@ export const RuleFilePicker: React.FC<RuleFilePickerProps> = ({ file, existingFi
       />
 
       {file ? (
-        <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
+        <div className="flex items-center justify-between p-3 rounded-block bg-slate-50 border border-slate-200">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="p-2 rounded-lg bg-primary/10 text-primary shrink-0">{getFileVisualInfo(file.name).icon}</div>
+            <div className="p-2 rounded-control bg-primary/10 text-primary shrink-0">{getFileVisualInfo(file.name).icon}</div>
             <div className="min-w-0">
               <p className="font-semibold text-slate-800 truncate text-xs">{file.name}</p>
               <p className="text-[10px] text-slate-400">{formatBytes(file.size)}</p>
@@ -57,7 +57,7 @@ export const RuleFilePicker: React.FC<RuleFilePickerProps> = ({ file, existingFi
           onClick={() => inputRef.current?.click()}
           onDragOver={(e) => e.preventDefault()}
           onDrop={handleDrop}
-          className={`border-2 border-dashed rounded-xl p-5 text-center cursor-pointer bg-slate-50/50 hover:bg-slate-50 flex flex-col items-center gap-1.5 transition-colors ${
+          className={`border-2 border-dashed rounded-block p-5 text-center cursor-pointer bg-slate-50/50 hover:bg-slate-50 flex flex-col items-center gap-1.5 transition-colors ${
             error ? 'border-red-400' : 'border-slate-300 hover:border-primary/60'
           }`}
         >

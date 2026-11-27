@@ -12,7 +12,7 @@ interface ProfileVariantsSectionProps {
 }
 
 const INPUT_CLASS =
-  'w-full h-8 px-2 border border-slate-200 rounded-lg text-xs bg-white text-slate-800 focus:outline-none focus:border-primary transition';
+  'w-full h-8 px-2 border border-slate-200 rounded-control text-xs bg-white text-slate-800 focus:outline-none focus:border-primary transition';
 
 const OVERRIDE_FIELDS: Array<{ name: 'sectionHeightMm' | (typeof DEDUCTION_FIELDS)[number]['name']; label: string }> = [
   { name: 'sectionHeightMm', label: 'Chiều cao (mm)' },
@@ -28,7 +28,7 @@ export function ProfileVariantsSection({ variants, onChange }: ProfileVariantsSe
   const addVariant = () => onChange([...variants, { role: 'FRAME', code: '', name: '', note: '' }]);
 
   return (
-    <div className="p-3.5 bg-slate-50/80 rounded-xl border border-slate-200/90 space-y-3">
+    <div className="p-3.5 bg-slate-50/80 rounded-block border border-slate-200/90 space-y-3">
       <div className="flex items-center justify-between gap-2">
         <div>
           <div className="text-xs font-bold text-slate-700">🔀 Biến thể</div>
@@ -37,20 +37,22 @@ export function ProfileVariantsSection({ variants, onChange }: ProfileVariantsSe
         <button
           type="button"
           onClick={addVariant}
-          className="inline-flex items-center gap-1 px-2.5 h-7 rounded-lg text-[11px] font-semibold text-primary border border-primary/30 hover:bg-primary/10 transition cursor-pointer"
+          className="inline-flex items-center gap-1 px-2.5 h-7 rounded-control text-[11px] font-semibold text-primary border border-primary/30 hover:bg-primary/10 transition cursor-pointer"
         >
           <Plus size={13} /> Thêm biến thể
         </button>
       </div>
 
       {variants.map((variant, index) => (
-        <div key={variant.id ?? `new-${index}`} className="p-3 bg-white rounded-lg border border-slate-200 space-y-2.5">
+        <div key={variant.id ?? `new-${index}`} className="p-3 bg-white rounded-control border border-slate-200 space-y-2.5">
           <div className="grid grid-cols-1 sm:grid-cols-[1.2fr_1fr_1.4fr_1.4fr_auto] gap-2 items-end">
             <div>
               <label className="block text-[10px] font-semibold text-slate-600 mb-1">Vai trò</label>
               <select value={variant.role} onChange={(e) => updateVariant(index, { role: e.target.value })} className={SELECT_CLASS + ' !h-8'}>
                 {BAR_TYPE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
                 ))}
               </select>
             </div>
@@ -72,7 +74,7 @@ export function ProfileVariantsSection({ variants, onChange }: ProfileVariantsSe
               type="button"
               onClick={() => removeVariant(index)}
               title="Xóa biến thể"
-              className="h-8 w-8 flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition cursor-pointer"
+              className="h-8 w-8 flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-control transition cursor-pointer"
             >
               <Trash2 size={15} />
             </button>
@@ -81,11 +83,7 @@ export function ProfileVariantsSection({ variants, onChange }: ProfileVariantsSe
             {OVERRIDE_FIELDS.map(({ name, label }) => (
               <div key={name}>
                 <label className="block text-[10px] font-semibold text-slate-600 mb-1">{label}</label>
-                <NullableNumberInput
-                  value={variant[name]}
-                  onChange={(next) => updateVariant(index, { [name]: next })}
-                  placeholder="Theo thanh gốc"
-                />
+                <NullableNumberInput value={variant[name]} onChange={(next) => updateVariant(index, { [name]: next })} placeholder="Theo thanh gốc" />
               </div>
             ))}
           </div>

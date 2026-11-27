@@ -54,7 +54,7 @@ export function PositionQrModal({ position, onClose }: PositionQrModalProps) {
       className="max-w-xs w-full text-center"
     >
       <div className="space-y-4 py-2 flex flex-col items-center">
-        <div className="flex h-52 w-52 items-center justify-center rounded-xl border border-slate-200 bg-white p-2">
+        <div className="flex h-52 w-52 items-center justify-center rounded-block border border-slate-200 bg-white p-2">
           {imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={imageUrl} alt={`QR ${position?.code}`} className="h-full w-full object-contain" />

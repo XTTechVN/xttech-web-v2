@@ -1,50 +1,20 @@
 'use client';
 
-import React, { useRef, useState, useEffect, Suspense } from 'react';
-import { StatCards, LeaveRequestTable, LeaveRequestModal } from './_components';
-import { usePermission } from '@/hooks';
+import { AccessDenied } from '@/components/access-denied';
+import { PageHeading } from '@/components-remake';
+import { useCan } from '@/hooks';
+import LeaveTable from './_components/list/table';
 
-function LeaveRequestsPageContent() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [containerWidth, setContainerWidth] = useState<number>(0);
-
-  const { user, isManager } = usePermission();
-
-  useEffect(() => {
-    if (!containerRef.current) return;
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        setContainerWidth(entry.contentRect.width);
-      }
-    });
-    observer.observe(containerRef.current);
-    return () => observer.disconnect();
-  }, []);
-
+const Page = () => {
+  const { can, isReady } = useCan();
+  if (!isReady) return null;
+  if (!can('leave_request:read')) return <AccessDenied />;
   return (
-    <div ref={containerRef} className="w-full flex flex-col gap-4 p-4">
-      {/* Statistical Metrics Cards */}
-      {isManager && <StatCards containerWidth={containerWidth} />}
-
-      {/* Leave Requests Data Grid / Table */}
-      <LeaveRequestTable isManager={isManager} currentUserId={user?.id} />
-
-      {/* Modals & Dialogs (Create / Edit / Detail / Review / Delete) */}
-      <LeaveRequestModal isManager={isManager} currentUserId={user?.id} />
+    <div className="p-4 font-body md:p-6 [&_h1]:font-heading [&_h2]:font-heading [&_h3]:font-heading">
+      <PageHeading title="Nghỉ phép" description="Gửi và duyệt đơn nghỉ phép." />
+      <LeaveTable />
     </div>
   );
-}
+};
 
-export default function LeaveRequestsPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="w-full flex items-center justify-center min-h-[400px] text-slate-500">
-          Đang tải dữ liệu nghỉ phép...
-        </div>
-      }
-    >
-      <LeaveRequestsPageContent />
-    </Suspense>
-  );
-}
+export default Page;

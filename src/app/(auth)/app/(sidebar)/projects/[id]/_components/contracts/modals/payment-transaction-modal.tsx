@@ -132,7 +132,7 @@ function PaymentTransactionForm({
         </div>
 
         {receiptImage ? (
-          <div className="relative inline-block rounded-lg border border-slate-200 bg-slate-50 p-1.5">
+          <div className="relative inline-block rounded-control border border-slate-200 bg-slate-50 p-1.5">
             <img
               src={getFileUrl(receiptImage)}
               alt="Ảnh chứng từ thanh toán"
@@ -150,7 +150,7 @@ function PaymentTransactionForm({
         ) : (
           <div
             onClick={() => !isUploading && fileInputRef.current?.click()}
-            className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-slate-200 bg-slate-50/60 py-3.5 text-xs text-slate-400 transition-colors hover:border-primary/40 hover:text-slate-600"
+            className="flex cursor-pointer items-center justify-center gap-2 rounded-control border border-dashed border-slate-200 bg-slate-50/60 py-3.5 text-xs text-slate-400 transition-colors hover:border-primary/40 hover:text-slate-600"
           >
             <ImagePlus size={15} />
             <span>Nhấn để tải ảnh chụp màn hình chuyển khoản hoặc phiếu thu</span>

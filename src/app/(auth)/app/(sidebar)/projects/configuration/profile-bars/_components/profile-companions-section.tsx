@@ -30,7 +30,7 @@ interface ProfileCompanionsSectionProps {
 }
 
 const INPUT_CLASS =
-  'w-full h-8 px-2 border border-slate-200 rounded-lg text-xs bg-white text-slate-800 focus:outline-none focus:border-primary transition';
+  'w-full h-8 px-2 border border-slate-200 rounded-control text-xs bg-white text-slate-800 focus:outline-none focus:border-primary transition';
 const LABEL_CLASS = 'block text-[10px] font-semibold text-slate-600 mb-1';
 const ANGLE_OPTIONS = [45, 90];
 
@@ -84,9 +84,7 @@ export function ProfileCompanionsSection({ companions, onChange, availableBars, 
 
   const handleAddProfileToGroup = (groupIdx: number) =>
     commitGroups(
-      combineGroups.map((group, idx) =>
-        idx === groupIdx ? { ...group, items: [...group.items, createEmptyItem(group.code, group.name)] } : group,
-      ),
+      combineGroups.map((group, idx) => (idx === groupIdx ? { ...group, items: [...group.items, createEmptyItem(group.code, group.name)] } : group)),
     );
 
   const handleUpdateGroupItem = (groupIdx: number, itemIdx: number, patch: Partial<ProfileBarCompanion>, autoMeta = false) =>
@@ -114,14 +112,23 @@ export function ProfileCompanionsSection({ companions, onChange, availableBars, 
     onRemove: () => void,
     key: string | number,
   ) => (
-    <div key={key} className="p-2.5 bg-white rounded-lg border border-slate-200 space-y-2">
+    <div key={key} className="p-2.5 bg-white rounded-control border border-slate-200 space-y-2">
       <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr_1fr_auto] gap-2 items-end">
         <div>
-          <label className={LABEL_CLASS}>Thanh kèm theo <span className="text-rose-500">*</span></label>
-          <select value={companion.companionBarId || ''} onChange={(e) => onSelectBar(Number(e.target.value))} className={SELECT_CLASS + ' !h-8'} required>
+          <label className={LABEL_CLASS}>
+            Thanh kèm theo <span className="text-rose-500">*</span>
+          </label>
+          <select
+            value={companion.companionBarId || ''}
+            onChange={(e) => onSelectBar(Number(e.target.value))}
+            className={SELECT_CLASS + ' !h-8'}
+            required
+          >
             <option value="">— Chọn thanh kèm —</option>
             {companion.companionBarId > 0 && !barById.has(companion.companionBarId) && (
-              <option value={companion.companionBarId}>{`${companion.companionCode ?? companion.companionBarId} — ${companion.companionName ?? ''}`}</option>
+              <option
+                value={companion.companionBarId}
+              >{`${companion.companionCode ?? companion.companionBarId} — ${companion.companionName ?? ''}`}</option>
             )}
             {candidateBars.map((bar) => (
               <option key={bar.id} value={bar.id}>{`${bar.code} — ${bar.name}`}</option>
@@ -134,9 +141,20 @@ export function ProfileCompanionsSection({ companions, onChange, availableBars, 
         </div>
         <div>
           <label className={LABEL_CLASS}>SL (1–10)</label>
-          <NullableNumberInput value={companion.qty} onChange={(next) => onPatch({ qty: Math.min(10, Math.max(1, Math.round(next ?? 1))) })} step={1} min={1} max={10} />
+          <NullableNumberInput
+            value={companion.qty}
+            onChange={(next) => onPatch({ qty: Math.min(10, Math.max(1, Math.round(next ?? 1))) })}
+            step={1}
+            min={1}
+            max={10}
+          />
         </div>
-        <button type="button" onClick={onRemove} title="Xóa dòng profile phụ" className="h-8 w-8 flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition cursor-pointer">
+        <button
+          type="button"
+          onClick={onRemove}
+          title="Xóa dòng profile phụ"
+          className="h-8 w-8 flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-control transition cursor-pointer"
+        >
           <Trash2 size={15} />
         </button>
       </div>
@@ -144,10 +162,16 @@ export function ProfileCompanionsSection({ companions, onChange, availableBars, 
         {(['goc1', 'goc2'] as const).map((field, angleIndex) => (
           <div key={field}>
             <label className={LABEL_CLASS}>Góc cắt {angleIndex + 1}</label>
-            <select value={companion[field] ?? ''} onChange={(e) => onPatch({ [field]: e.target.value === '' ? null : Number(e.target.value) })} className={SELECT_CLASS + ' !h-8'}>
+            <select
+              value={companion[field] ?? ''}
+              onChange={(e) => onPatch({ [field]: e.target.value === '' ? null : Number(e.target.value) })}
+              className={SELECT_CLASS + ' !h-8'}
+            >
               <option value="">Theo thanh chính</option>
               {ANGLE_OPTIONS.map((angle) => (
-                <option key={angle} value={angle}>{angle}°</option>
+                <option key={angle} value={angle}>
+                  {angle}°
+                </option>
               ))}
             </select>
           </div>
@@ -161,13 +185,17 @@ export function ProfileCompanionsSection({ companions, onChange, availableBars, 
   );
 
   return (
-    <div className="p-3.5 bg-slate-50/80 rounded-xl border border-slate-200/90 space-y-3">
+    <div className="p-3.5 bg-slate-50/80 rounded-block border border-slate-200/90 space-y-3">
       <div className="flex items-center justify-between gap-2">
         <div>
           <div className="text-xs font-bold text-slate-700">⊕ Thanh đính kèm</div>
           <p className="text-[11px] text-slate-500">Combine — mỗi cách có thể gồm nhiều profile kèm, cùng số đo + offset riêng</p>
         </div>
-        <button type="button" onClick={handleAddWayOrItem} className="inline-flex items-center gap-1 px-2.5 h-7 rounded-lg text-[11px] font-semibold text-primary border border-primary/30 hover:bg-primary/10 transition cursor-pointer">
+        <button
+          type="button"
+          onClick={handleAddWayOrItem}
+          className="inline-flex items-center gap-1 px-2.5 h-7 rounded-control text-[11px] font-semibold text-primary border border-primary/30 hover:bg-primary/10 transition cursor-pointer"
+        >
           <Plus size={13} /> Thêm
         </button>
       </div>
@@ -179,7 +207,18 @@ export function ProfileCompanionsSection({ companions, onChange, availableBars, 
               companion,
               (barId) => {
                 const selectedBar = barById.get(barId);
-                onChange(companions.map((item, i) => (i === index ? { ...item, companionBarId: barId, companionCode: selectedBar?.code ?? item.companionCode, companionName: selectedBar?.name ?? item.companionName } : item)));
+                onChange(
+                  companions.map((item, i) =>
+                    i === index
+                      ? {
+                          ...item,
+                          companionBarId: barId,
+                          companionCode: selectedBar?.code ?? item.companionCode,
+                          companionName: selectedBar?.name ?? item.companionName,
+                        }
+                      : item,
+                  ),
+                );
               },
               (patch) => onChange(companions.map((item, i) => (i === index ? { ...item, ...patch } : item))),
               () => onChange(companions.filter((_, i) => i !== index)),
@@ -190,24 +229,43 @@ export function ProfileCompanionsSection({ companions, onChange, availableBars, 
       ) : (
         <div className="space-y-3">
           {combineGroups.map((group, groupIdx) => (
-            <div key={group.groupId} className="p-3 bg-white rounded-xl border border-amber-200/80 shadow-2xs space-y-2.5">
+            <div key={group.groupId} className="p-3 bg-white rounded-block border border-amber-200/80 shadow-2xs space-y-2.5">
               <div className="grid grid-cols-1 sm:grid-cols-[1fr_1.4fr_auto] gap-2 items-end">
                 <div>
                   <label className={LABEL_CLASS}>Mã combine</label>
-                  <input value={group.code} onChange={(e) => handleGroupMetaChange(groupIdx, 'code', e.target.value)} placeholder={parent.code ? `${parent.code}+...` : 'Mã combine...'} className={INPUT_CLASS + ' font-mono font-semibold'} />
+                  <input
+                    value={group.code}
+                    onChange={(e) => handleGroupMetaChange(groupIdx, 'code', e.target.value)}
+                    placeholder={parent.code ? `${parent.code}+...` : 'Mã combine...'}
+                    className={INPUT_CLASS + ' tabular-nums font-semibold'}
+                  />
                 </div>
                 <div>
                   <label className={LABEL_CLASS}>Tên combine</label>
-                  <input value={group.name} onChange={(e) => handleGroupMetaChange(groupIdx, 'name', e.target.value)} placeholder={parent.name ? `${parent.name} + ...` : 'Tên combine...'} className={INPUT_CLASS} />
+                  <input
+                    value={group.name}
+                    onChange={(e) => handleGroupMetaChange(groupIdx, 'name', e.target.value)}
+                    placeholder={parent.name ? `${parent.name} + ...` : 'Tên combine...'}
+                    className={INPUT_CLASS}
+                  />
                 </div>
-                <button type="button" onClick={() => handleRemoveGroup(groupIdx)} title="Xóa cách combine này" className="h-8 w-8 flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition cursor-pointer">
+                <button
+                  type="button"
+                  onClick={() => handleRemoveGroup(groupIdx)}
+                  title="Xóa cách combine này"
+                  className="h-8 w-8 flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-control transition cursor-pointer"
+                >
                   <X size={15} />
                 </button>
               </div>
-              <div className="p-2.5 bg-amber-50/30 rounded-lg border border-amber-200/60 space-y-2">
+              <div className="p-2.5 bg-amber-50/30 rounded-control border border-amber-200/60 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-semibold text-amber-900">Profile ráp trong cách combine này</span>
-                  <button type="button" onClick={() => handleAddProfileToGroup(groupIdx)} className="inline-flex items-center gap-1 px-2 h-6 rounded-md text-[11px] font-semibold text-amber-800 bg-amber-100/80 hover:bg-amber-200/70 transition cursor-pointer">
+                  <button
+                    type="button"
+                    onClick={() => handleAddProfileToGroup(groupIdx)}
+                    className="inline-flex items-center gap-1 px-2 h-6 rounded-control text-[11px] font-semibold text-amber-800 bg-amber-100/80 hover:bg-amber-200/70 transition cursor-pointer"
+                  >
                     <Plus size={12} /> Thêm profile
                   </button>
                 </div>
@@ -217,7 +275,16 @@ export function ProfileCompanionsSection({ companions, onChange, availableBars, 
                       item,
                       (barId) => {
                         const selectedBar = barById.get(barId);
-                        handleUpdateGroupItem(groupIdx, itemIdx, { companionBarId: barId, companionCode: selectedBar?.code ?? item.companionCode, companionName: selectedBar?.name ?? item.companionName }, true);
+                        handleUpdateGroupItem(
+                          groupIdx,
+                          itemIdx,
+                          {
+                            companionBarId: barId,
+                            companionCode: selectedBar?.code ?? item.companionCode,
+                            companionName: selectedBar?.name ?? item.companionName,
+                          },
+                          true,
+                        );
                       },
                       (patch) => handleUpdateGroupItem(groupIdx, itemIdx, patch, false),
                       () => handleRemoveGroupItem(groupIdx, itemIdx),
@@ -232,8 +299,9 @@ export function ProfileCompanionsSection({ companions, onChange, availableBars, 
       )}
 
       {companions.length > 0 && (
-        <p className="text-[11px] text-teal-800 bg-teal-50 border border-teal-100 rounded-lg px-3 py-2">
-          Mỗi thanh gốc sẽ xuất thêm <strong>{companions.length}</strong> loại profile kèm · offset cộng chiều dài · SL là hệ số nhân · góc nhập sẽ ghi đè
+        <p className="text-[11px] text-teal-800 bg-teal-50 border border-teal-100 rounded-control px-3 py-2">
+          Mỗi thanh gốc sẽ xuất thêm <strong>{companions.length}</strong> loại profile kèm · offset cộng chiều dài · SL là hệ số nhân · góc nhập sẽ
+          ghi đè
         </p>
       )}
     </div>

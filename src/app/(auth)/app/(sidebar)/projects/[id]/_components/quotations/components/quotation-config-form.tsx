@@ -277,7 +277,7 @@ function FloorPicker({ floors, selectedIds, isReadOnly, isMissingFloors, onToggl
               type="button"
               disabled={isReadOnly}
               onClick={() => onToggle(floor.id)}
-              className={`px-2.5 py-1 rounded-md text-xs border transition-colors disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer ${
+              className={`px-2.5 py-1 rounded-control text-xs border transition-colors disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer ${
                 isActive
                   ? 'bg-primary text-white border-primary'
                   : 'bg-white text-slate-600 border-slate-200 hover:border-primary/40'

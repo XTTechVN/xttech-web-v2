@@ -112,7 +112,7 @@ export function TemplateDoorFilterBar({
               <ChevronDown size={12} />
             </button>
             {openMenu === 'brands' && (
-              <div className="absolute left-0 top-full mt-1.5 w-52 max-h-60 overflow-y-auto bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-50">
+              <div className="absolute left-0 top-full mt-1.5 w-52 max-h-60 overflow-y-auto bg-white border border-slate-200 rounded-control shadow-lg py-1 z-50">
                 {hiddenBrands.map((brand) => (
                   <button
                     key={brand.id}
@@ -142,7 +142,7 @@ export function TemplateDoorFilterBar({
             placeholder="Tìm mẫu cửa..."
             value={search}
             onChange={(e) => onChangeSearch(e.target.value)}
-            className="w-full h-9 pl-9 pr-8 border border-slate-200 rounded-lg text-xs bg-slate-50/60 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-primary transition-colors"
+            className="w-full h-9 pl-9 pr-8 border border-slate-200 rounded-control text-xs bg-slate-50/60 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-primary transition-colors"
           />
           {search && (
             <button
@@ -159,7 +159,7 @@ export function TemplateDoorFilterBar({
           <button
             type="button"
             onClick={() => setOpenMenu(openMenu === 'series' ? null : 'series')}
-            className={`h-9 px-3.5 rounded-lg border text-xs font-semibold inline-flex items-center gap-1.5 transition-all cursor-pointer ${
+            className={`h-9 px-3.5 rounded-control border text-xs font-semibold inline-flex items-center gap-1.5 transition-all cursor-pointer ${
               groupBySeries || activeSeries
                 ? 'bg-primary text-white border-primary shadow-2xs'
                 : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
@@ -171,7 +171,7 @@ export function TemplateDoorFilterBar({
           </button>
 
           {openMenu === 'series' && (
-            <div className="absolute right-0 top-full mt-1.5 w-64 bg-white border border-slate-200 rounded-lg shadow-lg py-1.5 z-50">
+            <div className="absolute right-0 top-full mt-1.5 w-64 bg-white border border-slate-200 rounded-control shadow-lg py-1.5 z-50">
               <div className="px-3 py-1.5 border-b border-slate-100 flex items-center justify-between">
                 <span className="text-[11px] font-semibold text-slate-600 flex items-center gap-1.5">
                   <Layers size={12} className="text-primary" />
@@ -250,7 +250,7 @@ export function TemplateDoorFilterBar({
               <ChevronDown size={12} />
             </button>
             {openMenu === 'types' && (
-              <div className="absolute left-0 top-full mt-1.5 w-48 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-50">
+              <div className="absolute left-0 top-full mt-1.5 w-48 bg-white border border-slate-200 rounded-control shadow-lg py-1 z-50">
                 {hiddenTypes.map((type) => (
                   <button
                     key={type.value}

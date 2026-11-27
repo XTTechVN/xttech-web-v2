@@ -10,7 +10,7 @@ import { usePathname } from 'next/navigation';
 import toast from 'react-hot-toast';
 
 // Components
-import { AppHeader, Sidebar, SidebarItemProps, XTLogo } from '@/components';
+import { Sidebar, SidebarItemProps, SidebarMenuButton, UserMenu, XTLogo } from '@/components';
 
 // Hooks & Actions
 import { useLocationTracker, useMyTodayAttendance } from '@/hooks';
@@ -24,8 +24,8 @@ import { AccessDenied } from '@/components/access-denied';
 // Giữ chỗ trong lúc chờ /me, tránh trang con gọi API trước khi biết quyền
 const PageSkeleton = () => (
   <div className="flex flex-col gap-3 p-4" aria-busy="true">
-    <div className="h-8 w-1/3 animate-pulse rounded-md bg-gray-200" />
-    <div className="h-40 w-full animate-pulse rounded-md bg-gray-100" />
+    <div className="h-8 w-1/3 animate-pulse rounded-control bg-gray-200" />
+    <div className="h-40 w-full animate-pulse rounded-control bg-gray-100" />
   </div>
 );
 import { useAuthStore } from '@/stores';
@@ -57,17 +57,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       onClick: () => navigateTo('/app/dashboard'),
     },
     sections: filteredSections,
-    cta: {
-      title: 'Hỗ trợ kỹ thuật',
-      badge: 'Zalo',
-      description: 'Liên hệ để đóng góp ý kiến hoặc phản hồi sự cố hệ thống',
-      buttonText: 'Mở nhóm hỗ trợ',
-      onButtonClick: () => {
-        const zaloGroupUrl = 'https://zalo.me/g/erv3bny3uug6i1qgbqez';
-
-        window.open(zaloGroupUrl, '_blank', 'noopener,noreferrer');
-      },
-    },
     onItemSelect: (item: SidebarItemProps) => {
       // Chặn người dùng truy cập một số tính năng trên sidebar
       const isAccepted = acceptedSections.includes(item.id);
@@ -110,7 +99,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         variant="light"
         className="hidden md:flex h-full rounded-none border-y-0 border-l-0 border-r border-slate-200 shadow-none bg-white shrink-0"
         activeId={activeMenu}
-        cta={sidebarConfig.cta}
+        footer={<UserMenu />}
         brand={sidebarConfig.brand}
         sections={sidebarConfig.sections}
         onItemSelect={sidebarConfig.onItemSelect}
@@ -124,7 +113,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             variant="light"
             className="relative h-full w-72 rounded-none border-y-0 border-l-0 border-r border-slate-200 shadow-2xl bg-white z-10 animate-in slide-in-from-left duration-300"
             activeId={activeMenu}
-            cta={sidebarConfig.cta}
+            footer={<UserMenu />}
             brand={sidebarConfig.brand}
             sections={sidebarConfig.sections}
             onItemSelect={sidebarConfig.onItemSelectMobile}
@@ -134,8 +123,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* 3. Vùng nội dung chính */}
       <div className="flex-1 h-full bg-slate-50 flex flex-col min-w-0">
-        <AppHeader setActive={setActiveMenu} onMenuClick={() => setIsMobileOpen(true)} userRole={userRole} />
-        <div className="flex-1 overflow-y-auto">{isPending ? <PageSkeleton /> : denied ? <AccessDenied /> : children}</div>
+        <div className="flex h-12 flex-none items-center border-b border-slate-200 bg-white px-2 md:hidden">
+          <SidebarMenuButton onClick={() => setIsMobileOpen(true)} />
+        </div>
+        <div className="flex-1 overflow-y-auto font-body [&_h1]:font-heading [&_h2]:font-heading [&_h3]:font-heading [&_h4]:font-heading">
+          {isPending ? <PageSkeleton /> : denied ? <AccessDenied /> : children}
+        </div>
       </div>
     </div>
   );

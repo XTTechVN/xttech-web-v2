@@ -127,7 +127,7 @@ export function ProjectQuotationsPricing({ projectId }: ProjectQuotationsPricing
             />
           </div>
         ) : (
-          <div className="bg-white rounded-lg border border-slate-200/60 p-8 shadow-xs text-center text-xs text-slate-400">
+          <div className="bg-white rounded-control border border-slate-200/60 p-8 shadow-xs text-center text-xs text-slate-400">
             Dự án chưa có báo giá. Hãy lập báo giá ở tab &quot;Cấu thành giá&quot;.
           </div>
         ))}
@@ -149,7 +149,7 @@ export function ProjectQuotationsPricing({ projectId }: ProjectQuotationsPricing
             initialMode={quotation.accessoryMode}
           />
         ) : (
-          <div className="bg-white rounded-lg border border-slate-200/60 p-8 shadow-xs text-center text-xs text-slate-400">
+          <div className="bg-white rounded-control border border-slate-200/60 p-8 shadow-xs text-center text-xs text-slate-400">
             Dự án chưa có báo giá. Hãy lập báo giá ở tab &quot;Cấu thành giá&quot;.
           </div>
         ))}

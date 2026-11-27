@@ -49,16 +49,16 @@ export function QuotationMaterialAnalysisSection({
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-12 w-full rounded-xl" />
-        <Skeleton className="h-64 w-full rounded-xl" />
-        <Skeleton className="h-64 w-full rounded-xl" />
+        <Skeleton className="h-12 w-full rounded-block" />
+        <Skeleton className="h-64 w-full rounded-block" />
+        <Skeleton className="h-64 w-full rounded-block" />
       </div>
     );
   }
 
   if (isError || !data) {
     return (
-      <div className="rounded-xl border border-red-200/80 bg-red-50/50 p-4 text-center text-xs text-red-600">
+      <div className="rounded-block border border-red-200/80 bg-red-50/50 p-4 text-center text-xs text-red-600">
         Không thể tải dữ liệu phân tích cấu thành giá sản xuất &amp; thống kê vật tư.
       </div>
     );
@@ -71,7 +71,7 @@ export function QuotationMaterialAnalysisSection({
   return (
     <div className="space-y-4">
       {/* Thanh lọc phạm vi bóc tách O(1) */}
-      <div className="rounded-xl border border-slate-200/80 bg-white p-3 shadow-xs flex flex-wrap items-center justify-between gap-3">
+      <div className="rounded-block border border-slate-200/80 bg-white p-3 shadow-xs flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
           <Layers size={15} className="text-primary shrink-0" />
           <span>Phạm vi bóc tách định mức &amp; vật tư:</span>
@@ -80,7 +80,7 @@ export function QuotationMaterialAnalysisSection({
           <button
             type="button"
             onClick={() => handleSelectPosition(null)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+            className={`px-3 py-1.5 rounded-control text-xs font-semibold transition-colors cursor-pointer ${
               selectedPosition === null
                 ? 'bg-primary text-white shadow-xs'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
@@ -96,13 +96,13 @@ export function QuotationMaterialAnalysisSection({
                 type="button"
                 onClick={() => handleSelectPosition(pos.positionId)}
                 title={`${pos.positionCode} · ${pos.doorName} (${pos.width}×${pos.height} mm - ${pos.floorName})`}
-                className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+                className={`px-2.5 py-1.5 rounded-control text-xs font-medium transition-colors cursor-pointer ${
                   isActive
                     ? 'bg-primary text-white font-semibold shadow-xs'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
                 }`}
               >
-                <span className="font-mono font-bold">{pos.positionCode}</span>
+                <span className="tabular-nums font-bold">{pos.positionCode}</span>
                 <span className="opacity-85"> · {pos.doorName}</span>
               </button>
             );

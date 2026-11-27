@@ -32,7 +32,7 @@ export function CuttingBarStrip({
   const wastePercent = Math.max(bar.wasteMm / bar.stockLengthMm, 0) * 100;
   return (
     <div className="flex items-center gap-2 text-[11px]">
-      <span className="w-14 shrink-0 font-mono font-semibold text-slate-500">
+      <span className="w-14 shrink-0 tabular-nums font-semibold text-slate-500">
         {bar.sourceType === 'offcut' ? `Dư #${index}` : `Cây ${index}`}
       </span>
       <div className="flex h-7 flex-1 overflow-hidden rounded border border-slate-200 bg-slate-50">
@@ -42,7 +42,7 @@ export function CuttingBarStrip({
             style={{ width: `${(piece.lengthMm / bar.stockLengthMm) * 100}%` }}
             title={`${piece.positionCode ?? ''} · ${piece.lengthMm} mm${piece.angle ? ` · ${piece.angle}` : ''}`}
             className={cn(
-              'flex items-center justify-center overflow-hidden border-r border-white px-0.5 font-mono',
+              'flex items-center justify-center overflow-hidden border-r border-white px-0.5 tabular-nums',
               pieceColor(piece.positionId),
             )}
           >
@@ -51,12 +51,12 @@ export function CuttingBarStrip({
         ))}
         <div
           style={{ width: `${wastePercent}%` }}
-          className="flex items-center justify-center bg-[repeating-linear-gradient(45deg,#f1f5f9,#f1f5f9_4px,#e2e8f0_4px,#e2e8f0_8px)] font-mono text-slate-500"
+          className="flex items-center justify-center bg-[repeating-linear-gradient(45deg,#f1f5f9,#f1f5f9_4px,#e2e8f0_4px,#e2e8f0_8px)] tabular-nums text-slate-500"
         >
           {bar.wasteMm >= 300 && <span className="truncate">{Math.round(bar.wasteMm)}</span>}
         </div>
       </div>
-      <span className="w-24 shrink-0 text-right font-mono text-slate-500">
+      <span className="w-24 shrink-0 text-right tabular-nums text-slate-500">
         {Math.round(bar.stockLengthMm)} mm
       </span>
       {bar.isOffcutReturned ? (

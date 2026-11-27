@@ -16,13 +16,7 @@ interface DayRosterModalProps {
   departmentName?: string;
 }
 
-export const DayRosterModal: React.FC<DayRosterModalProps> = ({
-  isOpen,
-  onClose,
-  selectedDate,
-  departmentId,
-  departmentName,
-}) => {
+export const DayRosterModal: React.FC<DayRosterModalProps> = ({ isOpen, onClose, selectedDate, departmentId, departmentName }) => {
   const { data: roster, isLoading } = useQuery({
     queryKey: ['department-roster', selectedDate, departmentId],
     queryFn: () =>
@@ -37,9 +31,7 @@ export const DayRosterModal: React.FC<DayRosterModalProps> = ({
   // Chỉ lấy những người ĐI LÀM (ca cố định hoặc làm linh hoạt part-time)
   const workingMembers = useMemo(() => {
     if (!members) return [];
-    return members.filter(
-      (m) => m.status === 'working' || m.status === 'flexible' || m.status === 'partial_leave'
-    );
+    return members.filter((m) => m.status === 'working' || m.status === 'flexible' || m.status === 'partial_leave');
   }, [members]);
 
   const formattedSelectedDate = useMemo(() => {
@@ -64,13 +56,11 @@ export const DayRosterModal: React.FC<DayRosterModalProps> = ({
       size="md"
       title={
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-50 text-[#045863] border border-teal-100">
+          <div className="flex h-9 w-9 items-center justify-center rounded-block bg-teal-50 text-[#045863] border border-teal-100">
             <Users size={18} />
           </div>
           <div>
-            <h4 className="text-base font-bold text-slate-900 tracking-tight">
-              Lịch làm việc ngày {formattedSelectedDate}
-            </h4>
+            <h4 className="text-base font-bold text-slate-900 tracking-tight">Lịch làm việc ngày {formattedSelectedDate}</h4>
             <p className="text-xs font-normal text-slate-500">
               {roster?.departmentName || departmentName || 'Phòng ban'} •{' '}
               {isPastDate && roster?.summary.actualPresentCount != null ? (
@@ -79,9 +69,7 @@ export const DayRosterModal: React.FC<DayRosterModalProps> = ({
                     {roster.summary.actualPresentCount}/{roster.summary.workingCount} có mặt
                   </span>
                   {roster.summary.actualAbsentCount ? (
-                    <span className="font-semibold text-rose-600">
-                      {' '}• {roster.summary.actualAbsentCount} vắng mặt
-                    </span>
+                    <span className="font-semibold text-rose-600"> • {roster.summary.actualAbsentCount} vắng mặt</span>
                   ) : null}
                 </>
               ) : (
@@ -95,12 +83,13 @@ export const DayRosterModal: React.FC<DayRosterModalProps> = ({
       <div className="flex flex-col gap-3 py-1">
         {/* Thông báo lưu ý cho ngày trong tương lai */}
         {isFutureDate && (
-          <div className="flex items-start gap-2.5 rounded-xl border border-amber-200/80 bg-amber-50/80 p-2.5 text-amber-900 shadow-xs">
+          <div className="flex items-start gap-2.5 rounded-block border border-amber-200/80 bg-amber-50/80 p-2.5 text-amber-900 shadow-xs">
             <Info size={16} className="text-amber-600 shrink-0 mt-0.5" />
             <div className="flex flex-col text-xs leading-relaxed">
               <span className="font-semibold text-slate-900">Lịch làm việc dự kiến</span>
               <span className="text-slate-800/90 text-[11px] mt-0.5">
-                Dữ liệu được tính toán dựa trên ca làm việc và đơn nghỉ phép đã duyệt tính đến thời điểm hiện tại. Lịch có thể thay đổi nếu nhân sự phát sinh đơn xin nghỉ hoặc điều chỉnh ca trước ngày này.
+                Dữ liệu được tính toán dựa trên ca làm việc và đơn nghỉ phép đã duyệt tính đến thời điểm hiện tại. Lịch có thể thay đổi nếu nhân sự
+                phát sinh đơn xin nghỉ hoặc điều chỉnh ca trước ngày này.
               </span>
             </div>
           </div>
@@ -117,9 +106,7 @@ export const DayRosterModal: React.FC<DayRosterModalProps> = ({
               <Coffee size={24} />
             </div>
             <p className="text-sm font-semibold text-slate-700">Ngày nghỉ</p>
-            <p className="text-xs text-slate-400 max-w-[240px]">
-              Ngày này không có nhân sự nào có lịch làm việc tại phòng ban.
-            </p>
+            <p className="text-xs text-slate-400 max-w-[240px]">Ngày này không có nhân sự nào có lịch làm việc tại phòng ban.</p>
           </div>
         ) : (
           <div className="flex flex-col gap-2 max-h-[380px] overflow-y-auto pr-0.5">
@@ -129,17 +116,12 @@ export const DayRosterModal: React.FC<DayRosterModalProps> = ({
               return (
                 <div
                   key={member.userId}
-                  className="flex items-center justify-between rounded-xl border border-slate-100 bg-white p-2.5 transition hover:border-slate-200 hover:shadow-xs"
+                  className="flex items-center justify-between rounded-block border border-slate-100 bg-white p-2.5 transition hover:border-slate-200 hover:shadow-xs"
                 >
                   {/* Avatar + Tên + Ca */}
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="relative shrink-0">
-                      <Avatar
-                        src={member.avatar ? getFileUrl(member.avatar) : undefined}
-                        alt={member.fullName}
-                        name={member.fullName}
-                        size="md"
-                      />
+                      <Avatar src={member.avatar ? getFileUrl(member.avatar) : undefined} alt={member.fullName} name={member.fullName} size="md" />
                       <span
                         className={cn(
                           'absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full ring-2 ring-white',
@@ -147,25 +129,19 @@ export const DayRosterModal: React.FC<DayRosterModalProps> = ({
                             ? member.actualStatus === 'absent'
                               ? 'bg-rose-500 ring-rose-100'
                               : member.actualStatus === 'late'
-                              ? 'bg-amber-500 ring-amber-100'
-                              : 'bg-emerald-500 ring-emerald-100'
+                                ? 'bg-amber-500 ring-amber-100'
+                                : 'bg-emerald-500 ring-emerald-100'
                             : isFlexible
-                            ? 'bg-purple-500 ring-purple-100'
-                            : 'bg-emerald-500 ring-emerald-100'
+                              ? 'bg-purple-500 ring-purple-100'
+                              : 'bg-emerald-500 ring-emerald-100',
                         )}
                       />
                     </div>
 
                     <div className="flex flex-col min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-semibold text-slate-900 line-clamp-1">
-                          {member.fullName}
-                        </span>
-                        {member.positionName && (
-                          <span className="text-[11px] text-slate-400 line-clamp-1">
-                            • {member.positionName}
-                          </span>
-                        )}
+                        <span className="text-xs font-semibold text-slate-900 line-clamp-1">{member.fullName}</span>
+                        {member.positionName && <span className="text-[11px] text-slate-400 line-clamp-1">• {member.positionName}</span>}
                       </div>
 
                       {/* Ca làm việc & Dữ liệu quẹt thẻ thực tế */}
@@ -174,9 +150,7 @@ export const DayRosterModal: React.FC<DayRosterModalProps> = ({
                           {isFlexible ? (
                             <>
                               <Zap size={12} className="text-purple-500 shrink-0" />
-                              <span className="text-purple-700 font-medium line-clamp-1">
-                                {member.shiftName || 'Linh hoạt (Part-time)'}
-                              </span>
+                              <span className="text-purple-700 font-medium line-clamp-1">{member.shiftName || 'Linh hoạt (Part-time)'}</span>
                             </>
                           ) : (
                             <>
@@ -214,11 +188,11 @@ export const DayRosterModal: React.FC<DayRosterModalProps> = ({
                     {isPastDate && member.actualStatus ? (
                       <span
                         className={cn(
-                          'inline-flex items-center rounded-lg border px-2 py-0.5 text-[11px] font-semibold',
+                          'inline-flex items-center rounded-control border px-2 py-0.5 text-[11px] font-semibold',
                           member.actualStatus === 'present' && 'bg-emerald-50 text-emerald-700 border-emerald-200/70',
                           member.actualStatus === 'late' && 'bg-amber-50 text-amber-700 border-amber-200/70',
                           member.actualStatus === 'absent' && 'bg-rose-50 text-rose-700 border-rose-200/70',
-                          member.actualStatus === 'forgot_checkout' && 'bg-blue-50 text-blue-700 border-blue-200/70'
+                          member.actualStatus === 'forgot_checkout' && 'bg-blue-50 text-blue-700 border-blue-200/70',
                         )}
                       >
                         {member.actualStatus === 'present' && 'Có mặt'}
@@ -229,10 +203,8 @@ export const DayRosterModal: React.FC<DayRosterModalProps> = ({
                     ) : (
                       <span
                         className={cn(
-                          'inline-flex items-center rounded-lg border px-2 py-0.5 text-[11px] font-semibold',
-                          isFlexible
-                            ? 'bg-purple-50 text-purple-700 border-purple-200/70'
-                            : 'bg-emerald-50 text-emerald-700 border-emerald-200/70'
+                          'inline-flex items-center rounded-control border px-2 py-0.5 text-[11px] font-semibold',
+                          isFlexible ? 'bg-purple-50 text-purple-700 border-purple-200/70' : 'bg-emerald-50 text-emerald-700 border-emerald-200/70',
                         )}
                       >
                         {isFlexible ? 'Ca linh hoạt' : 'Làm theo ca'}
@@ -243,7 +215,7 @@ export const DayRosterModal: React.FC<DayRosterModalProps> = ({
                       <a
                         href={`tel:${member.phoneNumber}`}
                         aria-label={`Gọi cho ${member.fullName}`}
-                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-teal-50 hover:text-[#045863] transition"
+                        className="flex h-7 w-7 items-center justify-center rounded-control border border-slate-200 bg-slate-50 text-slate-600 hover:bg-teal-50 hover:text-[#045863] transition"
                       >
                         <Phone size={13} />
                       </a>

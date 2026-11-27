@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { usePermission } from './user-permission';
+import { useCan } from './use-can';
 import { useQueryParam } from './use-query-param';
 import { useExplorerSelection } from './use-explorer-selection';
 import { useDocumentModals } from './use-document-modals';
@@ -47,8 +47,8 @@ const STATUS_OPTIONS = [
 export function useDocumentExplorer({ tab = 'my', defaultFolderId = null }: UseDocumentExplorerOptions = {}) {
   const queryClient = useQueryClient();
   const currentUser = useAuthStore((state) => state.user);
-  const { isAdmin, isHR } = usePermission();
-  const canManageDocuments = isAdmin || isHR;
+  const { can, isWide } = useCan();
+  const canManageDocuments = isWide('document:update');
 
   const [currentFolderId, setCurrentFolderId] = useState<number | null>(defaultFolderId);
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
@@ -96,6 +96,7 @@ export function useDocumentExplorer({ tab = 'my', defaultFolderId = null }: UseD
   } = useQuery({
     queryKey: DOC_QUERY_KEYS.categories.tree,
     queryFn: getDocumentCategoryTree,
+    enabled: can('document_category:read'),
   });
 
   const {
@@ -170,12 +171,13 @@ export function useDocumentExplorer({ tab = 'my', defaultFolderId = null }: UseD
     return filterUnreadOnly ? rawDocuments.filter((d) => d.isRead === false) : rawDocuments;
   }, [rawDocuments, filterUnreadOnly, itemTypeFilter]);
 
-  const canEditCurrentFolder = !isSharedSection || canManageDocuments || currentFolderPermission === 'edit';
-  const canDeleteCurrentFolder = !isSharedSection || canManageDocuments;
+  const canEditCurrentFolder = can('document:update') && (!isSharedSection || canManageDocuments || currentFolderPermission === 'edit');
+  const canDeleteCurrentFolder = can('document:delete') && (!isSharedSection || canManageDocuments);
   const canCreate =
-    !isSharedSection ||
-    canManageDocuments ||
-    (Boolean(currentFolderId) && (currentFolderPermission === 'edit' || canManageDocuments));
+    can('document:create') &&
+    (!isSharedSection ||
+      canManageDocuments ||
+      (Boolean(currentFolderId) && (currentFolderPermission === 'edit' || canManageDocuments)));
 
   const handleGoBack = useCallback(() => {
     setCurrentFolderId(parentFolder ? parentFolder.id : null);

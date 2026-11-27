@@ -1,5 +1,6 @@
 'use client';
 
+import { useCan } from '@/hooks';
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getEmployees } from '@/actions/employee';
@@ -19,20 +20,21 @@ const toDepartmentList = (raw: any): any[] => {
 };
 
 export function useRulesShareOptions(isEnabled: boolean, excludeUserId?: string) {
+  const { can } = useCan();
   const { data: employeesData } = useQuery({
     queryKey: DOC_QUERY_KEYS.options.employees,
     queryFn: () => getEmployees({ limit: 200 }),
-    enabled: isEnabled,
+    enabled: (isEnabled) && can('user:read'),
   });
   const { data: approversData } = useQuery({
     queryKey: [...DOC_QUERY_KEYS.options.employees, 'approvers'],
     queryFn: () => getEmployees({ limit: 200, permission: 'user:update' }),
-    enabled: isEnabled,
+    enabled: (isEnabled) && can('user:read'),
   });
   const { data: departmentsData } = useQuery({
     queryKey: DOC_QUERY_KEYS.options.departments,
     queryFn: () => getDepartments({ limit: 100 }),
-    enabled: isEnabled,
+    enabled: (isEnabled) && can('department:read'),
   });
 
   const approverOptions = useMemo<SelectOption[]>(() => {

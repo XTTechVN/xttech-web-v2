@@ -8,7 +8,8 @@ import { Button, Input, Skeleton, Textarea } from '@/components';
 import { ConfirmActionModal } from '@/components/documents';
 import { createPublicNewsComment, deleteNewsComment, getPublicNewsComments } from '@/actions';
 import { PUBLIC_NEWS_QUERY_KEYS } from '@/config';
-import { usePermission } from '@/hooks';
+import { useCan } from '@/hooks';
+import { useAuthStore } from '@/stores';
 import queryClient from '@/utils/query';
 import { showErrorToast, showSuccessToast } from '@/utils';
 import type { NewsArticle, NewsComment, NewsCommentCreate } from '@/types';
@@ -50,7 +51,8 @@ function CommentAvatar({ commentId, authorName }: { commentId: number; authorNam
 }
 
 export function NewsCommentsSection({ slug, articleId, commentCount }: NewsCommentsSectionProps) {
-  const { user, isManager } = usePermission();
+  const { user } = useAuthStore();
+  const isManager = useCan().can('news:update');
   const [authorName, setAuthorName] = useState(() => user?.fullName || user?.username || '');
   const [content, setContent] = useState('');
   const [nameError, setNameError] = useState('');

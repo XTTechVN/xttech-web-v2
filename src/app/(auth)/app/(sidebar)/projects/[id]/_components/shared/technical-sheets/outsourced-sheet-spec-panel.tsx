@@ -29,7 +29,7 @@ export function OutsourcedSheetSpecPanel({ sheet }: OutsourcedSheetSpecPanelProp
 
   return (
     <div className="space-y-3">
-      <div className="overflow-hidden rounded-md border border-primary/20 bg-white">
+      <div className="overflow-hidden rounded-control border border-primary/20 bg-white">
         <div className="flex items-center justify-between border-b border-primary/20 bg-primary/5 px-3 py-1.5 text-xs font-bold text-primary">
           <span className="flex items-center gap-1.5">
             <Store size={13} /> THÔNG SỐ BỘ CỬA NHẬP NGUYÊN BỘ (NCC)
@@ -43,7 +43,7 @@ export function OutsourcedSheetSpecPanel({ sheet }: OutsourcedSheetSpecPanelProp
               <dt className="col-span-5 text-slate-500">{item.label}</dt>
               <dd
                 className={`col-span-7 font-semibold text-slate-800 ${
-                  item.mono ? 'font-mono tabular-nums' : ''
+                  item.mono ? 'tabular-nums' : ''
                 }`}
               >
                 {item.value}
@@ -54,7 +54,7 @@ export function OutsourcedSheetSpecPanel({ sheet }: OutsourcedSheetSpecPanelProp
       </div>
 
       {sheet.specification && (
-        <div className="rounded-md border border-slate-200 bg-slate-50/70 px-3 py-2.5 text-xs">
+        <div className="rounded-control border border-slate-200 bg-slate-50/70 px-3 py-2.5 text-xs">
           <p className="font-semibold text-slate-700">Quy cách kỹ thuật</p>
           <p className="mt-1 whitespace-pre-line leading-relaxed text-slate-600">
             {sheet.specification}
@@ -63,7 +63,7 @@ export function OutsourcedSheetSpecPanel({ sheet }: OutsourcedSheetSpecPanelProp
       )}
 
       {sheet.measureNote && (
-        <div className="rounded-md border border-slate-200 bg-slate-50/70 px-3 py-2.5 text-xs">
+        <div className="rounded-control border border-slate-200 bg-slate-50/70 px-3 py-2.5 text-xs">
           <p className="font-semibold text-slate-700">Ghi chú đo đạc</p>
           <p className="mt-1 whitespace-pre-line leading-relaxed text-slate-600">
             {sheet.measureNote}
@@ -71,7 +71,7 @@ export function OutsourcedSheetSpecPanel({ sheet }: OutsourcedSheetSpecPanelProp
         </div>
       )}
 
-      <div className="flex items-start gap-2 rounded-md border border-primary/20 bg-primary/5 px-3 py-2.5 text-[11px] text-primary">
+      <div className="flex items-start gap-2 rounded-control border border-primary/20 bg-primary/5 px-3 py-2.5 text-[11px] text-primary">
         <Info size={14} className="mt-0.5 shrink-0" />
         <span>
           Bộ cửa nhập nguyên bộ từ NCC — không tách phôi cắt nhôm, kính, roan tại xưởng.

@@ -42,7 +42,7 @@ export function NullableNumberInput({ value, onChange, placeholder, step = 0.1, 
       step={step}
       min={min}
       max={max}
-      className={`w-full h-8 px-2 border border-slate-200 rounded-lg text-xs bg-white text-slate-800 focus:outline-none focus:border-primary transition ${className ?? ''}`}
+      className={`w-full h-8 px-2 border border-slate-200 rounded-control text-xs bg-white text-slate-800 focus:outline-none focus:border-primary transition ${className ?? ''}`}
     />
   );
 }

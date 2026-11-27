@@ -59,7 +59,7 @@ export function ProductionSheetCard({
   return (
     <div
       className={cn(
-        'production-sheet-page relative mx-auto w-full max-w-[960px] rounded-lg border border-slate-200 bg-white p-6 shadow-sm print:min-h-0 print:max-w-none print:rounded-none print:border-0 print:p-0 print:shadow-none',
+        'production-sheet-page relative mx-auto w-full max-w-[960px] rounded-control border border-slate-200 bg-white p-6 shadow-sm print:min-h-0 print:max-w-none print:rounded-none print:border-0 print:p-0 print:shadow-none',
         !compactHeader && 'min-h-[1050px]',
         className,
       )}
@@ -77,7 +77,7 @@ export function ProductionSheetCard({
           className="h-14 w-28 shrink-0 object-contain"
         />
         <div className="flex-1 border-l border-slate-300 pl-4 text-[11px] leading-tight text-slate-700">
-          <h2 className="text-sm font-extrabold uppercase tracking-wide text-slate-900">
+          <h2 className="text-sm font-extrabold tracking-wide text-slate-900">
             XUÂN TIỆP WINDOW
           </h2>
           <p className="mt-0.5">
@@ -92,7 +92,7 @@ export function ProductionSheetCard({
 
       <div
         className={cn(
-          'flex flex-wrap items-center justify-between gap-2 rounded-lg border px-4 py-2.5 text-xs',
+          'flex flex-wrap items-center justify-between gap-2 rounded-control border px-4 py-2.5 text-xs',
           compactHeader
             ? 'border-primary/25 bg-primary/5 print:mt-4'
             : 'mt-4 border-amber-300 bg-amber-50/70',
@@ -110,11 +110,11 @@ export function ProductionSheetCard({
             </>
           )}
           <span className="text-slate-400">|</span>
-          <span className="font-mono tabular-nums">S={(sheet.areaM2 || 0).toFixed(2)} m²</span>
+          <span className="tabular-nums">S={(sheet.areaM2 || 0).toFixed(2)} m²</span>
           {!isOutsourced && (
             <>
               <span className="text-slate-400">|</span>
-              <span className="font-mono tabular-nums">
+              <span className="tabular-nums">
                 {(sheet.totalWeightKg || 0).toFixed(1)} kg
               </span>
             </>
@@ -151,7 +151,7 @@ export function ProductionSheetCard({
             Số lượng:{' '}
             <span
               className={cn(
-                'font-mono text-sm tabular-nums',
+                'tabular-nums text-sm',
                 compactHeader ? 'text-primary' : 'text-amber-900',
               )}
             >
@@ -163,7 +163,7 @@ export function ProductionSheetCard({
 
       <div className="mt-4 grid grid-cols-12 gap-5">
         <div className="production-sheet-left-col col-span-12 space-y-4 md:col-span-5 print:col-span-5">
-          <div className="flex min-h-[300px] items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-white p-2">
+          <div className="flex min-h-[300px] items-center justify-center overflow-hidden rounded-control border border-slate-200 bg-white p-2">
             {visual.systemConfig && cadProps.rootCell ? (
               <div className="h-[290px] w-full">
                 <DoorCadRenderer
@@ -195,7 +195,7 @@ export function ProductionSheetCard({
             )}
           </div>
 
-          <div className="grid grid-cols-4 rounded-md border border-slate-200 bg-slate-50 p-2 text-center text-[11px]">
+          <div className="grid grid-cols-4 rounded-control border border-slate-200 bg-slate-50 p-2 text-center text-[11px]">
             {isOutsourced ? (
               <>
                 <div>
@@ -225,7 +225,7 @@ export function ProductionSheetCard({
             </div>
             <div>
               <span className="block text-[10px] text-slate-400">Số lượng:</span>
-              <span className="font-mono font-bold tabular-nums text-slate-700">{qty}</span>
+              <span className="tabular-nums font-bold text-slate-700">{qty}</span>
             </div>
           </div>
 
@@ -244,7 +244,7 @@ export function ProductionSheetCard({
             <div className="space-y-3">
               <ProductionSheetProfilesTable sheet={sheet} />
               {sheet.measureNote && (
-                <div className="rounded-md border border-slate-200 bg-slate-50/70 px-3 py-2 text-xs text-slate-700">
+                <div className="rounded-control border border-slate-200 bg-slate-50/70 px-3 py-2 text-xs text-slate-700">
                   <span className="font-semibold text-slate-800">Ghi chú đo đạc: </span>
                   <span className="whitespace-pre-line">{sheet.measureNote}</span>
                 </div>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useCan } from '@/hooks';
 
 import { Plus } from 'lucide-react';
 
@@ -36,6 +37,8 @@ interface InteractionLogsProps {
 }
 
 export const InteractionLogs = ({ customerId }: InteractionLogsProps) => {
+  const { can } = useCan();
+  const canManageLogs = can('customer:update');
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [logToDelete, setLogToDelete] = useState<CustomerLog | null>(null);
 
@@ -68,13 +71,14 @@ export const InteractionLogs = ({ customerId }: InteractionLogsProps) => {
 
   const { data, isLoading } = useQuery({
     queryKey: ['customer-logs', customerId, channelFilter, typeFilter, statusFilter],
-    queryFn: () => getCustomerLogs(customerId, { 
-      offset: 0, 
-      limit: 100,
-      channel: channelFilter,
-      type: typeFilter,
-      status: statusFilter,
-    }),
+    queryFn: () =>
+      getCustomerLogs(customerId, {
+        offset: 0,
+        limit: 100,
+        channel: channelFilter,
+        type: typeFilter,
+        status: statusFilter,
+      }),
   });
 
   const logs = data?.items || [];
@@ -106,18 +110,22 @@ export const InteractionLogs = ({ customerId }: InteractionLogsProps) => {
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <Heading as="h3" className="text-xs md:text-sm font-bold text-gray-500  tracking-wider">Lịch sử tương tác ({data?.meta?.total || 0})</Heading>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="bg-transparent text-primary hover:bg-transparent hover:opacity-80 p-0 font-semibold"
-          onClick={() => {
-            setSelectedLog(null);
-            setIsLogFormOpen(true);
-          }}
-        >
-          Tạo lượt tương tác
-        </Button>
+        <Heading as="h3" className="text-xs md:text-sm font-bold text-gray-500 ">
+          Lịch sử tương tác ({data?.meta?.total || 0})
+        </Heading>
+        {canManageLogs && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="bg-transparent text-primary hover:bg-transparent hover:opacity-80 p-0 font-semibold"
+            onClick={() => {
+              setSelectedLog(null);
+              setIsLogFormOpen(true);
+            }}
+          >
+            Tạo lượt tương tác
+          </Button>
+        )}
       </div>
 
       <div className="mb-4">
@@ -128,29 +136,31 @@ export const InteractionLogs = ({ customerId }: InteractionLogsProps) => {
         {isLoading ? (
           <div className="p-8 text-center text-gray-500 text-sm">Đang tải dữ liệu...</div>
         ) : logs.length === 0 ? (
-          <div className="p-8 text-center text-gray-500 text-sm border border-dashed border-gray-300 rounded-xl">Chưa có lịch sử tương tác nào</div>
+          <div className="p-8 text-center text-gray-500 text-sm border border-dashed border-gray-300 rounded-block">
+            Chưa có lịch sử tương tác nào
+          </div>
         ) : (
           logs.map((row: CustomerLog) => (
             <div
               key={row.id}
-              className="px-4 py-3 rounded-xl border border-gray-200 bg-white flex flex-col gap-2 hover:border-primary/20 hover:shadow-md transition-all"
+              className="px-4 py-3 rounded-block border border-gray-200 bg-white flex flex-col gap-2 hover:border-primary/20 hover:shadow-md transition-all"
             >
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 flex-1">
                   <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-bold text-gray-400  tracking-wider">Kênh tương tác</span>
+                    <span className="text-[10px] font-bold text-gray-400 ">Kênh tương tác</span>
                     <span className="text-sm font-bold text-gray-900">{getCustomerLogChannelLabel(row.channel || row.type)}</span>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-bold text-gray-400  tracking-wider">Loại tương tác</span>
+                    <span className="text-[10px] font-bold text-gray-400 ">Loại tương tác</span>
                     <span className="text-sm font-semibold text-gray-700">{getCustomerLogTypeLabel(row.type)}</span>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-bold text-gray-400  tracking-wider">Ngày tạo</span>
+                    <span className="text-[10px] font-bold text-gray-400 ">Ngày tạo</span>
                     <span className="text-sm font-semibold text-gray-900">{new Date(row.createdAt).toLocaleDateString('vi-VN')}</span>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-bold text-gray-400  tracking-wider">Ngày hẹn tiếp</span>
+                    <span className="text-[10px] font-bold text-gray-400 ">Ngày hẹn tiếp</span>
                     <span className="text-sm font-semibold text-gray-900">
                       {row.nextFollowDate ? new Date(row.nextFollowDate).toLocaleDateString('vi-VN') : '—'}
                     </span>
@@ -159,33 +169,37 @@ export const InteractionLogs = ({ customerId }: InteractionLogsProps) => {
 
                 <div className="flex items-center justify-between md:justify-end gap-4 mt-2 md:mt-0 pt-3 md:pt-0 border-t md:border-t-0 border-gray-100 min-w-fit">
                   <div className="flex flex-col gap-1 mr-4">
-                    <span className="text-[10px] font-bold text-gray-400  tracking-wider">Trạng thái</span>
-                    <span className={`text-xs font-medium px-2.5 py-1 rounded-lg border whitespace-nowrap w-fit ${getCustomerLogStatusColor(row.status)}`}>
+                    <span className="text-[10px] font-bold text-gray-400 ">Trạng thái</span>
+                    <span
+                      className={`text-xs font-medium px-2.5 py-1 rounded-control border whitespace-nowrap w-fit ${getCustomerLogStatusColor(row.status)}`}
+                    >
                       {getCustomerLogStatusLabel(row.status)}
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedLog(row);
-                        setIsLogFormOpen(true);
-                      }}
-                      className="h-7 px-3 py-1 text-[11px]"
-                    >
-                      Sửa
-                    </Button>
-                    <Button variant="danger" size="sm" onClick={() => handleDeleteClick(row)} className="h-7 px-3 py-1 text-[11px]">
-                      Xóa
-                    </Button>
-                  </div>
+                  {canManageLogs && (
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedLog(row);
+                          setIsLogFormOpen(true);
+                        }}
+                        className="h-7 px-3 py-1 text-[11px]"
+                      >
+                        Sửa
+                      </Button>
+                      <Button variant="danger" size="sm" onClick={() => handleDeleteClick(row)} className="h-7 px-3 py-1 text-[11px]">
+                        Xóa
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
 
               {row.note && (
-                <div className="mt-2 text-sm text-gray-700 bg-gray-50/80 p-3 rounded-lg border border-gray-100 whitespace-pre-wrap">
+                <div className="mt-2 text-sm text-gray-700 bg-gray-50/80 p-3 rounded-control border border-gray-100 whitespace-pre-wrap">
                   <span className="font-semibold text-red-500 mr-2">Ghi chú:</span>
                   {row.note}
                 </div>

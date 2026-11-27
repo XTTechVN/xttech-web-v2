@@ -100,7 +100,7 @@ export function MilestoneEditor({ milestones, totalAmount, onChange }: Milestone
         </div>
         <div className="flex items-center gap-2">
           <div
-            className={`text-xs font-semibold px-2.5 py-1 rounded-md border flex items-center gap-2 transition-colors ${
+            className={`text-xs font-semibold px-2.5 py-1 rounded-control border flex items-center gap-2 transition-colors ${
               isValidTotal
                 ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                 : 'bg-amber-50 text-amber-700 border-amber-200'
@@ -127,7 +127,7 @@ export function MilestoneEditor({ milestones, totalAmount, onChange }: Milestone
         </div>
       </div>
 
-      <div className="border border-slate-200/80 rounded-lg overflow-hidden bg-white">
+      <div className="border border-slate-200/80 rounded-control overflow-hidden bg-white">
         <div className="grid grid-cols-12 gap-2 px-3 py-2 bg-slate-50 border-b border-slate-200/80 text-[11px] font-semibold text-slate-500">
           <div className="col-span-1 text-center">Đợt</div>
           <div className="col-span-4">Tên đợt thanh toán</div>

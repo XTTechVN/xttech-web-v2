@@ -56,7 +56,7 @@ export function QuotationDoorsTable({
       ) : (
         <div className="space-y-3">
           {estimatedOutsourcedCount > 0 && (
-            <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50/90 px-3 py-2 text-xs text-amber-800">
+            <div className="flex items-start gap-2 rounded-control border border-amber-200 bg-amber-50/90 px-3 py-2 text-xs text-amber-800">
               <AlertTriangle size={15} className="shrink-0 mt-0.5 text-amber-600" />
               <span>
                 Có <span className="font-bold">{estimatedOutsourcedCount}</span> cửa nhập nguyên bộ
@@ -67,7 +67,7 @@ export function QuotationDoorsTable({
           )}
 
           {/* Thanh công cụ áp dụng nhanh đơn giá (chỉ áp dụng cho cửa tự sản xuất tính theo m²) */}
-          <div className="flex flex-wrap items-center justify-between gap-3 p-2.5 bg-slate-50/80 border border-slate-200/80 rounded-lg text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-3 p-2.5 bg-slate-50/80 border border-slate-200/80 rounded-control text-xs">
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-semibold text-slate-700 flex items-center gap-1.5">
                 <Zap size={14} className="text-amber-500 fill-amber-500" />
@@ -81,7 +81,7 @@ export function QuotationDoorsTable({
                   value={formatMoneyInput(batchUnitPrice)}
                   onChange={(e) => setBatchUnitPrice(onlyDigits(e.target.value))}
                   disabled={isLocked || inHouseItems.length === 0}
-                  className="w-32 text-right text-xs font-bold font-mono tabular-nums border rounded px-2 py-1 bg-white outline-none focus:border-primary disabled:bg-slate-100"
+                  className="w-32 text-right text-xs font-bold tabular-nums border rounded px-2 py-1 bg-white outline-none focus:border-primary disabled:bg-slate-100"
                 />
                 <span className="text-slate-500 font-medium">đ/m²</span>
               </div>
@@ -117,7 +117,7 @@ export function QuotationDoorsTable({
           </div>
 
           {drafts.changedCount > 0 && (
-            <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-md bg-primary/5 border border-primary/20 text-xs text-primary">
+            <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-control bg-primary/5 border border-primary/20 text-xs text-primary">
               <span>Bạn đã sửa {drafts.changedCount} giá bán. Lưu sẽ cập nhật lại báo giá.</span>
               <div className="flex gap-2">
                 <button
@@ -142,7 +142,7 @@ export function QuotationDoorsTable({
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                <tr className="border-b border-slate-100 text-[11px] font-bold text-slate-400">
                   <th className={`min-w-[230px] ${HEADER_CELL}`}>Vị trí</th>
                   <th className={HEADER_CELL}>Kích thước (mm)</th>
                   <th className={`${HEADER_CELL} text-right`}>Diện tích (m²)</th>

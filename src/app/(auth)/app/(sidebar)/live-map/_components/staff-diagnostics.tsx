@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { AlertCircle, Info, Smartphone } from 'lucide-react';
-import { usePermission } from '@/hooks';
+import { useCan } from '@/hooks';
 import { StaffDeviceDiagnostics } from '@/types';
 import {
   buildDiagnosticSignals,
@@ -26,13 +26,14 @@ const SEVERITY_CLASS_MAP: Record<DiagnosticSeverity, string> = {
   info: 'bg-sky-50 text-sky-700 border-sky-200',
 };
 
-/** Hiển thị tín hiệu chẩn đoán thiết bị giúp admin xác định nguyên nhân nhân viên mất tín hiệu. Chỉ role Admin/Super mới thấy. */
+/** Hiển thị tín hiệu chẩn đoán thiết bị giúp admin xác định nguyên nhân nhân viên mất tín hiệu. Chỉ người có quyền `tracking_diag:read` mới thấy. */
 export function StaffDiagnostics({ diagnostics, awaitingFirstPing = false, maxSignals, hideDeviceSummary = false }: StaffDiagnosticsProps) {
-  const { isAdmin } = usePermission();
-  const signals = isAdmin ? buildDiagnosticSignals(diagnostics, { awaitingFirstPing }) : [];
+  const { can } = useCan();
+  const canSeeDiagnostics = can('tracking_diag:read');
+  const signals = canSeeDiagnostics ? buildDiagnosticSignals(diagnostics, { awaitingFirstPing }) : [];
   const visibleSignals = maxSignals ? signals.slice(0, maxSignals) : signals;
   const hiddenCount = signals.length - visibleSignals.length;
-  const deviceSummary = !isAdmin || hideDeviceSummary ? null : formatDeviceSummary(diagnostics);
+  const deviceSummary = !canSeeDiagnostics || hideDeviceSummary ? null : formatDeviceSummary(diagnostics);
 
   if (visibleSignals.length === 0 && !deviceSummary) return null;
 
@@ -48,7 +49,7 @@ export function StaffDiagnostics({ diagnostics, awaitingFirstPing = false, maxSi
       {visibleSignals.map((signal) => (
         <div
           key={signal.id}
-          className={`flex items-start gap-1 rounded-md border px-1.5 py-0.5 text-[10px] leading-snug ${SEVERITY_CLASS_MAP[signal.severity]}`}
+          className={`flex items-start gap-1 rounded-control border px-1.5 py-0.5 text-[10px] leading-snug ${SEVERITY_CLASS_MAP[signal.severity]}`}
         >
           {signal.severity === 'info' ? (
             <Info size={10} className="mt-px shrink-0" />

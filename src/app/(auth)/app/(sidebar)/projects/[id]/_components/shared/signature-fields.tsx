@@ -26,7 +26,7 @@ export function SignatureFields({ title, defaultTitle, onChange }: SignatureFiel
   }, [signerName, signerTitle, image]);
 
   return (
-    <div className="space-y-2 rounded-lg border border-slate-200 p-3">
+    <div className="space-y-2 rounded-control border border-slate-200 p-3">
       <div className="text-xs font-bold text-slate-800">{title}</div>
       <div className="grid grid-cols-2 gap-2">
         <Input label="Họ tên" value={signerName} onChange={(e) => setSignerName(e.target.value)} fullWidth />

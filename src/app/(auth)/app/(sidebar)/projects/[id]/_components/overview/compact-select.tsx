@@ -122,7 +122,7 @@ export function CompactSelect({
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-1 w-64 bg-white rounded-md border border-slate-200 shadow-lg py-1 z-50 animate-in fade-in-50 zoom-in-95">
+        <div className="absolute right-0 top-full mt-1 w-64 bg-white rounded-control border border-slate-200 shadow-lg py-1 z-50 animate-in fade-in-50 zoom-in-95">
           {options.length > 5 && (
             <div className="p-1.5 border-b border-slate-100">
               <div className="relative">

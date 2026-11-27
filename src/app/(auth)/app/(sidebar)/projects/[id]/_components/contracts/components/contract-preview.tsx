@@ -35,7 +35,7 @@ export function ContractPreview({ source, terms, printTitle, scale }: ContractPr
           <Printer size={14} className="mr-1.5" /> In hợp đồng
         </Button>
       </div>
-      <div ref={paneRef} className="flex-1 min-h-0 overflow-auto no-scrollbar rounded-lg bg-slate-200 p-3">
+      <div ref={paneRef} className="flex-1 min-h-0 overflow-auto no-scrollbar rounded-control bg-slate-200 p-3">
         <style>{CONTRACT_DOCUMENT_CSS}</style>
         <div className="mx-auto w-fit shadow-lg" style={{ zoom: scale ?? fitScale }}>
           <ContractDocument ref={paperRef} source={source} terms={terms} />

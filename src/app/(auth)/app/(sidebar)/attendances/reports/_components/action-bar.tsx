@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { FileSpreadsheet } from 'lucide-react';
 import { Button } from '@/components';
-import { useQueryParam } from '@/hooks';
+import { useCan, useQueryParam } from '@/hooks';
 import { exportAttendanceReport } from '@/actions';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/utils';
@@ -11,6 +11,7 @@ import { getDefaultDateRange } from './table';
 import { PeriodLock } from './period-lock';
 
 export const ReportActionBar = () => {
+  const { can } = useCan();
   const defaultRange = useMemo(() => getDefaultDateRange(), []);
   const [fromDate] = useQueryParam('fromDate', defaultRange.from);
   const [toDate] = useQueryParam('toDate', defaultRange.to);
@@ -47,16 +48,18 @@ export const ReportActionBar = () => {
   return (
     <div className="flex w-full flex-wrap items-center justify-between gap-3">
       <PeriodLock fromDate={fromDate || ''} />
-      <Button
-        variant="primary"
-        size="sm"
-        className="h-7 px-2.5 text-xs md:h-9 md:px-3 md:text-sm shrink-0"
-        onClick={handleExportExcel}
-        loading={isExporting}
-        leftIcon={<FileSpreadsheet className="w-3.5 h-3.5 md:w-4 md:h-4" />}
-      >
-        Xuất Excel
-      </Button>
+      {can('attendance_report:read') && (
+        <Button
+          variant="primary"
+          size="sm"
+          className="h-7 px-2.5 text-xs md:h-9 md:px-3 md:text-sm shrink-0"
+          onClick={handleExportExcel}
+          loading={isExporting}
+          leftIcon={<FileSpreadsheet className="w-3.5 h-3.5 md:w-4 md:h-4" />}
+        >
+          Xuất Excel
+        </Button>
+      )}
     </div>
   );
 };

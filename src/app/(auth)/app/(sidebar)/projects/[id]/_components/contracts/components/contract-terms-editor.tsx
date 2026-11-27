@@ -24,7 +24,7 @@ export function ContractTermsEditor({ terms, isReadOnly = false, onChange }: Con
     <div className="space-y-2.5">
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
         <span>
-          Mẹo: Dùng biến <code className="bg-slate-100 text-blue-600 px-1 py-0.5 rounded font-mono font-medium">$phuong_thuc_thanh_toan</code> để chèn bảng đợt thanh toán vào vị trí bạn muốn (mặc định tại Điều 4).
+          Mẹo: Dùng biến <code className="bg-slate-100 text-blue-600 px-1 py-0.5 rounded tabular-nums font-medium">$phuong_thuc_thanh_toan</code> để chèn bảng đợt thanh toán vào vị trí bạn muốn (mặc định tại Điều 4).
         </span>
         {!isReadOnly && (
           <Button variant="outline" size="sm" className="h-7 text-[11px] px-2" onClick={handleLoadDefault}>

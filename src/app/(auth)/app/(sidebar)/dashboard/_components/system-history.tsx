@@ -502,11 +502,11 @@ export const SystemHistory: React.FC = () => {
   const logs: AuditLog[] = auditLogData?.items ?? [];
 
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col gap-3.5">
+    <div className="bg-white border border-gray-100 rounded-block p-4 sm:p-5 shadow-xs flex flex-col gap-3.5">
       {/* Header */}
       <div className="flex justify-between items-center gap-4">
         <div className="flex items-center gap-2">
-          <div className="p-2 rounded-xl bg-primary/10 text-primary shrink-0">
+          <div className="p-2 rounded-block bg-primary/10 text-primary shrink-0">
             <Activity size={18} />
           </div>
           <div>
@@ -522,7 +522,7 @@ export const SystemHistory: React.FC = () => {
         <Button
           variant="ghost"
           size="sm"
-          className="text-gray-400 hover:text-primary p-2 h-8 w-8 rounded-lg cursor-pointer active:scale-95"
+          className="text-gray-400 hover:text-primary p-2 h-8 w-8 rounded-control cursor-pointer active:scale-95"
           onClick={() => refetch()}
           title="Làm mới hoạt động"
           disabled={isLoading || isRefetching}
@@ -539,8 +539,8 @@ export const SystemHistory: React.FC = () => {
         {isLoading ? (
           <div className="flex flex-col gap-2.5 py-1">
             {[1, 2, 3, 4].map((n) => (
-              <div key={n} className="flex gap-3 items-center p-2 rounded-xl bg-gray-50/60">
-                <Skeleton className="w-8 h-8 rounded-xl shrink-0" />
+              <div key={n} className="flex gap-3 items-center p-2 rounded-block bg-gray-50/60">
+                <Skeleton className="w-8 h-8 rounded-block shrink-0" />
                 <div className="flex-1 space-y-1.5">
                   <Skeleton className="h-3.5 w-3/4" />
                   <Skeleton className="h-2.5 w-1/3" />
@@ -549,7 +549,7 @@ export const SystemHistory: React.FC = () => {
             ))}
           </div>
         ) : logs.length === 0 ? (
-          <div className="py-8 text-center flex flex-col items-center justify-center gap-2 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+          <div className="py-8 text-center flex flex-col items-center justify-center gap-2 bg-gray-50/50 rounded-block border border-dashed border-gray-200">
             <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
               <Activity size={20} />
             </div>
@@ -568,11 +568,11 @@ export const SystemHistory: React.FC = () => {
             return (
               <div
                 key={item.id}
-                className="flex items-start gap-3 p-2.5 rounded-xl bg-gray-50/70 hover:bg-gray-100/70 border border-gray-100/80 transition"
+                className="flex items-start gap-3 p-2.5 rounded-block bg-gray-50/70 hover:bg-gray-100/70 border border-gray-100/80 transition"
               >
                 {/* Icon phân loại hành động trực quan */}
                 <div
-                  className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border shadow-2xs mt-0.5 ${detail.iconBg} ${detail.iconColor}`}
+                  className={`w-8 h-8 rounded-block flex items-center justify-center shrink-0 border shadow-2xs mt-0.5 ${detail.iconBg} ${detail.iconColor}`}
                 >
                   {detail.icon}
                 </div>
@@ -609,7 +609,7 @@ export const SystemHistory: React.FC = () => {
                       {timeFormatted}
                     </span>
                     {!isSuccess && (
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-md bg-rose-50 text-rose-600 font-semibold border border-rose-200/60 text-[10px]">
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-control bg-rose-50 text-rose-600 font-semibold border border-rose-200/60 text-xs">
                         <AlertCircle size={10} /> Thất bại
                       </span>
                     )}

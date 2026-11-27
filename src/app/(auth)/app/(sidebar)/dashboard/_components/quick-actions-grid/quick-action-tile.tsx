@@ -46,9 +46,8 @@ const QuickActionTileComponent: React.FC<QuickActionTileProps> = ({
     <>
       <div
         className={cn(
-          'relative w-13 h-13 rounded-2xl flex items-center justify-center transition-colors shadow-xs',
-          action.bgColor,
-          action.textColor,
+          'relative w-13 h-13 rounded-block flex items-center justify-center transition-colors',
+          'bg-primary/5 text-primary group-hover:bg-primary/10',
           isEditing && isDragging && 'ring-2 ring-primary shadow-lg',
           isEditing && !isDragging && !isPinnedSlot && 'opacity-80 ring-1 ring-dashed ring-slate-300'
         )}
@@ -56,7 +55,7 @@ const QuickActionTileComponent: React.FC<QuickActionTileProps> = ({
         <IconComponent size={22} strokeWidth={2} />
 
         {!isEditing && badge !== undefined && badge > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-4.5 h-4.5 px-1 rounded-full bg-red-500 text-white text-[10px] font-mono font-bold flex items-center justify-center ring-2 ring-white tabular-nums">
+          <span className="absolute -top-1 -right-1 min-w-4.5 h-4.5 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white tabular-nums">
             {badge > 99 ? '99+' : badge}
           </span>
         )}
@@ -90,7 +89,7 @@ const QuickActionTileComponent: React.FC<QuickActionTileProps> = ({
         {...attributes}
         {...listeners}
         className={cn(
-          'relative flex flex-col items-center justify-center gap-1.5 p-1 rounded-xl cursor-grab active:cursor-grabbing select-none touch-none will-change-transform',
+          'relative flex flex-col items-center justify-center gap-1.5 p-1 rounded-block cursor-grab active:cursor-grabbing select-none touch-none will-change-transform',
           isDragging && 'z-30 opacity-95'
         )}
         title={`Giữ và kéo để đổi vị trí "${action.title}"`}
@@ -103,7 +102,7 @@ const QuickActionTileComponent: React.FC<QuickActionTileProps> = ({
   return (
     <Link
       href={action.href}
-      className="flex flex-col items-center justify-center gap-1.5 p-1 rounded-xl group cursor-pointer active:scale-95 transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+      className="flex flex-col items-center justify-center gap-1.5 p-1 rounded-block group cursor-pointer active:scale-95 transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
     >
       {tileContent}
     </Link>

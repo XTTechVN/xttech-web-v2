@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { AccessDenied } from '@/components/access-denied';
+import { useCan } from '@/hooks';
 import { Button, Badge, TableData, TableAction, ITableColumn, ITableFilterProps, AutoTimekeepingModal } from '@/components';
 import { Image } from 'antd';
 
@@ -14,7 +16,7 @@ import { useMyTodayAttendance } from '@/hooks';
 import { getAttendances } from '@/actions';
 import { Attendance, AttendanceStatus, getAttendanceStatusLabel, getAttendanceStatusVariant } from '@/types';
 import StatCart from '../../dashboard/_components/stats-card';
-import AddAdjustmentModal from '../adjustments/_components/add-modal';
+import AddAdjustmentDrawer from '../adjustments/_components/list/add-drawer';
 import AttendanceDetailModal from '../_components/attendance-modal';
 import OvertimeModal from '../_components/overtime-modal';
 import { getFileUrl } from '@/utils';
@@ -50,6 +52,8 @@ const formatTime = (value?: string | null): string => {
 
 // ─── Main component ──────────────────────────────────────────────────────────
 export default function PayrollDataPage() {
+  const { can, isReady } = useCan();
+  const canRead = isReady && can('attendance:read');
   const queryClient = useQueryClient();
   const [showTimekeepingModal, setShowTimekeepingModal] = useState(false);
   const [showAdjustmentModal, setShowAdjustmentModal] = useState(false);
@@ -64,7 +68,7 @@ export default function PayrollDataPage() {
   const { data: attendances, isLoading: isLoadingAttendances } = useQuery({
     queryKey: ['attendances', user?.id],
     queryFn: () => getAttendances({ userId: user!.id, limit: 100 }),
-    enabled: !!user?.id,
+    enabled: canRead && !!user?.id,
   });
 
   // Chấm công của riêng nhân viên đang đăng nhập, giới hạn trong tháng hiện tại -> dùng cho stat cards
@@ -77,7 +81,7 @@ export default function PayrollDataPage() {
         endDate: monthRange.endDate,
         limit: 100,
       }),
-    enabled: !!user?.id,
+    enabled: canRead && !!user?.id,
   });
 
   const myAttendances = useMemo(() => attendances?.items ?? [], [attendances?.items]);
@@ -237,8 +241,8 @@ export default function PayrollDataPage() {
       label: 'Ảnh chấm công',
       minWidth: '120px',
       cell: (row) => {
-        const inImgSrc = getFileUrl(row.imgCheckinPath)
-        const outImgSrc = getFileUrl(row.imgCheckoutPath)
+        const inImgSrc = getFileUrl(row.imgCheckinPath);
+        const outImgSrc = getFileUrl(row.imgCheckoutPath);
 
         return (
           <div className="flex gap-2 items-center py-1">
@@ -248,7 +252,13 @@ export default function PayrollDataPage() {
                   className="block relative w-9 h-9 rounded-full border border-slate-200 overflow-hidden cursor-pointer hover:opacity-85 transition-opacity"
                   title="Ảnh check-in"
                 >
-                  <Image src={inImgSrc} alt="Check In" rootClassName="w-full h-full" className="object-cover w-full h-full" preview={{ mask: true }} />
+                  <Image
+                    src={inImgSrc}
+                    alt="Check In"
+                    rootClassName="w-full h-full"
+                    className="object-cover w-full h-full"
+                    preview={{ mask: true }}
+                  />
                 </div>
               ) : (
                 <div
@@ -263,7 +273,13 @@ export default function PayrollDataPage() {
                   className="block relative w-9 h-9 rounded-full border border-slate-200 overflow-hidden cursor-pointer hover:opacity-85 transition-opacity"
                   title="Ảnh check-out"
                 >
-                  <Image src={outImgSrc} alt="Check Out" rootClassName="w-full h-full" className="object-cover w-full h-full" preview={{ mask: false }} />
+                  <Image
+                    src={outImgSrc}
+                    alt="Check Out"
+                    rootClassName="w-full h-full"
+                    className="object-cover w-full h-full"
+                    preview={{ mask: false }}
+                  />
                 </div>
               ) : (
                 <div
@@ -289,10 +305,7 @@ export default function PayrollDataPage() {
       label: 'Ghi chú',
       minWidth: '100px',
       cell: (row) => (
-        <span
-          className="text-xs max-w-[90px] truncate block"
-          title={row.note || undefined}
-        >
+        <span className="text-xs max-w-[90px] truncate block" title={row.note || undefined}>
           {row.note || '-'}
         </span>
       ),
@@ -304,7 +317,7 @@ export default function PayrollDataPage() {
       cell: (row) => (
         <TableAction
           items={[
-            {
+            can('attendance_request:create') && {
               title: 'Khiếu nại',
               icon: FileEdit,
               size: 18,
@@ -329,13 +342,13 @@ export default function PayrollDataPage() {
   ];
 
   const renderAttendanceCard = (row: Attendance, index: number) => {
-    const inImgSrc = getFileUrl(row.imgCheckinPath)
-    const outImgSrc = getFileUrl(row.imgCheckoutPath)
+    const inImgSrc = getFileUrl(row.imgCheckinPath);
+    const outImgSrc = getFileUrl(row.imgCheckoutPath);
 
     return (
       <div
         key={row.id ?? index}
-        className="rounded-2xl border border-primary/10 bg-white p-4 shadow-xs hover:shadow-md hover:border-primary/20 transition-all duration-300 space-y-3"
+        className="rounded-block border border-primary/10 bg-white p-4 shadow-xs hover:shadow-md hover:border-primary/20 transition-all duration-300 space-y-3"
       >
         <div className="flex items-center justify-between pb-2 border-b border-slate-100">
           <div>
@@ -349,32 +362,40 @@ export default function PayrollDataPage() {
           </Badge>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+        <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-2.5 rounded-block border border-slate-100">
           <Image.PreviewGroup>
             <div className="flex gap-2">
               {inImgSrc ? (
-                <div
-                  className="block relative w-8 h-8 rounded-full border border-slate-200 overflow-hidden shrink-0 mt-0.5 cursor-pointer"
-                >
-                  <Image src={inImgSrc} alt="Check In" rootClassName="w-full h-full" className="object-cover w-full h-full" preview={{ mask: false }} />
+                <div className="block relative w-8 h-8 rounded-full border border-slate-200 overflow-hidden shrink-0 mt-0.5 cursor-pointer">
+                  <Image
+                    src={inImgSrc}
+                    alt="Check In"
+                    rootClassName="w-full h-full"
+                    className="object-cover w-full h-full"
+                    preview={{ mask: false }}
+                  />
                 </div>
               ) : null}
               <div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase block">Check In</span>
+                <span className="text-[10px] font-bold text-slate-400 block">Check In</span>
                 <span className="font-semibold text-slate-800">{formatTime(row.checkIn)}</span>
                 {(row.lateMinutes ?? 0) > 0 && <span className="text-[10px] text-red-600 font-medium block">Muộn {row.lateMinutes}p</span>}
               </div>
             </div>
             <div className="flex gap-2">
               {outImgSrc ? (
-                <div
-                  className="block relative w-8 h-8 rounded-full border border-slate-200 overflow-hidden shrink-0 mt-0.5 cursor-pointer"
-                >
-                  <Image src={outImgSrc} alt="Check Out" rootClassName="w-full h-full" className="object-cover w-full h-full" preview={{ mask: false }} />
+                <div className="block relative w-8 h-8 rounded-full border border-slate-200 overflow-hidden shrink-0 mt-0.5 cursor-pointer">
+                  <Image
+                    src={outImgSrc}
+                    alt="Check Out"
+                    rootClassName="w-full h-full"
+                    className="object-cover w-full h-full"
+                    preview={{ mask: false }}
+                  />
                 </div>
               ) : null}
               <div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase block">Check Out</span>
+                <span className="text-[10px] font-bold text-slate-400 block">Check Out</span>
                 <span className="font-semibold text-slate-800">{formatTime(row.checkOut)}</span>
                 {(row.earlyLeaveMinutes ?? 0) > 0 && (
                   <span className="text-[10px] text-amber-600 font-medium block">Về sớm {row.earlyLeaveMinutes}p</span>
@@ -383,40 +404,45 @@ export default function PayrollDataPage() {
             </div>
           </Image.PreviewGroup>
           <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase block">Giờ công</span>
+            <span className="text-[10px] font-bold text-slate-400 block">Giờ công</span>
             <span className="font-bold text-teal-700">{row.totalHours?.toFixed(1) ?? '0'}h</span>
           </div>
           <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase block">Tăng ca</span>
+            <span className="text-[10px] font-bold text-slate-400 block">Tăng ca</span>
             <span className="font-bold text-slate-700">0h</span>
           </div>
         </div>
 
         {row.note && (
-          <p className="text-xs text-slate-500 italic bg-slate-50/50 p-2 rounded-lg border border-dashed border-slate-200 truncate" title={row.note}>
+          <p
+            className="text-xs text-slate-500 italic bg-slate-50/50 p-2 rounded-control border border-dashed border-slate-200 truncate"
+            title={row.note}
+          >
             Ghi chú: {row.note}
           </p>
         )}
 
         <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-2.5" onClick={(e) => e.stopPropagation()}>
-          <button
-            type="button"
-            onClick={() => {
-              setSelectedRow(row);
-              setShowAdjustmentModal(true);
-            }}
-            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-primary/5 text-primary border border-primary/10 hover:bg-primary/10 transition-colors flex items-center gap-1 cursor-pointer"
-          >
-            <FileEdit size={12} />
-            Khiếu nại
-          </button>
+          {can('attendance_request:create') && (
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedRow(row);
+                setShowAdjustmentModal(true);
+              }}
+              className="px-3 py-1.5 text-xs font-semibold rounded-control bg-primary/5 text-primary border border-primary/10 hover:bg-primary/10 transition-colors flex items-center gap-1 cursor-pointer"
+            >
+              <FileEdit size={12} />
+              Khiếu nại
+            </button>
+          )}
           <button
             type="button"
             onClick={() => {
               setSelectedRow(row);
               setShowDetailModal(true);
             }}
-            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100 transition-colors flex items-center gap-1 cursor-pointer"
+            className="px-3 py-1.5 text-xs font-semibold rounded-control bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100 transition-colors flex items-center gap-1 cursor-pointer"
           >
             <Eye size={12} />
             Chi tiết
@@ -426,16 +452,14 @@ export default function PayrollDataPage() {
     );
   };
 
+  if (!isReady) return null;
+  if (!can('attendance:read')) return <AccessDenied />;
+
   return (
     <div className="w-full flex flex-col gap-4 p-4">
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {payrollStats.map((stat, i) => (
-          <StatCart
-            key={i}
-            title={stat.title}
-            value={String(stat.value)}
-            icon={stat.icon}
-          />
+          <StatCart key={i} title={stat.title} value={String(stat.value)} icon={stat.icon} />
         ))}
       </div>
 
@@ -443,34 +467,40 @@ export default function PayrollDataPage() {
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center w-full gap-4">
           <div className="flex items-center sm:justify-end gap-2 overflow-x-auto scrollbar-none max-w-full w-full sm:w-auto shrink-0 pb-1 sm:pb-0 flex-nowrap sm:flex-wrap">
-            <Button
-              variant="primary"
-              size="sm"
-              className="gap-2 px-3 shrink-0"
-              leftIcon={isCheckOutAction ? <LogOut size={16} /> : <LogIn size={16} />}
-              onClick={handleTimekeepingButtonClick}
-            >
-              {isCheckOutAction ? 'Check-out ngay' : 'Check-in ngay'}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2 px-3 hover:bg-[#ececf27d] shrink-0"
-              leftIcon={<Clock size={16} className="text-[#314158]" />}
-              onClick={() => setShowOvertimeModal(true)}
-            >
-              Đăng ký tăng ca
-            </Button>
-            <Link href="/app/attendances/adjustments" className="shrink-0">
+            {can(isCheckOutAction ? 'attendance:checkout' : 'attendance:checkin') && (
+              <Button
+                variant="primary"
+                size="sm"
+                className="gap-2 px-3 shrink-0"
+                leftIcon={isCheckOutAction ? <LogOut size={16} /> : <LogIn size={16} />}
+                onClick={handleTimekeepingButtonClick}
+              >
+                {isCheckOutAction ? 'Check-out ngay' : 'Check-in ngay'}
+              </Button>
+            )}
+            {can('attendance_request:create') && (
               <Button
                 variant="outline"
                 size="sm"
-                className="gap-2 px-3 hover:bg-[#ececf27d] w-full"
-                leftIcon={<FileEdit size={16} className="text-[#314158]" />}
+                className="gap-2 px-3 hover:bg-[#ececf27d] shrink-0"
+                leftIcon={<Clock size={16} className="text-[#314158]" />}
+                onClick={() => setShowOvertimeModal(true)}
               >
-                Yêu cầu điều chỉnh
+                Đăng ký tăng ca
               </Button>
-            </Link>
+            )}
+            {can('attendance_request:read') && (
+              <Link href="/app/attendances/adjustments" className="shrink-0">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 px-3 hover:bg-[#ececf27d] w-full"
+                  leftIcon={<FileEdit size={16} className="text-[#314158]" />}
+                >
+                  Yêu cầu điều chỉnh
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
 
@@ -509,7 +539,7 @@ export default function PayrollDataPage() {
         />
       )}
 
-      <AddAdjustmentModal
+      <AddAdjustmentDrawer
         open={showAdjustmentModal}
         onClose={() => setShowAdjustmentModal(false)}
         onSuccess={async () => {
@@ -517,7 +547,6 @@ export default function PayrollDataPage() {
             queryClient.invalidateQueries({ queryKey: ['attendances'], refetchType: 'all' }),
             queryClient.invalidateQueries({ queryKey: ['payroll-daily-logs'], refetchType: 'all' }),
           ]);
-          toast.success('Thêm thành công');
         }}
         data={selectedRow}
       />

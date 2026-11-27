@@ -50,13 +50,13 @@ export function ProductionSheetsModal({
     <div className="production-sheets-modal-root fixed inset-0 z-50 flex flex-col bg-slate-900/60 backdrop-blur-xs">
       <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-6 shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <div className="flex h-8 w-8 items-center justify-center rounded-control bg-primary/10 text-primary">
             <FileText size={18} />
           </div>
           <div>
             <h2 className="flex items-center gap-2 text-sm font-bold text-slate-800">
               <span>Thẻ sản xuất &amp; lắp ráp cửa</span>
-              <span className="rounded bg-primary/10 px-2 py-0.5 font-mono text-xs text-primary">
+              <span className="rounded bg-primary/10 px-2 py-0.5 tabular-nums text-xs text-primary">
                 {order.code}
               </span>
             </h2>
@@ -66,11 +66,11 @@ export function ProductionSheetsModal({
           </div>
         </div>
 
-        <div className="hidden max-w-xl items-center gap-1.5 overflow-x-auto rounded-lg bg-slate-100 p-1 md:flex">
+        <div className="hidden max-w-xl items-center gap-1.5 overflow-x-auto rounded-control bg-slate-100 p-1 md:flex">
           <button
             type="button"
             onClick={() => setSelectedPositionId('all')}
-            className={`cursor-pointer rounded-md px-3 py-1 text-xs font-semibold transition-all ${
+            className={`cursor-pointer rounded-control px-3 py-1 text-xs font-semibold transition-all ${
               selectedPositionId === 'all'
                 ? 'bg-white text-primary shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
@@ -83,7 +83,7 @@ export function ProductionSheetsModal({
               key={s.positionId}
               type="button"
               onClick={() => setSelectedPositionId(s.positionId)}
-              className={`cursor-pointer whitespace-nowrap rounded-md px-2.5 py-1 font-mono text-xs font-semibold transition-all ${
+              className={`cursor-pointer whitespace-nowrap rounded-control px-2.5 py-1 tabular-nums text-xs font-semibold transition-all ${
                 selectedPositionId === s.positionId
                   ? 'bg-white text-primary shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
@@ -110,7 +110,7 @@ export function ProductionSheetsModal({
             type="button"
             onClick={onClose}
             aria-label="Đóng modal"
-            className="cursor-pointer rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            className="cursor-pointer rounded-control p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
           >
             <X size={18} />
           </button>

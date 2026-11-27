@@ -13,12 +13,12 @@ interface ProfileSectionPickerProps {
 export function ProfileSectionPicker({ section, onOpenLibrary, onClear }: ProfileSectionPickerProps) {
   return (
     <div className="flex flex-col items-center justify-center pt-1 pb-1">
-      <span className="text-[11px] font-bold text-slate-500 tracking-wider mb-2">MẶT CẮT PROFILE</span>
+      <span className="text-[11px] font-bold text-slate-500 mb-2">MẶT CẮT PROFILE</span>
       <div className="relative group">
         <div
           onClick={onOpenLibrary}
           title={section ? 'Bấm để đổi mặt cắt khác' : 'Bấm để chọn mặt cắt từ thư viện'}
-          className="w-28 h-28 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50/70 hover:border-primary hover:bg-slate-50 flex flex-col items-center justify-center p-2 cursor-pointer transition shadow-2xs group"
+          className="w-28 h-28 rounded-block border-2 border-dashed border-slate-300 bg-slate-50/70 hover:border-primary hover:bg-slate-50 flex flex-col items-center justify-center p-2 cursor-pointer transition shadow-2xs group"
         >
           {section ? (
             <svg

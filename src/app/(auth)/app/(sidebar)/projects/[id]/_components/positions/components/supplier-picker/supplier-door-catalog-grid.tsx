@@ -71,10 +71,10 @@ export function SupplierDoorCatalogGrid({
       <button
         type="button"
         onClick={onSelectCustomDoor}
-        className="group w-full p-3 rounded-xl border border-dashed border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary flex items-center justify-between gap-3 transition-colors cursor-pointer"
+        className="group w-full p-3 rounded-block border border-dashed border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary flex items-center justify-between gap-3 transition-colors cursor-pointer"
       >
         <div className="flex items-center gap-2.5 text-left">
-          <div className="w-8 h-8 rounded-lg bg-white border border-primary/20 flex items-center justify-center shrink-0">
+          <div className="w-8 h-8 rounded-control bg-white border border-primary/20 flex items-center justify-center shrink-0">
             <Plus className="w-4 h-4" />
           </div>
           <div>
@@ -82,7 +82,7 @@ export function SupplierDoorCatalogGrid({
             <p className="text-[11px] text-primary/80">Dùng khi cửa đặc thù hoặc chưa khai báo mẫu cố định</p>
           </div>
         </div>
-        <span className="inline-flex h-9 px-3 items-center justify-center rounded-md bg-primary text-sm font-medium text-white shrink-0 group-hover:bg-primary/90 transition-colors">
+        <span className="inline-flex h-9 px-3 items-center justify-center rounded-control bg-primary text-sm font-medium text-white shrink-0 group-hover:bg-primary/90 transition-colors">
           Tạo mới
         </span>
       </button>
@@ -90,11 +90,11 @@ export function SupplierDoorCatalogGrid({
       {isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {Array.from({ length: 6 }).map((_, idx) => (
-            <div key={idx} className="h-36 rounded-xl bg-slate-100 animate-pulse" />
+            <div key={idx} className="h-36 rounded-block bg-slate-100 animate-pulse" />
           ))}
         </div>
       ) : doors.length === 0 ? (
-        <div className="py-12 text-center border border-slate-200 rounded-xl text-slate-400 text-xs space-y-1">
+        <div className="py-12 text-center border border-slate-200 rounded-block text-slate-400 text-xs space-y-1">
           <Store className="w-7 h-7 mx-auto text-slate-300" />
           <p>Chưa có mẫu cửa NCC nào phù hợp bộ lọc.</p>
         </div>
@@ -107,10 +107,10 @@ export function SupplierDoorCatalogGrid({
                 key={door.id}
                 type="button"
                 onClick={() => onSelectCatalogDoor(door)}
-                className="text-left rounded-xl border border-slate-200 hover:border-primary hover:shadow-sm bg-white p-3 transition-all flex flex-col justify-between gap-2.5 cursor-pointer group"
+                className="text-left rounded-block border border-slate-200 hover:border-primary hover:shadow-sm bg-white p-3 transition-all flex flex-col justify-between gap-2.5 cursor-pointer group"
               >
                 <div className="flex items-start gap-3">
-                  <div className="w-16 h-16 rounded-lg border border-slate-200 bg-slate-50 overflow-hidden shrink-0 flex items-center justify-center">
+                  <div className="w-16 h-16 rounded-control border border-slate-200 bg-slate-50 overflow-hidden shrink-0 flex items-center justify-center">
                     {imgUrl ? (
                       <img src={imgUrl} alt={door.name} className="w-full h-full object-cover" />
                     ) : (
@@ -118,7 +118,7 @@ export function SupplierDoorCatalogGrid({
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <span className="font-mono text-[11px] font-semibold text-primary block truncate">
+                    <span className="tabular-nums text-[11px] font-semibold text-primary block truncate">
                       {door.code}
                     </span>
                     <p className="text-xs font-bold text-slate-900 line-clamp-2 mt-0.5 group-hover:text-primary">
@@ -131,7 +131,7 @@ export function SupplierDoorCatalogGrid({
                 </div>
                 <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px]">
                   <span className="text-slate-500">Giá tham khảo</span>
-                  <span className="font-mono tabular-nums font-bold text-slate-900">
+                  <span className="tabular-nums font-bold text-slate-900">
                     {new Intl.NumberFormat('vi-VN').format(door.referenceCostPerSqm || 0)} VNĐ/m²
                   </span>
                 </div>

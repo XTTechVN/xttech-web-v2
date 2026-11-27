@@ -179,7 +179,7 @@ function AcceptanceForm({
           </div>
         </div>
 
-        <div className="max-h-64 space-y-2 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50/50 p-2">
+        <div className="max-h-64 space-y-2 overflow-y-auto rounded-control border border-slate-200 bg-slate-50/50 p-2">
           {installedPositions.map((position) => {
             const st = evalMap[position.id] ?? { checked: true, result: 'passed', note: '' };
             const isPassed = st.result === 'passed';
@@ -187,7 +187,7 @@ function AcceptanceForm({
             return (
               <div
                 key={position.id}
-                className={`rounded-md border p-2.5 transition-colors ${
+                className={`rounded-control border p-2.5 transition-colors ${
                   !st.checked
                     ? 'border-slate-200 bg-slate-100/60 opacity-60'
                     : isPassed
@@ -282,7 +282,7 @@ function AcceptanceForm({
               key={option.value}
               type="button"
               onClick={() => setMode(option.value)}
-              className={`cursor-pointer rounded-lg border p-2 text-left transition-colors ${
+              className={`cursor-pointer rounded-control border p-2 text-left transition-colors ${
                 mode === option.value ? 'border-primary bg-primary/5' : 'border-slate-200 hover:bg-slate-50'
               }`}
             >

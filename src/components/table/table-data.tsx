@@ -5,6 +5,7 @@ import { TableDataDesktop } from './table-data-desktop';
 import { TableDataMobile } from './table-data-mobile';
 import { TableSearch } from './table-search';
 import { TableFilters } from './table-filters';
+import { TableFilterPanel } from './table-filter-panel';
 import { TableView } from './table-view';
 import { TableDataProps } from './types';
 import { getInitialVisibleKeys, getFilteredColumns, useIsMobile } from './table-func';
@@ -22,6 +23,7 @@ export function TableData<T>({
   initialData,
   syncToUrl = true,
   filters = [],
+  collapseFilters = false,
 
   hideRowPerPage = false,
   hidePagination = false,
@@ -47,6 +49,10 @@ export function TableData<T>({
 
   // Lọc danh sách các cột có gắn label để cho phép cấu hình ẩn/hiện
   const togglableColumns = columns.filter((col) => !!col.label);
+
+  const chipFilters = <TableFilters filters={filters} />;
+  // Điện thoại: gom vào một nút "Bộ lọc"; máy tính giữ dạng nhãn
+  const mobileFilters = collapseFilters ? <TableFilterPanel filters={filters} /> : chipFilters;
 
   // Nếu không khai báo renderCard cho Mobile, mặc định sử dụng Table cuộn ngang ở cả 2 thiết bị
   if (!renderCard) {
@@ -80,7 +86,7 @@ export function TableData<T>({
             </div>
             <div className="flex items-center justify-between gap-2 w-full">
               <div className="flex flex-wrap items-center gap-2">
-                {filters && filters.length > 0 && <TableFilters filters={filters} />}
+                {filters && filters.length > 0 && mobileFilters}
               </div>
               {mobileActions.secondary && (
                 <div className="shrink-0 ml-auto">{mobileActions.secondary}</div>
@@ -90,7 +96,7 @@ export function TableData<T>({
         ) : (
           <div className="flex flex-wrap items-center gap-3">
             {search.placeholder && <TableSearch {...search} />}
-            {filters && filters.length > 0 && <TableFilters filters={filters} />}
+            {filters && filters.length > 0 && mobileFilters}
           </div>
         )}
 
@@ -110,7 +116,7 @@ export function TableData<T>({
         <div className="flex items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-3 flex-1">
             {search.placeholder && <TableSearch {...search} />}
-            {filters && filters.length > 0 && <TableFilters filters={filters} />}
+            {filters && filters.length > 0 && chipFilters}
           </div>
           <div className="flex items-center gap-3 shrink-0">
             {actions}

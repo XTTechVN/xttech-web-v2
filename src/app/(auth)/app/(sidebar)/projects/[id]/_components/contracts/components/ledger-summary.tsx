@@ -15,7 +15,7 @@ interface LedgerCardProps {
 
 function LedgerCard({ label, value, hint, icon, tone }: LedgerCardProps) {
   return (
-    <div className="bg-white p-3.5 rounded-lg border border-slate-200/70 shadow-2xs">
+    <div className="bg-white p-3.5 rounded-control border border-slate-200/70 shadow-2xs">
       <div className="flex items-center justify-between">
         <span className={`text-xs font-medium ${tone}`}>{label}</span>
         {icon}

@@ -61,7 +61,7 @@ function RevertForm({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-2.5 text-[11px] text-amber-800">
+      <div className="flex items-start gap-2 rounded-control border border-amber-200 bg-amber-50 p-2.5 text-[11px] text-amber-800">
         <AlertTriangle size={14} className="mt-px shrink-0" />
         Lùi {selectedPositions.length} cửa từ &quot;{PROGRESS_STEP_LABEL[currentStep]}&quot;. Thao tác được ghi vào nhật
         ký tiến độ kèm lý do.

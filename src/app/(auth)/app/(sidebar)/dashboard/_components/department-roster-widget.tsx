@@ -115,7 +115,7 @@ export const DepartmentRosterWidget: React.FC<DepartmentRosterWidgetProps> = ({
   return (
     <div
       className={cn(
-        'relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs transition-all',
+        'relative overflow-hidden rounded-block border border-slate-200/80 bg-white p-4 shadow-xs transition-all',
         className
       )}
     >
@@ -123,7 +123,7 @@ export const DepartmentRosterWidget: React.FC<DepartmentRosterWidgetProps> = ({
       <div className="flex flex-col gap-3 border-b border-slate-100 pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-50 text-[#045863] border border-teal-100/70 shrink-0">
+            <div className="flex h-9 w-9 items-center justify-center rounded-block bg-teal-50 text-[#045863] border border-teal-100/70 shrink-0">
               <Users size={18} />
             </div>
             <div className="min-w-0">
@@ -145,7 +145,7 @@ export const DepartmentRosterWidget: React.FC<DepartmentRosterWidgetProps> = ({
         </div>
 
         {/* Quick Date Pills: Segmented Control phẳng mượt mà */}
-        <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100/80 w-full">
+        <div className="flex items-center gap-1 p-1 rounded-block bg-slate-100/80 w-full">
           {[
             { label: 'Hôm nay', val: todayStr },
             { label: 'Ngày mai', val: tomorrowStr },
@@ -156,7 +156,7 @@ export const DepartmentRosterWidget: React.FC<DepartmentRosterWidgetProps> = ({
               type="button"
               onClick={() => setSelectedDate(item.val)}
               className={cn(
-                'flex-1 py-1.5 px-2 text-xs font-semibold rounded-lg transition-all text-center whitespace-nowrap',
+                'flex-1 py-1.5 px-2 text-xs font-semibold rounded-control transition-all text-center whitespace-nowrap',
                 selectedDate === item.val
                   ? 'bg-[#045863] text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
@@ -176,7 +176,7 @@ export const DepartmentRosterWidget: React.FC<DepartmentRosterWidgetProps> = ({
             <button
               type="button"
               aria-label="Chọn ngày khác"
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-xs hover:bg-slate-50 transition"
+              className="flex h-8 w-8 items-center justify-center rounded-control border border-slate-200 bg-white text-slate-600 shadow-xs hover:bg-slate-50 transition"
             >
               <CalendarIcon size={14} />
             </button>
@@ -191,7 +191,7 @@ export const DepartmentRosterWidget: React.FC<DepartmentRosterWidgetProps> = ({
             type="button"
             onClick={() => setStatusFilter(statusFilter === 'working' ? 'all' : 'working')}
             className={cn(
-              'flex flex-col items-center justify-center py-2 px-1 rounded-xl border transition-all text-center',
+              'flex flex-col items-center justify-center py-2 px-1 rounded-block border transition-all text-center',
               statusFilter === 'working'
                 ? 'bg-emerald-50/80 border-emerald-300 ring-2 ring-emerald-100'
                 : 'bg-emerald-50/40 border-emerald-200/60 hover:bg-emerald-50/80'
@@ -209,7 +209,7 @@ export const DepartmentRosterWidget: React.FC<DepartmentRosterWidgetProps> = ({
             type="button"
             onClick={() => setStatusFilter(statusFilter === 'on_leave' ? 'all' : 'on_leave')}
             className={cn(
-              'flex flex-col items-center justify-center py-2 px-1 rounded-xl border transition-all text-center',
+              'flex flex-col items-center justify-center py-2 px-1 rounded-block border transition-all text-center',
               statusFilter === 'on_leave'
                 ? 'bg-amber-50/80 border-amber-300 ring-2 ring-amber-100'
                 : 'bg-amber-50/40 border-amber-200/60 hover:bg-amber-50/80'
@@ -227,7 +227,7 @@ export const DepartmentRosterWidget: React.FC<DepartmentRosterWidgetProps> = ({
             type="button"
             onClick={() => setStatusFilter(statusFilter === 'day_off' ? 'all' : 'day_off')}
             className={cn(
-              'flex flex-col items-center justify-center py-2 px-1 rounded-xl border transition-all text-center',
+              'flex flex-col items-center justify-center py-2 px-1 rounded-block border transition-all text-center',
               statusFilter === 'day_off'
                 ? 'bg-slate-200/80 border-slate-300 ring-2 ring-slate-100'
                 : 'bg-slate-50 border-slate-200/60 hover:bg-slate-100/70'
@@ -266,7 +266,7 @@ export const DepartmentRosterWidget: React.FC<DepartmentRosterWidgetProps> = ({
             return (
               <div
                 key={member.userId}
-                className="flex items-center justify-between rounded-xl border border-slate-100 bg-white p-2.5 transition hover:border-slate-200 hover:shadow-xs gap-2"
+                className="flex items-center justify-between rounded-block border border-slate-100 bg-white p-2.5 transition hover:border-slate-200 hover:shadow-xs gap-2"
               >
                 {/* Cụm Avatar + Tên + Ca làm */}
                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -298,7 +298,7 @@ export const DepartmentRosterWidget: React.FC<DepartmentRosterWidgetProps> = ({
                       )}
                       <span
                         className={cn(
-                          'inline-flex items-center rounded-md border px-1.5 py-0.2 text-[10px] font-semibold whitespace-nowrap shrink-0',
+                          'inline-flex items-center rounded-control border px-1.5 py-0.2 text-xs font-semibold whitespace-nowrap shrink-0',
                           config.badgeClass
                         )}
                       >
@@ -346,7 +346,7 @@ export const DepartmentRosterWidget: React.FC<DepartmentRosterWidgetProps> = ({
                   <a
                     href={`tel:${member.phoneNumber}`}
                     aria-label={`Gọi cho ${member.fullName}`}
-                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-teal-50 hover:text-[#045863] transition"
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-control border border-slate-200 bg-slate-50 text-slate-600 hover:bg-teal-50 hover:text-[#045863] transition"
                   >
                     <Phone size={13} />
                   </a>

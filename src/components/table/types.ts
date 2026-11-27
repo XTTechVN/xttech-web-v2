@@ -70,6 +70,8 @@ export interface TableDataProps<T> extends TableDataBaseProps<T> {
   columns: ITableColumn<T>[];
   search?: ITableSearchProps;
   filters?: ITableFilterProps[];
+  /** Điện thoại: gom mọi bộ lọc vào một nút "Bộ lọc" (máy tính giữ dạng nhãn) */
+  collapseFilters?: boolean;
 
   select?: boolean;
 

@@ -28,7 +28,7 @@ import {
   X,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores';
-import { UserRole, isRouteAllowedForRole } from '@/config';
+import { useCan } from '@/hooks';
 import { cn } from '@/utils';
 import {
   QUICK_ACTIONS_COLLAPSED_LIMIT,
@@ -62,6 +62,7 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({
 }) => {
   const dndContextId = useId();
   const user = useAuthStore((state) => state.user);
+  const { canAny } = useCan();
   const storageKey = `${QUICK_ACTIONS_STORAGE_PREFIX}_${user?.id ?? 'default'}`;
 
   // Dùng chung queryKey với MyTasksReminderWidget để React Query deduplicate, không tạo request thừa
@@ -94,23 +95,10 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({
     })
   );
 
-  const userRoles = useMemo<UserRole[]>(() => {
-    if (!user?.roles || user.roles.length === 0) return ['employee'];
-    return user.roles
-      .map((r) => (typeof r === 'string' ? r : r.code)?.toLowerCase() as UserRole)
-      .filter(Boolean);
-  }, [user]);
-
-  const visibleActions = useMemo(() => {
-    return QUICK_ACTIONS_REGISTRY.filter((action) =>
-      userRoles.some((role) => {
-        if (action.roles && !action.roles.includes(role)) {
-          return false;
-        }
-        return isRouteAllowedForRole(action.href, role);
-      })
-    );
-  }, [userRoles]);
+  const visibleActions = useMemo(
+    () => QUICK_ACTIONS_REGISTRY.filter((action) => canAny(action.permissions)),
+    [canAny]
+  );
 
   const orderedActions = useMemo(
     () => applyQuickActionsOrder(visibleActions, savedOrder),
@@ -190,14 +178,14 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs flex flex-col gap-3">
+    <div className="bg-white rounded-block p-4 border border-gray-100 shadow-xs flex flex-col gap-3">
       {/* Header gọn gàng, phân cấp rõ ràng */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <h2 className="text-xs font-bold text-gray-900 uppercase tracking-wider truncate">
+          <h2 className="text-xs font-bold text-gray-900 truncate">
             Tiện ích doanh nghiệp
           </h2>
-          <span className="px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-mono font-semibold tabular-nums shrink-0">
+          <span className="px-1.5 py-0.5 rounded-control bg-slate-100 text-slate-600 text-xs font-semibold tabular-nums shrink-0">
             {orderedActions.length}
           </span>
         </div>
@@ -209,7 +197,7 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({
                 type="button"
                 onClick={handleResetOrder}
                 disabled={savedOrder.length === 0}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 disabled:opacity-40 disabled:pointer-events-none transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-control text-[11px] font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 disabled:opacity-40 disabled:pointer-events-none transition-colors cursor-pointer"
                 title="Khôi phục thứ tự mặc định"
               >
                 <RotateCcw size={12} />
@@ -218,7 +206,7 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({
               <button
                 type="button"
                 onClick={handleToggleEdit}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-primary text-white hover:bg-primary/90 transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-control text-[11px] font-semibold bg-primary text-white hover:bg-primary/90 transition-colors cursor-pointer"
               >
                 <Check size={12} />
                 Xong
@@ -229,7 +217,7 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({
               <button
                 type="button"
                 onClick={handleToggleEdit}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium text-slate-600 hover:text-primary hover:bg-primary/5 transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-control text-[11px] font-medium text-slate-600 hover:text-primary hover:bg-primary/5 transition-colors cursor-pointer"
                 title="Sắp xếp thứ tự tiện ích"
               >
                 <ArrowUpDown size={12} />
@@ -242,7 +230,7 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({
                     setIsExpanded(false);
                     setSearchQuery('');
                   }}
-                  className="inline-flex items-center gap-0.5 px-2 py-1 rounded-lg text-[11px] font-medium text-primary bg-primary/5 hover:bg-primary/10 transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-0.5 px-2 py-1 rounded-control text-[11px] font-medium text-primary bg-primary/5 hover:bg-primary/10 transition-colors cursor-pointer"
                 >
                   Thu gọn
                   <ChevronUp size={13} />
@@ -265,7 +253,7 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Tìm nhanh tiện ích..."
-            className="w-full h-8 pl-8 pr-8 rounded-lg bg-slate-50 border border-slate-200/80 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-primary/50 focus:bg-white transition-colors"
+            className="w-full h-8 pl-8 pr-8 rounded-control bg-slate-50 border border-slate-200/80 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-primary/50 focus:bg-white transition-colors"
           />
           {searchQuery && (
             <button
@@ -315,12 +303,12 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({
                   type="button"
                   onClick={() => setIsExpanded(true)}
                   className={cn(
-                    'flex flex-col items-center justify-center gap-1.5 p-1 rounded-xl group cursor-pointer active:scale-95 transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40'
+                    'flex flex-col items-center justify-center gap-1.5 p-1 rounded-block group cursor-pointer active:scale-95 transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40'
                   )}
                 >
-                  <div className="relative w-13 h-13 rounded-2xl flex items-center justify-center border border-dashed border-primary/40 bg-primary/5 text-primary group-hover:bg-primary/10 group-hover:border-primary/60 transition-colors shadow-xs">
+                  <div className="relative w-13 h-13 rounded-block flex items-center justify-center border border-dashed border-primary/40 bg-primary/5 text-primary group-hover:bg-primary/10 group-hover:border-primary/60 transition-colors shadow-xs">
                     <LayoutGrid size={21} strokeWidth={1.9} />
-                    <span className="absolute -top-1 -right-1 min-w-4.5 h-4.5 px-1 rounded-full bg-primary text-white text-[10px] font-mono font-bold flex items-center justify-center ring-2 ring-white tabular-nums">
+                    <span className="absolute -top-1 -right-1 min-w-4.5 h-4.5 px-1 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white tabular-nums">
                       +{hiddenCount}
                     </span>
                   </div>

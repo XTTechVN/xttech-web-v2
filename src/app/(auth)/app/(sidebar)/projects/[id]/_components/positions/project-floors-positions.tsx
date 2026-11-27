@@ -8,6 +8,7 @@ import { SupplierQuoteUpdateModal } from '../shared';
 import { FloorSidebar } from './components/floor-sidebar';
 import { PositionCard } from './components/position-card';
 import { PositionsHeaderBar } from './components/positions-header-bar';
+import { useCan } from '@/hooks';
 import { useProjectPositions } from './hooks/use-project-positions';
 import { ConfirmDeleteModal } from './modals/confirm-delete-modal';
 import { FloorCreateModal } from './modals/floor-create-modal';
@@ -24,6 +25,7 @@ interface ProjectFloorsPositionsProps {
 }
 
 export function ProjectFloorsPositions({ projectId }: ProjectFloorsPositionsProps) {
+  const { can } = useCan();
   const {
     floors,
     allPositions,
@@ -70,10 +72,8 @@ export function ProjectFloorsPositions({ projectId }: ProjectFloorsPositionsProp
   const [positionToDelete, setPositionToDelete] = useState<ProjectDoorPosition | null>(null);
 
   const isStudioSketchMode = editingStudioPosition?.fulfillmentType === 'outsourced';
-  const studioBrandId =
-    editingStudioPosition?.brandId ?? pendingDrawInit?.brandId ?? studioDoor?.doorSeries?.brandId ?? null;
-  const studioSeriesId =
-    studioDoor?.doorSeriesId ?? editingStudioPosition?.doorSeriesId ?? pendingDrawInit?.doorSeriesId ?? null;
+  const studioBrandId = editingStudioPosition?.brandId ?? pendingDrawInit?.brandId ?? studioDoor?.doorSeries?.brandId ?? null;
+  const studioSeriesId = studioDoor?.doorSeriesId ?? editingStudioPosition?.doorSeriesId ?? pendingDrawInit?.doorSeriesId ?? null;
 
   return (
     <div className="flex flex-col md:flex-row items-start gap-4">
@@ -88,7 +88,7 @@ export function ProjectFloorsPositions({ projectId }: ProjectFloorsPositionsProp
         onDeleteFloor={(floor) => setFloorToDelete(floor)}
       />
 
-      <div className="flex-1 w-full bg-white rounded-xl border border-slate-200/80 p-4 shadow-2xs space-y-4">
+      <div className="flex-1 w-full bg-white rounded-block border border-slate-200/80 p-4 shadow-2xs space-y-4">
         <PositionsHeaderBar
           positionsCount={positions.length}
           currentFloorName={currentFloorName}
@@ -106,32 +106,32 @@ export function ProjectFloorsPositions({ projectId }: ProjectFloorsPositionsProp
             <div className="p-3 bg-slate-50 text-slate-300 rounded-full">
               <FolderOpen size={36} />
             </div>
-            <p className="text-xs text-slate-500 font-medium">
-              Chưa có vị trí cửa nào trong {currentFloorName.toLowerCase()}.
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
-              <Button
-                variant="outline"
-                size="sm"
-                leftIcon={<Store size={14} />}
-                onClick={() => setIsSupplierPickerOpen(true)}
-                className="text-xs font-semibold border-primary/30 text-primary hover:bg-primary/5"
-              >
-                Thêm cửa NCC
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                leftIcon={<PenTool size={14} />}
-                onClick={() => setIsDrawInitOpen(true)}
-                className="text-xs font-semibold border-primary/30 text-primary hover:bg-primary/5"
-              >
-                Vẽ cửa mới
-              </Button>
-              <Button variant="primary" size="sm" leftIcon={<Plus size={14} />} onClick={() => setIsPickerOpen(true)} className="text-xs">
-                Chọn mẫu cửa ngay
-              </Button>
-            </div>
+            <p className="text-xs text-slate-500 font-medium">Chưa có vị trí cửa nào trong {currentFloorName.toLowerCase()}.</p>
+            {can('door:create') && (
+              <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  leftIcon={<Store size={14} />}
+                  onClick={() => setIsSupplierPickerOpen(true)}
+                  className="text-xs font-semibold border-primary/30 text-primary hover:bg-primary/5"
+                >
+                  Thêm cửa NCC
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  leftIcon={<PenTool size={14} />}
+                  onClick={() => setIsDrawInitOpen(true)}
+                  className="text-xs font-semibold border-primary/30 text-primary hover:bg-primary/5"
+                >
+                  Vẽ cửa mới
+                </Button>
+                <Button variant="primary" size="sm" leftIcon={<Plus size={14} />} onClick={() => setIsPickerOpen(true)} className="text-xs">
+                  Chọn mẫu cửa ngay
+                </Button>
+              </div>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -182,12 +182,7 @@ export function ProjectFloorsPositions({ projectId }: ProjectFloorsPositionsProp
         onOpenSketchAfterCreate={handleOpenStudioForPosition}
       />
 
-      <OutsourcedRfqModal
-        isOpen={isRfqModalOpen}
-        onClose={() => setIsRfqModalOpen(false)}
-        projectId={projectId}
-        positions={allPositions}
-      />
+      <OutsourcedRfqModal isOpen={isRfqModalOpen} onClose={() => setIsRfqModalOpen(false)} projectId={projectId} positions={allPositions} />
 
       <SupplierQuoteUpdateModal
         isOpen={Boolean(quoteModalPos)}
@@ -201,9 +196,7 @@ export function ProjectFloorsPositions({ projectId }: ProjectFloorsPositionsProp
         floors={floors}
         isSubmitting={updatePositionMutation.isPending}
         onClose={() => setEditingBasicPos(null)}
-        onSubmit={(posId, data) =>
-          updatePositionMutation.mutate({ posId, data }, { onSuccess: () => setEditingBasicPos(null) })
-        }
+        onSubmit={(posId, data) => updatePositionMutation.mutate({ posId, data }, { onSuccess: () => setEditingBasicPos(null) })}
       />
 
       <FloorCreateModal
@@ -244,8 +237,7 @@ export function ProjectFloorsPositions({ projectId }: ProjectFloorsPositionsProp
         title="Xác nhận xóa vị trí cửa"
         description={
           <>
-            Bạn có chắc chắn muốn xóa vị trí cửa{' '}
-            <strong className="text-slate-900 font-semibold">{positionToDelete?.code}</strong>
+            Bạn có chắc chắn muốn xóa vị trí cửa <strong className="text-slate-900 font-semibold">{positionToDelete?.code}</strong>
             {positionToDelete?.description ? ` (${positionToDelete.description})` : ''}?
           </>
         }

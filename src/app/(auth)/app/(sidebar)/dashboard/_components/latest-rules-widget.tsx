@@ -70,11 +70,11 @@ export function LatestRulesWidget() {
   const safeActiveIndex = items.length > 0 ? Math.min(activeIndex, items.length - 1) : 0;
 
   return (
-    <div className="rounded-2xl border border-slate-200/80 bg-white p-3.5 sm:p-4 shadow-xs flex flex-col gap-3">
+    <div className="rounded-block border border-slate-200/80 bg-white p-3.5 sm:p-4 shadow-xs flex flex-col gap-3">
       {/* Header 1 dòng gọn gàng */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <div className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-control bg-primary/10 text-primary">
             <BookOpenCheck size={16} />
             {unreadCount > 0 && (
               <span
@@ -84,11 +84,11 @@ export function LatestRulesWidget() {
             )}
           </div>
           <div className="flex items-center gap-2 min-w-0">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 truncate">
+            <h3 className="text-xs font-bold text-slate-900 truncate">
               Cơ chế mới nhất
             </h3>
             {unreadCount > 0 && (
-              <span className="px-1.5 py-0.5 rounded-full bg-red-500 text-white text-[10px] font-mono font-bold tabular-nums shrink-0">
+              <span className="px-1.5 py-0.5 rounded-full bg-red-500 text-white text-xs font-bold tabular-nums shrink-0">
                 {unreadCount} chưa đọc
               </span>
             )}
@@ -97,7 +97,7 @@ export function LatestRulesWidget() {
 
         <Link
           href="/app/rules"
-          className="inline-flex items-center gap-1 rounded-lg bg-primary/5 px-2.5 py-1 text-[11px] font-semibold text-primary hover:bg-primary/10 transition-colors shrink-0"
+          className="inline-flex items-center gap-1 rounded-control bg-primary/5 px-2.5 py-1 text-[11px] font-semibold text-primary hover:bg-primary/10 transition-colors shrink-0"
         >
           <span>Xem tất cả</span>
           <ArrowRight size={12} />
@@ -106,7 +106,7 @@ export function LatestRulesWidget() {
 
       {/* Carousel lướt ngang từng thẻ nổi bật + Pagination Dots */}
       {isLoading ? (
-        <div className="rounded-xl border border-slate-200/70 bg-slate-50/50 p-3.5 flex flex-col gap-2 animate-pulse">
+        <div className="rounded-block border border-slate-200/70 bg-slate-50/50 p-3.5 flex flex-col gap-2 animate-pulse">
           <div className="flex justify-between">
             <div className="h-3.5 w-28 rounded bg-slate-200" />
             <div className="h-4 w-20 rounded bg-slate-200" />
@@ -115,7 +115,7 @@ export function LatestRulesWidget() {
           <div className="h-3 w-1/2 rounded bg-slate-100 mt-1" />
         </div>
       ) : items.length === 0 ? (
-        <div className="flex items-center gap-2 rounded-xl border border-dashed border-slate-200 bg-slate-50/60 px-3 py-3 text-xs text-slate-500">
+        <div className="flex items-center gap-2 rounded-block border border-dashed border-slate-200 bg-slate-50/60 px-3 py-3 text-xs text-slate-500">
           <FileText size={14} className="shrink-0 text-slate-400" />
           <span>Chưa có cơ chế / quy chế nào đang có hiệu lực.</span>
         </div>
@@ -138,7 +138,7 @@ export function LatestRulesWidget() {
                   key={doc.id}
                   href="/app/rules"
                   className={cn(
-                    'w-full shrink-0 snap-center rounded-xl border p-3.5 transition-colors flex flex-col justify-between gap-2.5',
+                    'w-full shrink-0 snap-center rounded-block border p-3.5 transition-colors flex flex-col justify-between gap-2.5',
                     isUnread
                       ? 'border-red-200/80 bg-red-50/30 hover:bg-red-50/60'
                       : 'border-slate-200/80 bg-slate-50/60 hover:bg-slate-100/70'
@@ -153,13 +153,13 @@ export function LatestRulesWidget() {
                           title="Chưa đọc"
                         />
                       )}
-                      <span className="font-mono text-xs font-bold text-primary shrink-0">
+                      <span className="text-xs font-bold text-primary shrink-0">
                         {doc.code}
                       </span>
                       {typeMeta && (
                         <span
                           className={cn(
-                            'px-1.5 py-0.5 rounded-md text-[10px] font-medium border shrink-0',
+                            'px-1.5 py-0.5 rounded-control text-xs font-medium border shrink-0',
                             typeMeta.badgeClass
                           )}
                         >
@@ -169,15 +169,15 @@ export function LatestRulesWidget() {
                     </div>
 
                     {isUnread ? (
-                      <span className="px-2 py-0.5 rounded-full bg-red-500 text-white text-[10px] font-semibold shrink-0">
+                      <span className="px-2 py-0.5 rounded-full bg-red-500 text-white text-xs font-semibold shrink-0">
                         Chưa đọc
                       </span>
                     ) : needsAck ? (
-                      <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-semibold shrink-0">
+                      <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-xs font-semibold shrink-0">
                         Cần xác nhận
                       </span>
                     ) : doc.isAcknowledged ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-medium shrink-0">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-medium shrink-0">
                         <CheckCircle2 size={10} />
                         Đã xác nhận
                       </span>
@@ -198,7 +198,7 @@ export function LatestRulesWidget() {
                   <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-200/70 text-[11px] text-slate-500">
                     <div className="flex items-center gap-3 min-w-0">
                       {dateLabel && (
-                        <span className="inline-flex items-center gap-1 font-mono tabular-nums shrink-0">
+                        <span className="inline-flex items-center gap-1 tabular-nums shrink-0">
                           <Calendar size={11} className="text-slate-400" />
                           {dateLabel}
                         </span>
@@ -228,7 +228,7 @@ export function LatestRulesWidget() {
                 type="button"
                 onClick={() => scrollToSlide(safeActiveIndex - 1)}
                 disabled={safeActiveIndex === 0}
-                className="p-1 rounded-md text-slate-400 hover:text-primary hover:bg-primary/5 disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                className="p-1 rounded-control text-slate-400 hover:text-primary hover:bg-primary/5 disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
                 aria-label="Cơ chế trước"
               >
                 <ChevronLeft size={14} />
@@ -256,7 +256,7 @@ export function LatestRulesWidget() {
                 type="button"
                 onClick={() => scrollToSlide(safeActiveIndex + 1)}
                 disabled={safeActiveIndex === items.length - 1}
-                className="p-1 rounded-md text-slate-400 hover:text-primary hover:bg-primary/5 disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                className="p-1 rounded-control text-slate-400 hover:text-primary hover:bg-primary/5 disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
                 aria-label="Cơ chế tiếp theo"
               >
                 <ChevronRight size={14} />

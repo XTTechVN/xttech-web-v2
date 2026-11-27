@@ -48,7 +48,7 @@ export function CancelProductionOrderModal({
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="Nhập lý do hủy lệnh sản xuất (VD: Thay đổi thiết kế, gộp đợt thi công...)"
-            className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-md text-slate-800 placeholder-slate-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none"
+            className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-control text-slate-800 placeholder-slate-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none"
           />
         </div>
       </div>

@@ -155,3 +155,39 @@
     padding-bottom: var(--spacing-rm-gutter);
   }
 }
+
+/* Drawer (components-remake): mở chậm hơn đóng; chỉ dùng transform và opacity */
+@keyframes rm-sheet-in {
+  from { transform: var(--rm-sheet-from); }
+  to { transform: none; }
+}
+@keyframes rm-sheet-out {
+  from { transform: none; }
+  to { transform: var(--rm-sheet-from); }
+}
+@keyframes rm-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes rm-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+.rm-drawer-panel { animation: rm-sheet-in var(--rm-dur) cubic-bezier(0.2, 0.8, 0.2, 1); }
+.rm-drawer-panel[data-closing] { animation: rm-sheet-out var(--rm-dur-fast) ease-in forwards; }
+.rm-drawer-scrim { animation: rm-fade-in var(--rm-dur) ease-out; }
+.rm-drawer-scrim[data-closing] { animation: rm-fade-out var(--rm-dur-fast) ease-in forwards; }
+
+/* Drawer con: điện thoại và dưới 1024px trượt từ phải sang trái đè lên drawer chính; từ 1024px nằm cạnh trái drawer chính */
+:root { --rm-side-from: translateX(100%); }
+@media (min-width: 1024px) { :root { --rm-side-from: translateX(56px); } }
+@keyframes rm-side-in {
+  from { transform: var(--rm-side-from); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes rm-side-out {
+  from { transform: none; opacity: 1; }
+  to { transform: var(--rm-side-from); opacity: 0; }
+}
+.rm-side-panel { animation: rm-side-in var(--rm-dur) cubic-bezier(0.2, 0.8, 0.2, 1); }
+.rm-side-panel[data-closing] { animation: rm-side-out var(--rm-dur-fast) ease-in forwards; }

@@ -42,8 +42,8 @@ export function QuotationPreviewTab({ projectId, quotationId, initialMode }: Quo
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2 bg-white rounded-lg border border-slate-200/60 p-3 shadow-xs">
-        <div className="inline-flex rounded-md border border-slate-200 p-0.5 bg-slate-50">
+      <div className="flex flex-wrap items-center justify-between gap-2 bg-white rounded-control border border-slate-200/60 p-3 shadow-xs">
+        <div className="inline-flex rounded-control border border-slate-200 p-0.5 bg-slate-50">
           {MODE_OPTIONS.map((option) => (
             <Button
               key={option.value}
@@ -82,7 +82,7 @@ export function QuotationPreviewTab({ projectId, quotationId, initialMode }: Quo
         </div>
       </div>
 
-      <div ref={paneRef} className="overflow-auto no-scrollbar rounded-lg bg-slate-200 p-3">
+      <div ref={paneRef} className="overflow-auto no-scrollbar rounded-control bg-slate-200 p-3">
         <style>{QUOTATION_DOCUMENT_CSS}</style>
         <div className="mx-auto w-fit shadow-lg" style={{ zoom: fitScale }}>
           <QuotationDocument ref={paperRef} sheet={sheet} />
