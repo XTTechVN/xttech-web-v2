@@ -3,6 +3,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { getLiveLocations } from '@/actions';
+import { PageHeading } from '@/components-remake';
 import { useCan } from '@/hooks';
 import { AccessDenied } from '@/components/access-denied';
 import { StaffLiveLocation, STAFF_LIVE_STATUS_MAP } from '@/types';
@@ -232,7 +233,8 @@ function LiveMapView() {
   };
 
   return (
-    <div className="flex h-full flex-col gap-4 p-4 font-body [&_h1]:font-heading [&_h2]:font-heading [&_h3]:font-heading [&_h4]:font-heading">
+    <div className="flex h-full flex-col gap-4 p-4 font-body md:p-6 [&_h1]:font-heading [&_h2]:font-heading [&_h3]:font-heading [&_h4]:font-heading">
+      <PageHeading className="mb-0 shrink-0" title="Bản đồ trực tiếp" description="Vị trí nhân sự đang làm việc, cập nhật theo thời gian thực." />
       {/* Main Content: Sidebar List (Desktop) + Map View (Full screen on mobile) */}
       <div className="flex-1 flex flex-col md:flex-row gap-4 min-h-0 relative">
         {/* 1. Danh sách nhân viên trên Desktop (ẩn trên mobile) */}
