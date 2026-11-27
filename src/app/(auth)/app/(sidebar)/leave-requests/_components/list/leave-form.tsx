@@ -39,7 +39,7 @@ export function LeaveForm({ initial, onDone, onPendingChange }: Props) {
   const { isWide, can } = useCan();
   const me = useAuthStore((s) => s.user);
   // Phạm vi dept/org được làm đơn hộ người khác
-  const pickUser = isWide('leave_request:update');
+  const pickUser = isWide('leave_request:create');
 
   const [userId, setUserId] = useState(initial?.userId ?? (me?.id ? String(me.id) : ''));
   const [leaveType, setLeaveType] = useState<string>(initial?.leaveType ?? LEAVE_TYPES[0].value);

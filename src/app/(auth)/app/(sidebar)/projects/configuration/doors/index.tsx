@@ -1,5 +1,6 @@
 'use client';
 
+import { useCan } from '@/hooks';
 import React, { useState } from 'react';
 import { Heading, StatsCard, DoorStudioModal } from '@/components';
 import Table from './_components/table';
@@ -14,6 +15,7 @@ import { DoorBOMModal } from './_components/bom-modal';
 import { showErrorToast } from '@/utils';
 
 const Page = () => {
+  const { can } = useCan();
   const [selectedBrandId, setSelectedBrandId] = useState<number | undefined>(undefined);
   const [selectedSeriesId, setSelectedSeriesId] = useState<number | undefined>(undefined);
 
@@ -176,7 +178,8 @@ const Page = () => {
           setIsFormOpen(false);
           setSelectedDoor(null);
         }}
-        title="Sửa thiết kế cửa"
+        title={can('catalog:update') ? 'Sửa thiết kế cửa' : 'Chi tiết thiết kế cửa'}
+        readOnly={!can('catalog:update')}
         submitText="Xác nhận lưu"
         initialData={selectedDoor || undefined}
       />

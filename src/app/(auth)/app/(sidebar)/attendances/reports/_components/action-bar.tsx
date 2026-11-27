@@ -48,7 +48,7 @@ export const ReportActionBar = () => {
   return (
     <div className="flex w-full flex-wrap items-center justify-between gap-3">
       <PeriodLock fromDate={fromDate || ''} />
-      {can('attendance_report:read') && (
+      {can('attendance_report:export') && (
         <Button
           variant="primary"
           size="sm"

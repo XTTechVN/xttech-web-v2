@@ -33,7 +33,7 @@ export default function DocumentPage() {
   const id = Number(useParams<{ id: string }>().id);
   const router = useRouter();
   const qc = useQueryClient();
-  const { can, me, isReady } = useCan();
+  const { can, isWide, me, isReady } = useCan();
   const [verFile, setVerFile] = useState<File | null>(null);
   const [rejecting, setRejecting] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -168,7 +168,7 @@ export default function DocumentPage() {
             ))}
           </dl>
 
-          {stats && (isCreator || can('document:update')) && (
+          {stats && (isCreator || isWide('document:update')) && (
             <section aria-label="Người nhận">
               <h2 className="mb-2 text-sm font-semibold">Người nhận</h2>
               <p className="rounded-block border border-slate-200/80 bg-white p-3 text-sm">
@@ -204,7 +204,7 @@ export default function DocumentPage() {
             </section>
           )}
 
-          {(isCreator || can('document:update')) && (
+          {(isCreator || isWide('document:update')) && (
             <div className="flex flex-col gap-2">
               <label htmlFor="dv-file" className="flex min-h-11 cursor-pointer items-center gap-2 text-sm text-primary">
                 <Paperclip size={16} className="flex-none" aria-hidden="true" />
@@ -220,12 +220,12 @@ export default function DocumentPage() {
           )}
 
           <div className="flex flex-col gap-2">
-            {(d.approvalStatus === 'draft' || d.approvalStatus === 'rejected') && (isCreator || can('document:submit')) && (
+            {(d.approvalStatus === 'draft' || d.approvalStatus === 'rejected') && (isCreator || isWide('document:submit')) && (
               <Button disabled={busy} onClick={() => flow.mutate('submit')}>
                 Trình duyệt
               </Button>
             )}
-            {d.approvalStatus === 'pending' && (d.approverId === me?.user.id || can('document:approve')) && (
+            {d.approvalStatus === 'pending' && (d.approverId === me?.user.id || isWide('document:approve')) && (
               <>
                 {rejecting !== null && (
                   <Textarea rows={2} fullWidth value={rejecting} onChange={(e) => setRejecting(e.target.value)} placeholder="Lý do từ chối" />

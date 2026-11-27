@@ -45,7 +45,8 @@ export default function ProjectTable() {
   const total = list.data?.pages[0]?.meta?.total ?? rows.length;
   const selected = useMemo(() => rows.find((r) => r.id === selectedId) ?? null, [rows, selectedId]);
 
-  const statsQuery = useQuery({ queryKey: ['projects', 'stats-summary', userId], queryFn: () => getProjectStats({ userId }), staleTime: 30_000 });
+  const canStats = can('project:view_stats');
+  const statsQuery = useQuery({ queryKey: ['projects', 'stats-summary', userId], queryFn: () => getProjectStats({ userId }), staleTime: 30_000, enabled: canStats });
   const stats = useMemo(
     () => [
       { label: 'Tổng số dự án', value: statsQuery.data?.total ?? 0, icon: FolderOpen },
@@ -115,7 +116,7 @@ export default function ProjectTable() {
 
   return (
     <div className="flex flex-col gap-4">
-      {!statsQuery.isError && <StatGrid items={stats} />}
+      {canStats && !statsQuery.isError && <StatGrid items={stats} />}
 
       <div className="flex items-center gap-2">
         <SearchField value={search} onChange={setSearch} label="Tìm dự án" placeholder="Tìm theo tên, mã dự án, địa chỉ..." />
@@ -133,8 +134,8 @@ export default function ProjectTable() {
 
       <ProjectDrawer
         project={selected}
-        canEdit={can('project:update')}
-        canDelete={can('project:delete')}
+        canEdit={!!selected?._can?.update}
+        canDelete={!!selected?._can?.delete}
         onClose={() => setSelectedId(null)}
         onDelete={setDeleting}
       />

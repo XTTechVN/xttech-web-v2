@@ -38,7 +38,7 @@ const CustomerLogsPage = ({ params }: { params: Promise<{ id: string }> }) => {
 
       <div className="flex flex-col gap-6 mt-2">
         <CustomerInfo customer={customer} />
-        <InteractionLogs customerId={Number(id)} />
+        <InteractionLogs customerId={Number(id)} canManage={!!customer._can?.update} />
       </div>
     </div>
   );

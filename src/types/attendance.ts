@@ -154,6 +154,8 @@ export const getRequestTypeLabel = (type: string | null | undefined): string => 
 
 
 export interface Attendance {
+    /** API báo sẵn thao tác làm được với bản ghi này (theo phạm vi own/dept/org) */
+    _can?: Partial<Record<'update' | 'delete', boolean>>;
     id: number;
     userId: string;
     workShiftId: number | null;
@@ -276,6 +278,7 @@ export interface AdjustmentRequestQueryParams {
 }
 
 export interface AttendanceAdjustmentRequest {
+    _can?: Partial<Record<'update' | 'delete' | 'review', boolean>>;
     id: number;
     attendanceId: number | null;
     userId: string;

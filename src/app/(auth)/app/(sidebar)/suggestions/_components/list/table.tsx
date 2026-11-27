@@ -102,7 +102,6 @@ export default function SuggestionTable() {
 
   const filtered = !!keyword || Object.values(filters).some(Boolean);
   const groups = tab === 'review' ? [TYPE_GROUP] : [STATUS_GROUP, TYPE_GROUP];
-  const owner = (s: Suggestion) => s.userId === meId;
 
   let body;
   if (list.isLoading) {
@@ -174,9 +173,9 @@ export default function SuggestionTable() {
       <SuggestionDrawer
         suggestion={selected}
         showUser={showUser}
-        canEdit={(s) => canReview || owner(s)}
-        canDelete={(s) => can('suggestion:delete') && (readWide || owner(s))}
-        canReview={(s) => canReview && !owner(s)}
+        canEdit={(s) => !!s._can?.update}
+        canDelete={(s) => !!s._can?.delete}
+        canReview={(s) => !!s._can?.review}
         onClose={() => setSelectedId(null)}
         onDelete={setDeleting}
       />

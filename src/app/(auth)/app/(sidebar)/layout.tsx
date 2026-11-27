@@ -17,9 +17,13 @@ import { useLocationTracker, useMyTodayAttendance } from '@/hooks';
 import { usePageTransition } from '@/contexts';
 
 // Config
-import { getSidebarSections, isRouteAllowed, acceptedSections } from '@/config';
+import { getSidebarSections, getActiveItemId, isRouteAllowed, acceptedSections, DEV_TOOLS } from '@/config';
 import { useCan } from '@/hooks';
 import { AccessDenied } from '@/components/access-denied';
+import dynamic from 'next/dynamic';
+
+// Chỉ dev (NEXT_PUBLIC_DEV_TOOLS=true): cột phải để chọn tài khoản mock và bật/tắt quyền; bản production không nạp
+const DevPermissionPanel = DEV_TOOLS ? dynamic(() => import('@/components/dev').then((m) => m.DevPermissionPanel), { ssr: false }) : null;
 
 // Giữ chỗ trong lúc chờ /me, tránh trang con gọi API trước khi biết quyền
 const PageSkeleton = () => (
@@ -36,12 +40,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   useLocationTracker({ enabled: isWorkingShift, isStatusResolved: isShiftStatusResolved, intervalMs: 60000 });
 
   const path = usePathname();
-  const pathSegments = path.split('/');
-  const lastPath = pathSegments[pathSegments.length - 1];
 
   const { navigateTo } = usePageTransition();
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
-  const [activeMenu, setActiveMenu] = React.useState(lastPath);
+  const activeMenu = path.startsWith('/app/profile') ? 'profile' : getActiveItemId(path);
 
   const { access, isReady, isPending } = useCan();
 
@@ -68,7 +70,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         return;
       }
 
-      setActiveMenu(item.id);
       if (item.href) {
         navigateTo(item.href);
       }
@@ -84,7 +85,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         return;
       }
 
-      setActiveMenu(item.id);
       if (item.href) {
         navigateTo(item.href);
       }
@@ -113,7 +113,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             variant="light"
             className="relative h-full w-72 rounded-none border-y-0 border-l-0 border-r border-slate-200 shadow-2xl bg-white z-10 animate-in slide-in-from-left duration-300"
             activeId={activeMenu}
-            footer={<UserMenu />}
+            footer={
+              <UserMenu
+                onNavigate={() => {
+                  setIsMobileOpen(false);
+                }}
+              />
+            }
             brand={sidebarConfig.brand}
             sections={sidebarConfig.sections}
             onItemSelect={sidebarConfig.onItemSelectMobile}
@@ -130,6 +136,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {isPending ? <PageSkeleton /> : denied ? <AccessDenied /> : children}
         </div>
       </div>
+      {DevPermissionPanel && <DevPermissionPanel />}
     </div>
   );
 }

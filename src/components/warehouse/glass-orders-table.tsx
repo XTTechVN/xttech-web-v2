@@ -9,6 +9,7 @@ import {
   getProjectGlassOrderDetail, receiveGlassOrderDelivery, sendGlassOrderToSupplier,
 } from '@/actions';
 import { GLASS_ORDER_STATUS_MAP } from '@/config/warehouse';
+import { useCan } from '@/hooks';
 import { GlassOrder } from '@/types';
 import {
   exportGlassOrderToDxf, exportGlassOrderToExcel, printGlassOrderHtml, showErrorToast,
@@ -23,6 +24,7 @@ export interface GlassOrdersTableProps {
 }
 
 export function GlassOrdersTable({ projectId, orders, loading, onRefresh }: GlassOrdersTableProps) {
+  const { can } = useCan();
   const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
   const [activeOrderDetail, setActiveOrderDetail] = useState<GlassOrder | null>(null);
   const [exportingExcelId, setExportingExcelId] = useState<number | null>(null);
@@ -164,12 +166,12 @@ export function GlassOrdersTable({ projectId, orders, loading, onRefresh }: Glas
                           <button type="button" onClick={() => handleToggleExpand(order)} className="p-1.5 text-slate-500 hover:text-primary hover:bg-primary/10 rounded-md transition-colors" title="Xem danh sách tấm kính">
                             {isExpanded ? <ChevronUp size={15} /> : <Eye size={15} />}
                           </button>
-                          {order.status === 'draft' && (
+                          {order.status === 'draft' && can('glass_order:send_to_supplier') && (
                             <button type="button" onClick={() => handleSendToSupplier(order)} className="px-2.5 py-1 text-[11px] font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors flex items-center gap-1">
                               <Send size={12} />Gửi nhà máy
                             </button>
                           )}
-                          {order.status === 'ordered' && (
+                          {order.status === 'ordered' && can('glass_order:receive') && (
                             <button type="button" onClick={() => handleReceiveDelivery(order)} className="px-2.5 py-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-md transition-colors flex items-center gap-1">
                               <CheckCircle2 size={12} />Nhận hàng
                             </button>

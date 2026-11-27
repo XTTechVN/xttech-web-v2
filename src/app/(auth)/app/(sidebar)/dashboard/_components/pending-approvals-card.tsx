@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import type { DashboardPendingLeave, DashboardPendingAdjustment } from '@/types';
 import { AlertCircle, CalendarOff, ClockAlert, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { useCan } from '@/hooks';
 
 interface PendingApprovalsCardProps {
   pendingLeavesCount: number;
@@ -12,8 +13,13 @@ interface PendingApprovalsCardProps {
   recentAdjustments?: DashboardPendingAdjustment[];
 }
 
+// Mỗi phần xét quyền duyệt riêng: nghỉ phép (leave_request:review), khiếu nại công (attendance_request:review)
 export const PendingApprovalsCard: React.FC<PendingApprovalsCardProps> = ({ pendingLeavesCount, pendingAdjustmentsCount, recentLeaves = [] }) => {
-  const totalPending = pendingLeavesCount + pendingAdjustmentsCount;
+  const { can } = useCan();
+  const showLeaves = can('leave_request:review');
+  const showAdjustments = can('attendance_request:review');
+  if (!showLeaves && !showAdjustments) return null;
+  const totalPending = (showLeaves ? pendingLeavesCount : 0) + (showAdjustments ? pendingAdjustmentsCount : 0);
 
   if (totalPending === 0) {
     return (
@@ -49,8 +55,8 @@ export const PendingApprovalsCard: React.FC<PendingApprovalsCardProps> = ({ pend
       </div>
 
       {/* Danh sách 2 nút tắt xử lý nhanh chuẩn nhận diện & tối giản */}
-      <div className="grid grid-cols-2 gap-2.5 pt-0.5">
-        <Link
+      <div className={showLeaves && showAdjustments ? 'grid grid-cols-2 gap-2.5 pt-0.5' : 'grid grid-cols-1 gap-2.5 pt-0.5'}>
+        {showLeaves && <Link
           href="/app/leave-requests"
           className="p-2.5 rounded-block bg-gray-50/80 hover:bg-gray-100/90 border border-gray-100/90 flex items-center justify-between transition cursor-pointer active:scale-98 group"
         >
@@ -64,9 +70,9 @@ export const PendingApprovalsCard: React.FC<PendingApprovalsCardProps> = ({ pend
             </div>
           </div>
           <ChevronRight size={14} className="text-gray-400 group-hover:text-gray-600 transition-colors" />
-        </Link>
+        </Link>}
 
-        <Link
+        {showAdjustments && <Link
           href="/app/attendances/adjustments"
           className="p-2.5 rounded-block bg-gray-50/80 hover:bg-gray-100/90 border border-gray-100/90 flex items-center justify-between transition cursor-pointer active:scale-98 group"
         >
@@ -80,11 +86,11 @@ export const PendingApprovalsCard: React.FC<PendingApprovalsCardProps> = ({ pend
             </div>
           </div>
           <ChevronRight size={14} className="text-gray-400 group-hover:text-gray-600 transition-colors" />
-        </Link>
+        </Link>}
       </div>
 
       {/* Danh sách preview 2-3 đơn gần nhất */}
-      {recentLeaves.length > 0 && (
+      {showLeaves && recentLeaves.length > 0 && (
         <div className="flex flex-col gap-1.5 pt-2 border-t border-gray-100">
           <span className="text-xs font-bold text-gray-400">Đơn nghỉ gần nhất</span>
           {recentLeaves.slice(0, 2).map((leave) => (

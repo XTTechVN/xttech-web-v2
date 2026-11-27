@@ -77,7 +77,7 @@ export const HRDashboard = () => {
         <Gate any={['rule:read']}>
           <LatestRulesWidget />
         </Gate>
-        <Gate any={['leave_request:review']}>
+        <Gate any={['leave_request:review', 'attendance_request:review']}>
           <PendingApprovalsCard
             pendingLeavesCount={data?.pendingLeavesCount ?? 0}
             pendingAdjustmentsCount={data?.pendingAdjustmentsCount ?? 0}
@@ -115,7 +115,7 @@ export const HRDashboard = () => {
               data={data?.weeklyStats}
               todayCount={data?.todayAttendancesCount}
             />
-            <Gate any={['leave_request:review']}>
+            <Gate any={['leave_request:review', 'attendance_request:review']}>
               <PendingApprovalsCard
                 pendingLeavesCount={data?.pendingLeavesCount ?? 0}
                 pendingAdjustmentsCount={data?.pendingAdjustmentsCount ?? 0}

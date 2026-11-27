@@ -15,14 +15,7 @@ import {
   ClipboardCheck,
   CalendarDays,
   Handshake,
-  Tag,
-  Layers,
-  Ruler,
-  PanelTop,
-  Puzzle,
   Boxes,
-  DoorOpen,
-  Truck,
   Share2,
   ScrollText,
   Trash2,
@@ -82,12 +75,15 @@ export const acceptedSections = [
   'trash',
   'inbox',
   'tasks',
+  'catalog',
 ];
 
 // Mục menu hiện khi người dùng có MỘT trong các quyền (lấy từ /me); `platformOnly` chỉ cho quản trị nền tảng
 interface AccessGate {
   permissions?: string[];
   platformOnly?: boolean;
+  /** Chỉ hiện khi có quyền ở phạm vi dept/org (phạm vi own thì ẩn mục và chặn cả đường dẫn) */
+  wide?: boolean;
 }
 
 export interface SidebarItemWithAccess extends Omit<SidebarItemType, 'subItems'>, AccessGate {}
@@ -102,12 +98,17 @@ export interface Access {
   scopeOf?: (code: string) => string | null;
 }
 
-const isAllowed = (gate: AccessGate, access: Access) =>
-  gate.platformOnly ? access.isPlatformAdmin : !gate.permissions || access.canAny(gate.permissions);
+const isWideScope = (scope: string | null | undefined) => scope === 'dept' || scope === 'org';
+
+const isAllowed = (gate: AccessGate, access: Access) => {
+  if (gate.platformOnly) return access.isPlatformAdmin;
+  if (!gate.permissions) return true;
+  if (!gate.wide) return access.canAny(gate.permissions);
+  return gate.permissions.some((code) => isWideScope(access.scopeOf?.(code)));
+};
 
 export const rawSidebarSections: SidebarSectionWithAccess[] = [
   {
-    title: 'Điều hành',
     items: [
       {
         id: 'dashboard',
@@ -126,7 +127,7 @@ export const rawSidebarSections: SidebarSectionWithAccess[] = [
     ],
   },
   {
-    title: 'Nhân sự & Chấm công',
+    title: 'Công việc',
     items: [
       {
         id: 'tasks',
@@ -136,32 +137,23 @@ export const rawSidebarSections: SidebarSectionWithAccess[] = [
         permissions: ['staff_task:read'],
       },
       {
-        id: 'employees-root',
-        label: 'Nhân sự',
-        icon: React.createElement(Users, { size: 18 }),
-        href: '/app/employees',
-        permissions: ['user:read'],
+        id: 'suggestions',
+        label: 'Đề xuất',
+        icon: React.createElement(MessageSquarePlus, { size: 18 }),
+        href: '/app/suggestions',
+        permissions: ['suggestion:read'],
       },
-      {
-        id: 'departments',
-        label: 'Phòng ban',
-        icon: React.createElement(Building2, { size: 18 }),
-        href: '/app/departments',
-        permissions: ['department:read'],
-      },
-      {
-        id: 'access-roles',
-        label: 'Vai trò & quyền',
-        icon: React.createElement(ShieldCheck, { size: 18 }),
-        href: '/app/access/roles',
-        permissions: ['role:read'],
-      },
+    ],
+  },
+  {
+    title: 'Chấm công',
+    items: [
       {
         id: 'attendances',
         label: 'Chấm công',
         icon: React.createElement(CalendarCheck, { size: 18 }),
         href: '/app/attendances',
-        permissions: ['attendance:update'],
+        permissions: ['attendance:read'],
       },
       {
         id: 'attendances-roster',
@@ -184,17 +176,37 @@ export const rawSidebarSections: SidebarSectionWithAccess[] = [
         href: '/app/attendances/adjustments',
         permissions: ['attendance_request:read'],
       },
+    ],
+  },
+  {
+    title: 'Tổ chức',
+    items: [
       {
-        id: 'suggestions',
-        label: 'Đề xuất',
-        icon: React.createElement(MessageSquarePlus, { size: 18 }),
-        href: '/app/suggestions',
-        permissions: ['suggestion:read'],
+        id: 'employees-root',
+        label: 'Nhân sự',
+        icon: React.createElement(Users, { size: 18 }),
+        href: '/app/employees',
+        permissions: ['user:read'],
+        wide: true,
+      },
+      {
+        id: 'departments',
+        label: 'Phòng ban',
+        icon: React.createElement(Building2, { size: 18 }),
+        href: '/app/departments',
+        permissions: ['department:read'],
+      },
+      {
+        id: 'access-roles',
+        label: 'Vai trò & quyền',
+        icon: React.createElement(ShieldCheck, { size: 18 }),
+        href: '/app/access/roles',
+        permissions: ['role:read'],
       },
     ],
   },
   {
-    title: 'Dự án & Đối tác',
+    title: 'Kinh doanh',
     items: [
       {
         id: 'projects',
@@ -209,13 +221,6 @@ export const rawSidebarSections: SidebarSectionWithAccess[] = [
         icon: React.createElement(FileText, { size: 18 }),
         href: '/app/quotations',
         permissions: ['quotation:approve'],
-      },
-      {
-        id: 'warehouse',
-        label: 'Quản lý kho',
-        icon: React.createElement(Warehouse, { size: 18 }),
-        href: '/app/warehouse',
-        permissions: ['warehouse_item:read', 'warehouse_receipt:read', 'offcut:read', 'glass_order:read', 'warehouse_supplier:read'],
       },
       {
         id: 'customers',
@@ -234,68 +239,26 @@ export const rawSidebarSections: SidebarSectionWithAccess[] = [
     ],
   },
   {
-    title: 'Cấu hình dự án',
+    title: 'Vật tư',
     items: [
       {
-        id: 'brand',
-        label: 'Hãng cung cấp',
-        icon: React.createElement(Tag, { size: 18 }),
-        href: '/app/projects/configuration?tab=brand',
-        permissions: ['catalog:read'],
+        id: 'warehouse',
+        label: 'Quản lý kho',
+        icon: React.createElement(Warehouse, { size: 18 }),
+        href: '/app/warehouse',
+        permissions: ['warehouse_item:read', 'warehouse_receipt:read', 'offcut:read', 'glass_order:read', 'warehouse_supplier:read'],
       },
       {
-        id: 'series',
-        label: 'Hệ nhôm',
-        icon: React.createElement(Layers, { size: 18 }),
-        href: '/app/projects/configuration?tab=series',
-        permissions: ['catalog:read'],
-      },
-      {
-        id: 'profile-bars',
-        label: 'Thanh profile',
-        icon: React.createElement(Ruler, { size: 18 }),
-        href: '/app/projects/configuration?tab=profile-bars',
-        permissions: ['catalog:read'],
-      },
-      {
-        id: 'glass-gaskets',
-        label: 'Kính, Panel & Lưới muỗi',
-        icon: React.createElement(PanelTop, { size: 18 }),
-        href: '/app/projects/configuration?tab=glass-gaskets',
-        permissions: ['catalog:read'],
-      },
-      {
-        id: 'accessories',
-        label: 'Phụ kiện',
-        icon: React.createElement(Puzzle, { size: 18 }),
-        href: '/app/projects/configuration?tab=accessories',
-        permissions: ['catalog:read'],
-      },
-      {
-        id: 'accessory-combos',
-        label: 'Combo phụ kiện',
+        id: 'catalog',
+        label: 'Danh mục vật tư',
         icon: React.createElement(Boxes, { size: 18 }),
-        href: '/app/projects/configuration?tab=accessory-combos',
-        permissions: ['catalog:read'],
-      },
-      {
-        id: 'door-templates',
-        label: 'Mẫu cửa',
-        icon: React.createElement(DoorOpen, { size: 18 }),
-        href: '/app/projects/configuration?tab=door-templates',
-        permissions: ['catalog:read'],
-      },
-      {
-        id: 'supplier-doors',
-        label: 'Cửa nhập nguyên bộ (NCC)',
-        icon: React.createElement(Truck, { size: 18 }),
-        href: '/app/projects/configuration?tab=supplier-doors',
+        href: '/app/projects/configuration',
         permissions: ['catalog:read'],
       },
     ],
   },
   {
-    title: 'Cơ chế và tài liệu',
+    title: 'Tài liệu',
     items: [
       {
         id: 'documents-my',
@@ -352,4 +315,17 @@ export function isRouteAllowed(path: string, access: Access): boolean {
     }
   }
   return !matched || allowed;
+}
+
+// Mục đang mở theo đường dẫn: khớp tiền tố dài nhất (vd /app/projects/configuration thắng /app/projects)
+export function getActiveItemId(path: string): string | undefined {
+  let best: { id: string; len: number } | undefined;
+  for (const section of rawSidebarSections) {
+    for (const item of section.items) {
+      const base = item.href?.split('?')[0];
+      if (!base) continue;
+      if ((path === base || path.startsWith(`${base}/`)) && (!best || base.length > best.len)) best = { id: item.id, len: base.length };
+    }
+  }
+  return best?.id;
 }

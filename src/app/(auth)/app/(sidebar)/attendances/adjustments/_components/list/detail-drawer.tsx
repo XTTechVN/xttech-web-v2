@@ -87,9 +87,9 @@ export function AdjustmentDrawer({ request: r, showUser, canManage, canReview, o
                   <IconAction label="Sửa" onClick={() => setEditing(true)}>
                     <Pencil size={16} />
                   </IconAction>
-                  <IconAction label="Xóa" danger onClick={() => onDelete(r)}>
+                  {r._can?.delete && <IconAction label="Xóa" danger onClick={() => onDelete(r)}>
                     <Trash2 size={16} />
-                  </IconAction>
+                  </IconAction>}
                 </>
               )
             }

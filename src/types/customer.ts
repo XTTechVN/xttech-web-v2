@@ -1,6 +1,7 @@
 import type { CustomerProvider } from './customer-provider';
 
 export interface Customer {
+  _can?: { update?: boolean; delete?: boolean };
   id: number;
   name: string;
   address: string | null;

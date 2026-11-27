@@ -1,4 +1,5 @@
 export * from './app';
+export * from './dev-tools';
 export * from './ui';
 export * from './sidebar';
 export * from './project';

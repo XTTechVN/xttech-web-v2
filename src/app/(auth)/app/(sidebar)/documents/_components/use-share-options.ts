@@ -18,7 +18,7 @@ export function useShareOptions(enabled: boolean, excludeUserId?: string) {
   const people = useQuery({ queryKey: ['rule-opt', 'employees'], queryFn: () => getEmployees({ limit: 200 }), enabled });
   const approvers = useQuery({
     queryKey: ['rule-opt', 'approvers'],
-    queryFn: () => getEmployees({ limit: 200, permission: 'user:update' }),
+    queryFn: () => getEmployees({ limit: 200, permission: 'document:approve' }),
     enabled,
   });
   const depts = useQuery({ queryKey: ['rule-opt', 'departments'], queryFn: () => getDepartments({ limit: 100 }), enabled });

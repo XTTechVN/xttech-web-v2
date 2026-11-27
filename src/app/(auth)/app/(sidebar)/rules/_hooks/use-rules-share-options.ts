@@ -28,7 +28,7 @@ export function useRulesShareOptions(isEnabled: boolean, excludeUserId?: string)
   });
   const { data: approversData } = useQuery({
     queryKey: [...DOC_QUERY_KEYS.options.employees, 'approvers'],
-    queryFn: () => getEmployees({ limit: 200, permission: 'user:update' }),
+    queryFn: () => getEmployees({ limit: 200, permission: 'document:approve' }),
     enabled: (isEnabled) && can('user:read'),
   });
   const { data: departmentsData } = useQuery({

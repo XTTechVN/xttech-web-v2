@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useMutation } from '@tanstack/react-query';
 import { Pencil, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { completeStaffTask, reopenStaffTask } from '@/actions';
+import { completeStaffTask, startStaffTask, reopenStaffTask } from '@/actions';
 import { Textarea } from '@/components';
 import { Button, Drawer, DrawerBody, DrawerFooter, DrawerHeader, DrawerSection, IconAction, InfoRow, Tag } from '@/components-remake';
 import type { StaffTask } from '@/types';
@@ -48,6 +48,15 @@ export function TaskDrawer({ task: t, canEdit, canDelete, canAct, onClose, onDel
       close();
     },
     onError: (e) => showErrorToast(e, 'Không thể xác nhận hoàn thành'),
+  });
+
+  const start = useMutation({
+    mutationFn: () => startStaffTask(t!.id),
+    onSuccess: () => {
+      refreshTasks();
+      toast.success('Đã bắt đầu thực hiện công việc');
+    },
+    onError: (e) => showErrorToast(e, 'Không thể bắt đầu công việc'),
   });
 
   const reopen = useMutation({
@@ -212,6 +221,11 @@ export function TaskDrawer({ task: t, canEdit, canDelete, canAct, onClose, onDel
                     {warranty && (
                       <Button variant="outline" className="flex-1 md:flex-none" onClick={() => onWarranty(t)}>
                         Biên bản bảo hành
+                      </Button>
+                    )}
+                    {t.status === 'pending' && (
+                      <Button variant="outline" className="flex-1 md:flex-none" loading={start.isPending} onClick={() => start.mutate()}>
+                        Bắt đầu làm
                       </Button>
                     )}
                     <Button

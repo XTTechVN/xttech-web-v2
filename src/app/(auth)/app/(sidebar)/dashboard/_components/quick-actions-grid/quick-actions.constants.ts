@@ -91,7 +91,7 @@ export const QUICK_ACTIONS_REGISTRY: QuickActionConfig[] = [
   },
   {
     id: 'employees',
-    permissions: ['user:update'],
+    permissions: ['user:create'],
     title: 'Nhân sự',
     href: '/app/employees',
     icon: Users,

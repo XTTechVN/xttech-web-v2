@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useCan } from '@/hooks';
 
 import { Plus } from 'lucide-react';
 
@@ -34,11 +33,10 @@ import { LogFormModal } from './log-form-modal';
 
 interface InteractionLogsProps {
   customerId: number;
+  canManage: boolean;
 }
 
-export const InteractionLogs = ({ customerId }: InteractionLogsProps) => {
-  const { can } = useCan();
-  const canManageLogs = can('customer:update');
+export const InteractionLogs = ({ customerId, canManage: canManageLogs }: InteractionLogsProps) => {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [logToDelete, setLogToDelete] = useState<CustomerLog | null>(null);
 

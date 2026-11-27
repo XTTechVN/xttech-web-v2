@@ -19,7 +19,7 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export function InviteDrawer({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const { can } = useCan();
   // Mời cần chọn vai trò cho người được mời nên cần cả quyền đọc vai trò
-  const allowed = can('user:create') && can('role:read');
+  const allowed = can('user:invite') && can('role:read');
   const [email, setEmail] = useState('');
   const [roleId, setRoleId] = useState('');
   const [revoking, setRevoking] = useState<Invitation | null>(null);

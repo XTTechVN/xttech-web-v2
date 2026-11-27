@@ -1,60 +1,78 @@
 'use client';
 
-import Link from 'next/link';
+import { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { Building2, ChevronRight } from 'lucide-react';
-import { Badge } from '@/components';
+import { PageHeading, Tag } from '@/components-remake';
+import { DataTable, type Column } from '@/components-remake/data-table';
 import { getPlatformOrganizations } from '@/actions';
-import { ListState, PageHeader } from './_components/page-parts';
+import type { PlatformOrganization } from '@/types';
+import { ListState } from './_components/states';
+import { SearchBox } from './_components/search-box';
+
+const statusTag = (o: PlatformOrganization) => (
+  <Tag tone={o.status === 'active' ? 'green' : 'red'}>{o.status === 'active' ? 'Hoạt động' : 'Ngưng hoạt động'}</Tag>
+);
+
+const COLUMNS: Column<PlatformOrganization>[] = [
+  {
+    key: 'name',
+    header: 'Doanh nghiệp',
+    className: 'max-w-72',
+    render: (o) => <span className="block truncate font-medium text-slate-900">{o.name}</span>,
+  },
+  { key: 'code', header: 'Mã', render: (o) => o.code },
+  { key: 'kind', header: 'Loại', wide: true, render: (o) => o.kind },
+  { key: 'users', header: 'Người dùng', className: 'text-right tabular-nums', render: (o) => o.userCount },
+  { key: 'status', header: 'Trạng thái', render: statusTag },
+];
 
 export default function PlatformOrganizationsPage() {
+  const router = useRouter();
+  const [search, setSearch] = useState('');
   const orgs = useQuery({ queryKey: ['platform-orgs'], queryFn: getPlatformOrganizations });
+  const keyword = search.trim().toLowerCase();
+  const rows = useMemo(
+    () => (orgs.data ?? []).filter((o) => !keyword || `${o.name} ${o.code}`.toLowerCase().includes(keyword)),
+    [orgs.data, keyword],
+  );
+
+  let body;
+  if (orgs.isLoading) body = <ListState kind="loading" />;
+  else if (orgs.isError) body = <ListState kind="error" onRetry={() => orgs.refetch()} />;
+  else if (rows.length === 0)
+    body = <ListState kind="empty" emptyText={keyword ? 'Không có doanh nghiệp khớp tìm kiếm.' : 'Chưa có doanh nghiệp nào.'} />;
+  else
+    body = (
+      <DataTable
+        caption="Danh sách doanh nghiệp"
+        rows={rows}
+        rowKey={(o) => o.id}
+        columns={COLUMNS}
+        onOpen={(o) => router.push(`/platform/organizations/${o.id}`)}
+        card={(o) => (
+          <div className="flex items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium text-slate-900">{o.name}</p>
+              <p className="truncate text-xs text-slate-500">
+                {o.code} · {o.userCount} người dùng
+              </p>
+            </div>
+            {statusTag(o)}
+          </div>
+        )}
+      />
+    );
 
   return (
-    <div className="flex flex-col gap-4 p-4">
-      <PageHeader
+    <div className="flex flex-col gap-3 p-4 md:gap-4 md:p-6">
+      <PageHeading
+        className="mb-0"
         title="Doanh nghiệp"
-        description="Chọn một doanh nghiệp để xem tổng quan, người dùng, vai trò & quyền và nhật ký. Chỉ đọc; mỗi lần xem đều được ghi lại."
+        description="Chọn một doanh nghiệp để xem tổng quan, người dùng, vai trò và nhật ký. Chỉ đọc; mỗi lần xem đều được ghi lại."
       />
-      {orgs.isLoading && <ListState kind="loading" />}
-      {orgs.isError && <ListState kind="error" onRetry={() => orgs.refetch()} />}
-      {orgs.data && orgs.data.length === 0 && <ListState kind="empty" emptyText="Chưa có doanh nghiệp nào." />}
-      {orgs.data && orgs.data.length > 0 && (
-        <ul className="flex flex-col divide-y divide-gray-100 rounded-lg border border-gray-200 bg-white">
-          {orgs.data.map((o, i) => (
-            <li key={o.id} className="motion-safe:animate-rise" style={{ animationDelay: `${Math.min(i, 5) * 50}ms` }}>
-              <Link
-                href={`/platform/organizations/${o.id}`}
-                className="group flex min-h-16 w-full items-center gap-3 px-4 py-2 transition-colors active:bg-gray-50 [@media(hover:hover)]:hover:bg-gray-50"
-              >
-                <span className="flex h-9 w-9 flex-none items-center justify-center rounded-md bg-gray-100 text-gray-500">
-                  <Building2 size={16} aria-hidden="true" />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="flex items-center gap-2">
-                    <span className="truncate text-sm font-semibold text-gray-900">{o.name}</span>
-                    {o.status !== 'active' && (
-                      <Badge size="sm" variant="danger" className="flex-none">
-                        Ngưng hoạt động
-                      </Badge>
-                    )}
-                  </span>
-                  <span className="block truncate text-xs text-gray-500">
-                    {o.code} · {o.kind}
-                    <span className="md:hidden"> · {o.userCount} người dùng</span>
-                  </span>
-                </span>
-                <span className="hidden flex-none text-sm text-gray-600 md:block">{o.userCount} người dùng</span>
-                <ChevronRight
-                  size={18}
-                  className="flex-none text-gray-400 transition-transform [@media(hover:hover)]:group-hover:translate-x-0.5"
-                  aria-hidden="true"
-                />
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
+      <SearchBox value={search} onChange={setSearch} label="Tìm doanh nghiệp" placeholder="Tên hoặc mã doanh nghiệp" />
+      {body}
     </div>
   );
 }

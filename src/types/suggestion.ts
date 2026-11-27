@@ -23,6 +23,7 @@ export interface SuggestionAttachment {
 }
 
 export interface Suggestion {
+  _can?: Partial<Record<'update' | 'delete' | 'review', boolean>>;
   id: string;
   title: string;
   content: string;

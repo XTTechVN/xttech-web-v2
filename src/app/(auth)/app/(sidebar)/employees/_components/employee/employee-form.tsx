@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, type Resolver } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
@@ -23,6 +23,8 @@ interface EmployeeFormProps {
   /** Gọi sau khi lưu thành công */
   onDone: () => void;
   onPendingChange?: (pending: boolean) => void;
+  /** Phạm vi own/dept: chỉ sửa thông tin cá nhân cơ bản (ẩn tên đăng nhập, CCCD, ngày vào làm, chính sách chấm công) */
+  limited?: boolean;
 }
 
 const baseEmployeeSchema = z.object({
@@ -50,10 +52,14 @@ const updateEmployeeSchema = baseEmployeeSchema.extend({
   password: z.string().optional(),
 });
 
+type EmployeeFormValues = z.infer<typeof createEmployeeSchema>;
+
+const limitedEmployeeSchema = updateEmployeeSchema.omit({ username: true, identifyCode: true, joinedAt: true, attendancePolicy: true });
+
 export const EMPLOYEE_FORM_ID = 'employee-form';
 
 // Form thêm/sửa nhân sự: chỉ có phần thân, drawer cha lo khung và nút Lưu (submit bằng form={EMPLOYEE_FORM_ID})
-export function EmployeeForm({ initialData, onDone, onPendingChange }: EmployeeFormProps) {
+export function EmployeeForm({ initialData, onDone, onPendingChange, limited = false }: EmployeeFormProps) {
   const isOpen = true;
   const isEditMode = Boolean(initialData);
 
@@ -66,8 +72,8 @@ export function EmployeeForm({ initialData, onDone, onPendingChange }: EmployeeF
     setError,
     clearErrors,
     formState: { errors },
-  } = useForm({
-    resolver: zodResolver(isEditMode ? updateEmployeeSchema : createEmployeeSchema),
+  } = useForm<EmployeeFormValues>({
+    resolver: zodResolver(isEditMode ? (limited ? limitedEmployeeSchema : updateEmployeeSchema) : createEmployeeSchema) as unknown as Resolver<EmployeeFormValues>,
     defaultValues: { gender: 'male', attendancePolicy: 'administrative' },
   });
 
@@ -217,7 +223,9 @@ export function EmployeeForm({ initialData, onDone, onPendingChange }: EmployeeF
 
         <div className="grid grid-cols-[minmax(0,1fr)] gap-4">
           <Input label="Họ và tên *" placeholder="Nhập họ và tên" fullWidth {...register('fullName')} error={errors.fullName?.message} />
-          <Input label="Tên đăng nhập *" placeholder="Nhập tên đăng nhập" fullWidth {...register('username')} error={errors.username?.message} />
+          {!limited && (
+            <Input label="Tên đăng nhập *" placeholder="Nhập tên đăng nhập" fullWidth {...register('username')} error={errors.username?.message} />
+          )}
 
           {!isEditMode && (
             <div className="relative w-full">
@@ -286,6 +294,7 @@ export function EmployeeForm({ initialData, onDone, onPendingChange }: EmployeeF
           />
 
           {/* CCCD Field */}
+          {!limited && (
           <div className="flex flex-col gap-1.5 w-full">
             <div className="flex items-center justify-between">
               <label className="text-xs font-semibold text-gray-700 select-none">Căn cước công dân *</label>
@@ -321,6 +330,7 @@ export function EmployeeForm({ initialData, onDone, onPendingChange }: EmployeeF
               error={errors.identifyCode?.message}
             />
           </div>
+          )}
 
           <Select
             label="Giới tính"
@@ -333,8 +343,10 @@ export function EmployeeForm({ initialData, onDone, onPendingChange }: EmployeeF
             ]}
           />
           <Input label="Ngày sinh" type="date" fullWidth {...register('birthday')} error={errors.birthday?.message} />
-          <Input label="Ngày gia nhập" type="date" fullWidth {...register('joinedAt')} error={errors.joinedAt?.message} />
-          <Select
+          {!limited && (
+            <Input label="Ngày gia nhập" type="date" fullWidth {...register('joinedAt')} error={errors.joinedAt?.message} />
+          )}
+          {!limited && <Select
             label="Chính sách chấm công"
             value={watch('attendancePolicy') || 'administrative'}
             {...register('attendancePolicy')}
@@ -343,7 +355,7 @@ export function EmployeeForm({ initialData, onDone, onPendingChange }: EmployeeF
               { value: 'seasonal', label: 'Thời vụ' },
               { value: 'part_time', label: 'Part-time' },
             ]}
-          />
+          />}
         </div>
 
         <Input label="Địa chỉ *" placeholder="Nhập địa chỉ cư trú" fullWidth {...register('address')} error={errors.address?.message} />

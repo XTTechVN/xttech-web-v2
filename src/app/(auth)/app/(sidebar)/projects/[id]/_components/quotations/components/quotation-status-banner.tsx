@@ -8,7 +8,7 @@ import type { ProjectQuotationDetail } from '@/types';
 interface QuotationStatusBannerProps {
   quotation: ProjectQuotationDetail;
   isSyncing: boolean;
-  onSync: () => void;
+  onSync?: () => void;
 }
 
 export function QuotationStatusBanner({ quotation, isSyncing, onSync }: QuotationStatusBannerProps) {
@@ -53,17 +53,19 @@ function OutdatedBanner({ quotation, isSyncing, onSync }: QuotationStatusBannerP
           <p className="text-amber-700">{syncHint}</p>
         </div>
       </div>
-      <Button
-        variant="primary"
-        size="sm"
-        leftIcon={<RefreshCw size={14} />}
-        loading={isSyncing}
-        disabled={isSyncing}
-        onClick={onSync}
-        className="shrink-0"
-      >
-        Đồng bộ lại báo giá mới
-      </Button>
+      {onSync && (
+        <Button
+          variant="primary"
+          size="sm"
+          leftIcon={<RefreshCw size={14} />}
+          loading={isSyncing}
+          disabled={isSyncing}
+          onClick={onSync}
+          className="shrink-0"
+        >
+          Đồng bộ lại báo giá mới
+        </Button>
+      )}
     </div>
   );
 }

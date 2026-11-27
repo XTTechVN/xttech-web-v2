@@ -33,7 +33,7 @@ function Shot({ src, alt }: { src?: string; alt: string }) {
 
 // Xem nhanh một bản ghi chấm công; bấm Sửa thì chính drawer này chuyển sang ô nhập
 export function AttendanceDrawer({ attendance: a, showUser, onClose, onDelete, onComplain, onRoute }: Props) {
-  const { can } = useCan();
+  const { can, scopeOf, me } = useCan();
   const [editing, setEditing] = useState(false);
   const [pending, setPending] = useState(false);
 
@@ -59,12 +59,12 @@ export function AttendanceDrawer({ attendance: a, showUser, onClose, onDelete, o
             actions={
               !editing && (
                 <>
-                  {can('attendance:update') && (
+                  {a._can?.update && (
                     <IconAction label="Sửa" onClick={() => setEditing(true)}>
                       <Pencil size={16} />
                     </IconAction>
                   )}
-                  {can('attendance:delete') && (
+                  {a._can?.delete && (
                     <IconAction label="Xóa" danger onClick={() => onDelete(a)}>
                       <Trash2 size={16} />
                     </IconAction>
@@ -82,7 +82,7 @@ export function AttendanceDrawer({ attendance: a, showUser, onClose, onDelete, o
                   <DrawerSection
                     title="Thông tin"
                     action={
-                      can('attendance_request:create') && (
+                      can('attendance_request:create') && (scopeOf('attendance_request:create') !== 'own' || a.userId === me?.user.id) && (
                         <IconAction label="Khiếu nại chấm công" onClick={() => onComplain(a)}>
                           <FileEdit size={16} />
                         </IconAction>

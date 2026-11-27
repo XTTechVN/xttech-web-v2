@@ -52,7 +52,7 @@ function CommentAvatar({ commentId, authorName }: { commentId: number; authorNam
 
 export function NewsCommentsSection({ slug, articleId, commentCount }: NewsCommentsSectionProps) {
   const { user } = useAuthStore();
-  const isManager = useCan().can('news:update');
+  const isManager = useCan().can('news:moderate');
   const [authorName, setAuthorName] = useState(() => user?.fullName || user?.username || '');
   const [content, setContent] = useState('');
   const [nameError, setNameError] = useState('');

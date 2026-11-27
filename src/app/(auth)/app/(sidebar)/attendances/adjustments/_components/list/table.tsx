@@ -40,8 +40,8 @@ export default function AdjustmentTable() {
   const { can, isWide } = useCan();
   const meId = useAuthStore((s) => s.user?.id);
   const readWide = isWide('attendance_request:read');
-  // Duyệt cần quyền sửa ở phạm vi rộng
-  const canReview = isWide('attendance_request:update');
+  // Duyệt cần quyền duyệt khiếu nại ở phạm vi rộng
+  const canReview = isWide('attendance_request:review');
 
   const tabs = useMemo(() => requestTabs({ readWide, canReview, canCreate: can('attendance_request:create') }), [readWide, canReview, can]);
   const [tab, setTab] = useState<RequestTab>(tabs[0]?.value ?? 'mine');
@@ -172,8 +172,8 @@ export default function AdjustmentTable() {
       <AdjustmentDrawer
         request={selected}
         showUser={showUser}
-        canManage={(r) => readWide || r.userId === meId}
-        canReview={(r) => canReview && r.userId !== meId}
+        canManage={(r) => !!r._can?.update}
+        canReview={(r) => !!r._can?.review}
         onClose={() => setSelectedId(null)}
         onDelete={setDeleting}
       />

@@ -182,7 +182,7 @@ export function getDocumentPermissions(...args: Parameters<typeof computeDocumen
     canEdit: result.canEdit && can('document:update'),
     canMove: result.canMove && can('document:update'),
     canDelete: result.canDelete && can('document:delete'),
-    canShare: result.canShare && can('document:share'),
+    canShare: result.canShare && can('document:update'),
   };
 }
 

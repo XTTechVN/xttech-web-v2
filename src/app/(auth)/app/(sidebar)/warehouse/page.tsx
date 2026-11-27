@@ -72,18 +72,19 @@ export default function WarehouseManagementPage() {
   if (tabs.length === 0) return <AccessDenied />;
 
   const stats = [
-    { label: 'Mặt hàng trong kho', value: itemList.length, icon: Package },
-    { label: 'Cảnh báo thiếu hụt', value: itemList.filter(isLow).length, icon: AlertTriangle },
-    { label: 'Phiếu chờ duyệt', value: receiptList.filter((r) => r.status === 'draft').length, icon: Layers },
-    { label: 'Nhôm thừa tái dùng', value: offcutList.filter((o) => o.status === 'available').length, icon: Sparkles },
-  ];
+    { label: 'Mặt hàng trong kho', value: itemList.length, icon: Package, perm: 'warehouse_item:read' },
+    { label: 'Cảnh báo thiếu hụt', value: itemList.filter(isLow).length, icon: AlertTriangle, perm: 'warehouse_item:read' },
+    { label: 'Phiếu chờ duyệt', value: receiptList.filter((r) => r.status === 'draft').length, icon: Layers, perm: 'warehouse_receipt:read' },
+    { label: 'Nhôm thừa tái dùng', value: offcutList.filter((o) => o.status === 'available').length, icon: Sparkles, perm: 'offcut:read' },
+  ]
+    .filter((x) => can(x.perm));
   const busy = items.isFetching || receipts.isFetching || offcuts.isFetching || suppliers.isFetching;
 
   return (
     <div className="w-full p-4 font-body md:p-6 [&_h1]:font-heading [&_h2]:font-heading [&_h3]:font-heading">
       <PageHeading title="Quản lý kho" description="Tồn kho, nhập xuất và vật tư." />
       <div className="flex flex-col gap-4 text-slate-800">
-        <StatGrid items={stats} />
+        {stats.length > 0 && <StatGrid items={stats} />}
 
         <div className="flex items-center gap-2">
           <Tabs tabs={tabs} value={activeTab} onChange={setActiveTab} label="Nhóm kho vật tư" className="min-w-0 flex-1 px-0" />

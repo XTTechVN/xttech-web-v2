@@ -61,6 +61,7 @@ export function MaterialStandardCard({
         <div className="flex items-center justify-between">
           <span className="text-slate-500">Hãng nhôm mặc định</span>
           <CompactSelect
+            disabled={!project._can?.update}
             value={project.defaultBrandId || brand?.id}
             displayLabel={brandText}
             options={brandOptions}
@@ -92,7 +93,7 @@ export function MaterialStandardCard({
             options={seriesOptions}
             isLoading={updatingField === 'series' || isLoadingSeries}
             placeholder={currentBrandId ? 'Chọn hệ nhôm' : 'Cần chọn hãng trước'}
-            disabled={!currentBrandId}
+            disabled={!project._can?.update || !currentBrandId}
             emptyText={currentBrandId ? 'Hãng này chưa có hệ nhôm' : 'Vui lòng chọn hãng nhôm'}
             onOpen={onEnableCatalogs}
             onChange={(val) => {
@@ -117,7 +118,7 @@ export function MaterialStandardCard({
             options={colorOptions}
             isLoading={updatingField === 'color' || isLoadingColors}
             placeholder={currentBrandId ? 'Chọn màu sơn' : 'Cần chọn hãng trước'}
-            disabled={!currentBrandId}
+            disabled={!project._can?.update || !currentBrandId}
             emptyText={currentBrandId ? 'Hãng này chưa có màu sơn' : 'Vui lòng chọn hãng nhôm'}
             onOpen={onEnableCatalogs}
             onChange={(val) => {

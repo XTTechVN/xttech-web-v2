@@ -20,7 +20,7 @@ const Dashboard = () => {
   // Trang tổng quan theo nhóm việc của người dùng (suy từ quyền, không so tên role)
   const renderDashboard = () => {
     if (can('role:assign_permission')) return <AdminDashboard />;
-    if (can('user:update')) return <HRDashboard />;
+    if (can('attendance_request:review')) return <HRDashboard />;
     if (can('quotation:submit')) return <SaleDashboard />;
     if (can('door:calculate')) return <TechnicianDashboard />;
     if (can('payment:create')) return <AccountantDashboard />;

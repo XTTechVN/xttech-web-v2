@@ -29,22 +29,25 @@ const BLOCK = 'rounded-block border border-slate-200/80 bg-white p-4 md:p-5';
 // Trang chi tiết nhân sự: tab Thông tin (xem/sửa), Vai trò & chức vụ, Quyền hiện có, Tài khoản. Mỗi tab xét quyền riêng.
 export function EmployeeDetailPage({ employee: e }: { employee: Employee }) {
   const router = useRouter();
-  const { can } = useCan();
+  const { can, scopeOf } = useCan();
   const [tab, setTab] = useState<Tab>('info');
   const [editing, setEditing] = useState(false);
   const [pending, setPending] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const name = e.fullName || e.username;
-  const canEdit = can('user:update');
-  const canDelete = can('user:delete');
+  // Nút Sửa theo cờ _can của API (own: chỉ mình, dept: cùng phòng ban, org: mọi người); phạm vi org mới sửa đủ trường
+  const canEdit = !!e._can?.update;
+  const limited = scopeOf('user:update') !== 'org';
+  const canManageAccount = can('user:lock') || can('user:reset_password');
+  const canDelete = can('user:delete') && !!e._can?.delete;
 
   const tabs = useMemo(() => {
     const list: { value: Tab; label: string }[] = [{ value: 'info', label: 'Thông tin' }];
     if (can('user:read')) list.push({ value: 'access', label: 'Vai trò & chức vụ' });
     if (can('user:assign_role')) list.push({ value: 'permissions', label: 'Quyền hiện có' });
-    if (canEdit) list.push({ value: 'account', label: 'Tài khoản' });
+    if (canManageAccount) list.push({ value: 'account', label: 'Tài khoản' });
     return list;
-  }, [can, canEdit]);
+  }, [can, canManageAccount]);
 
   const { mutate: remove, isPending: removing } = useMutation({
     mutationFn: () => deleteEmployee(e.id),
@@ -103,7 +106,7 @@ export function EmployeeDetailPage({ employee: e }: { employee: Employee }) {
       {editing ? (
         <div className={BLOCK}>
           <h2 className="mb-4 text-base font-semibold text-slate-900">Chỉnh sửa nhân sự</h2>
-          <EmployeeForm key={e.id} initialData={e} onDone={() => setEditing(false)} onPendingChange={setPending} />
+          <EmployeeForm key={e.id} initialData={e} limited={limited} onDone={() => setEditing(false)} onPendingChange={setPending} />
           <div className="sticky bottom-0 -mx-4 mt-6 flex justify-end gap-2 border-t border-slate-100 bg-white px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:-mx-5 md:px-5">
             <Button variant="outline" className="flex-1 md:flex-none" onClick={() => setEditing(false)} disabled={pending}>
               Hủy

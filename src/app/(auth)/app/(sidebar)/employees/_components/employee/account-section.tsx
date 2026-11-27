@@ -13,10 +13,12 @@ import { PasswordSecretModal, type PasswordSecret } from './password-secret-moda
 
 type Confirm = 'lock' | 'reset' | null;
 
-// Khóa/mở khóa và đặt lại mật khẩu. Chỉ người có user:update mới thấy.
+// Khóa/mở khóa (user:lock) và đặt lại mật khẩu (user:reset_password), mỗi nút xét quyền riêng.
 export function AccountSection({ employee }: { employee: Employee }) {
   const { can } = useCan();
-  const allowed = can('user:update');
+  const canLock = can('user:lock');
+  const canReset = can('user:reset_password');
+  const allowed = canLock || canReset;
   const name = employee.fullName || employee.username;
   const [confirm, setConfirm] = useState<Confirm>(null);
   const [secret, setSecret] = useState<PasswordSecret | null>(null);
@@ -57,10 +59,12 @@ export function AccountSection({ employee }: { employee: Employee }) {
         </InfoRow>
         {member?.mustChangePassword && <InfoRow label="Mật khẩu">Chờ người dùng đổi khi đăng nhập</InfoRow>}
         <div className="grid grid-cols-2 gap-2 md:flex">
-          <Button variant="outline" className="min-w-0" icon={<KeyRound size={16} />} disabled={!member} onClick={() => setConfirm('reset')}>
-            Đặt lại mật khẩu
-          </Button>
-          {locked ? (
+          {canReset && (
+            <Button variant="outline" className="min-w-0" icon={<KeyRound size={16} />} disabled={!member} onClick={() => setConfirm('reset')}>
+              Đặt lại mật khẩu
+            </Button>
+          )}
+          {canLock && (locked ? (
             <Button variant="outline" className="min-w-0" icon={<LockOpen size={16} />} loading={lock.isPending} onClick={() => lock.mutate()}>
               Mở khóa
             </Button>
@@ -68,7 +72,7 @@ export function AccountSection({ employee }: { employee: Employee }) {
             <Button variant="outline" className="min-w-0" icon={<Lock size={16} />} disabled={!member} onClick={() => setConfirm('lock')}>
               Khóa tài khoản
             </Button>
-          )}
+          ))}
         </div>
       </DrawerSection>
 

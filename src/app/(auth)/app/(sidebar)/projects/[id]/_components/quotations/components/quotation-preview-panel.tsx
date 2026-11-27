@@ -14,6 +14,7 @@ interface QuotationPreviewPanelProps {
   saveLabel: string;
   isSaving: boolean;
   isSaveDisabled: boolean;
+  canSave: boolean;
   onSave: () => void;
 }
 
@@ -24,6 +25,7 @@ export function QuotationPreviewPanel({
   saveLabel,
   isSaving,
   isSaveDisabled,
+  canSave,
   onSave,
 }: QuotationPreviewPanelProps) {
   return (
@@ -43,17 +45,19 @@ export function QuotationPreviewPanel({
         <PreviewSkeleton />
       )}
 
-      <Button
-        variant="primary"
-        size="sm"
-        fullWidth
-        leftIcon={<CheckCircle2 size={16} />}
-        loading={isSaving}
-        disabled={isSaveDisabled || isSaving}
-        onClick={onSave}
-      >
-        {saveLabel}
-      </Button>
+      {canSave && (
+        <Button
+          variant="primary"
+          size="sm"
+          fullWidth
+          leftIcon={<CheckCircle2 size={16} />}
+          loading={isSaving}
+          disabled={isSaveDisabled || isSaving}
+          onClick={onSave}
+        >
+          {saveLabel}
+        </Button>
+      )}
     </div>
   );
 }

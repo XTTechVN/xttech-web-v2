@@ -137,10 +137,12 @@ export default function AccessoriesTab() {
           onChange={setFilter}
         />
         <div className="ml-auto flex flex-none items-center gap-2">
-          <Button variant="outline" icon={<Download size={16} />} iconOnly="mobile" loading={exporting} onClick={exportExcel}>
-            Xuất Excel
-          </Button>
-          {can('catalog:create') && (
+          {can('catalog:export') && (
+            <Button variant="outline" icon={<Download size={16} />} iconOnly="mobile" loading={exporting} onClick={exportExcel}>
+              Xuất Excel
+            </Button>
+          )}
+          {can('catalog:import') && (
             <Button variant="outline" icon={<Upload size={16} />} iconOnly="mobile" onClick={() => setExcelOpen(true)}>
               Nhập Excel
             </Button>

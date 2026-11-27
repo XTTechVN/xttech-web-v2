@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { Loader2, Pencil, Check, X } from 'lucide-react';
 import type { ProjectDetail, ProjectUpdate } from '@/types';
-import { useCan } from '@/hooks';
 
 interface ProjectProgressCardProps {
   project: ProjectDetail;
@@ -12,7 +11,6 @@ interface ProjectProgressCardProps {
 }
 
 export function ProjectProgressCard({ project, updatingField, onUpdate }: ProjectProgressCardProps) {
-  const { can } = useCan();
   const [isEditingNote, setIsEditingNote] = useState(false);
   const [noteInput, setNoteInput] = useState('');
 
@@ -126,7 +124,7 @@ export function ProjectProgressCard({ project, updatingField, onUpdate }: Projec
                 <X size={12} />
               </button>
             </div>
-          ) : !can('project:update') ? (
+          ) : !project._can?.update ? (
             <span className="font-semibold text-primary truncate text-xs max-w-[200px]" title={project.note || undefined}>
               {project.note || '—'}
             </span>

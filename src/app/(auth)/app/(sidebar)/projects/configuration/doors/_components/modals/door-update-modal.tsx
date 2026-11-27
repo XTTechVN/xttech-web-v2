@@ -17,6 +17,7 @@ interface DoorUpdateModalProps {
   onClose: () => void;
   title: string;
   submitText?: string;
+  readOnly?: boolean;
   initialData?: Door;
 }
 
@@ -34,7 +35,7 @@ const DOOR_TYPE_OPTIONS = [
   { value: 'composite', label: 'Tổng hợp' },
 ];
 
-export function DoorUpdateModal({ isOpen, onClose, title, submitText = 'Xác nhận lưu', initialData }: DoorUpdateModalProps) {
+export function DoorUpdateModal({ isOpen, onClose, title, submitText = 'Xác nhận lưu', initialData, readOnly = false }: DoorUpdateModalProps) {
   const {
     register,
     handleSubmit,
@@ -165,6 +166,7 @@ export function DoorUpdateModal({ isOpen, onClose, title, submitText = 'Xác nh�
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title} className="m-2 max-w-2xl w-full">
       <form onSubmit={handleSubmit(handleConfirm)}>
+<fieldset disabled={readOnly} className="contents">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
           <div className="md:col-span-5 flex flex-col items-center gap-3 w-full">
             <div className="w-full flex items-center justify-between">
@@ -305,19 +307,22 @@ export function DoorUpdateModal({ isOpen, onClose, title, submitText = 'Xác nh�
 
         <div className="flex gap-2 justify-end w-full mt-6 pt-4 border-t border-gray-150">
           <Button variant="outline" size="sm" onClick={onClose}>
-            Hủy
+            {readOnly ? 'Đóng' : 'Hủy'}
           </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            leftIcon={<CheckCircle2 size={16} />}
-            type="submit"
-            disabled={updateIsPending}
-            loading={updateIsPending}
-          >
-            {submitText}
-          </Button>
+          {!readOnly && (
+            <Button
+              variant="primary"
+              size="sm"
+              leftIcon={<CheckCircle2 size={16} />}
+              type="submit"
+              disabled={updateIsPending}
+              loading={updateIsPending}
+            >
+              {submitText}
+            </Button>
+          )}
         </div>
+      </fieldset>
       </form>
     </Modal>
   );

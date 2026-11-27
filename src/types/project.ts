@@ -35,6 +35,7 @@ export interface ProjectFloorItem {
 }
 
 export interface Project {
+  _can?: { update?: boolean; delete?: boolean };
   id: number;
   code: string;
   name: string;

@@ -146,7 +146,7 @@ export default function CustomerTable() {
         <SearchField value={search} onChange={setSearch} label="Tìm khách hàng" placeholder="Tìm theo tên, SĐT, mã, email..." />
         <div className="ml-auto flex flex-none items-center gap-2">
           <FilterDrawer groups={groups} value={filters} onChange={setFilters} />
-          {can('import_export:export') && (
+          {can('customer:export') && (
             <Button variant="outline" icon={<FileSpreadsheet size={18} />} iconOnly="mobile" onClick={() => setExporting(true)}>
               Xuất Excel
             </Button>
@@ -163,8 +163,8 @@ export default function CustomerTable() {
 
       <CustomerDrawer
         customer={selected}
-        canEdit={can('customer:update')}
-        canDelete={can('customer:delete')}
+        canEdit={!!selected?._can?.update}
+        canDelete={!!selected?._can?.delete}
         onClose={() => setSelectedId(null)}
         onDelete={setDeleting}
       />

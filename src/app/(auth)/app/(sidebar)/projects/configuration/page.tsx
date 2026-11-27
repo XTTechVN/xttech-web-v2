@@ -2,10 +2,10 @@
 
 import React, { Suspense } from 'react';
 import dynamic from 'next/dynamic';
-import { useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Skeleton } from '@/components';
 import { AccessDenied } from '@/components/access-denied';
-import { PageHeading } from '@/components-remake';
+import { PageHeading, Tabs } from '@/components-remake';
 import { useCan } from '@/hooks';
 
 const ConfigTabFallback = () => (
@@ -44,8 +44,13 @@ const TABS: ConfigTab[] = [
   { id: 'accessory-combos', title: 'Combo phụ kiện', description: 'Bộ phụ kiện đi cùng nhau.', component: AccessoryCombosTab },
 ];
 
+// Thanh tab: các mục từng có trong menu (Biên dạng cửa vẫn vào được bằng ?tab=doors, như trước)
+const MENU_TABS = TABS.filter((t) => t.id !== 'doors');
+
 function ProjectConfigurationContent() {
   const { can, isReady } = useCan();
+  const router = useRouter();
+  const pathname = usePathname();
   const urlTab = useSearchParams().get('tab');
   const tab = TABS.find((t) => t.id === (urlTab === 'aluminum' ? 'brand' : urlTab)) ?? TABS[0];
   const Active = tab.component;
@@ -56,8 +61,15 @@ function ProjectConfigurationContent() {
   return (
     <div className="font-body [&_h1]:font-heading [&_h2]:font-heading [&_h3]:font-heading">
       <div className="px-4 pt-4 md:px-6 md:pt-6">
-        <PageHeading title={tab.title} description={tab.description} />
+        <PageHeading title="Danh mục vật tư" description={tab.description} />
       </div>
+      <Tabs
+        tabs={MENU_TABS.map((t) => ({ value: t.id, label: t.title }))}
+        value={tab.id}
+        onChange={(id) => router.replace(`${pathname}?tab=${id}`, { scroll: false })}
+        label="Nhóm danh mục vật tư"
+        className="px-4 md:px-6"
+      />
       <Active key={tab.id} />
     </div>
   );

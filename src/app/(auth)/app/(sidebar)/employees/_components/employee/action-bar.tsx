@@ -12,18 +12,28 @@ const ActionBar = () => {
   const [inviting, setInviting] = useState(false);
   const { can } = useCan();
 
-  if (!can('user:create')) return null;
+  const canCreate = can('user:create');
+  const canInvite = can('user:invite');
+  if (!canCreate && !canInvite) return null;
 
   return (
     <>
-      <Button variant="outline" icon={<Mail size={16} />} iconOnly="mobile" onClick={() => setInviting(true)}>
-        Mời qua email
-      </Button>
-      <Button icon={<Plus size={18} />} iconOnly="mobile" onClick={() => setIsOpen(true)}>
-        Thêm nhân sự
-      </Button>
-      <InviteDrawer isOpen={inviting} onClose={() => setInviting(false)} />
-      <EmployeeFormModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      {canInvite && (
+        <>
+          <Button variant="outline" icon={<Mail size={16} />} iconOnly="mobile" onClick={() => setInviting(true)}>
+            Mời qua email
+          </Button>
+          <InviteDrawer isOpen={inviting} onClose={() => setInviting(false)} />
+        </>
+      )}
+      {canCreate && (
+        <>
+          <Button icon={<Plus size={18} />} iconOnly="mobile" onClick={() => setIsOpen(true)}>
+            Thêm nhân sự
+          </Button>
+          <EmployeeFormModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
+        </>
+      )}
     </>
   );
 };

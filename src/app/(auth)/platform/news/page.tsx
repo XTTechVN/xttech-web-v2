@@ -1,170 +1,133 @@
 'use client';
 
-import { PageHeading } from '@/components-remake';
-import React, { useState } from 'react';
-import dynamic from 'next/dynamic';
-import { useQuery } from '@tanstack/react-query';
-import { CheckCircle2, FileEdit, Newspaper, Sparkles } from 'lucide-react';
-import { StatsCard } from '@/components';
-import { ConfirmActionModal } from '@/components/documents';
-import { deleteNewsArticle, getAdminNewsList } from '@/actions';
-import queryClient from '@/utils/query';
-import { showErrorToast, showSuccessToast } from '@/utils';
-import type { NewsArticle } from '@/types';
-import { NewsAdminTable } from './_components/news-admin-table';
+import { useState } from 'react';
+import Link from 'next/link';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { Plus } from 'lucide-react';
+import { FilterDrawer, PageHeading, SearchField, Tag, type FilterGroup } from '@/components-remake';
+import { DataTable, type Column } from '@/components-remake/data-table';
+import { AccessDenied } from '@/components/access-denied';
+import { NEWS_CATEGORY_OPTIONS, NEWS_STATUS_OPTIONS } from '@/config';
+import { getAdminNewsList } from '@/actions';
+import { useDebounce } from '@/hooks';
+import type { NewsArticle, NewsCategory, NewsStatus } from '@/types';
+import { ListState, LoadMore } from '../_components/states';
+import { NewsDrawer, statusTag } from './_components/news-drawer';
+import { usePlatformCan } from '../_components/use-platform-can';
 
-const NewsFormModal = dynamic(
-  () => import('./_components/modals/news-form-modal').then((m) => m.NewsFormModal),
-  { ssr: false },
-);
+const LIMIT = 20;
+const GROUPS: FilterGroup[] = [
+  { key: 'status', label: 'Trạng thái', options: NEWS_STATUS_OPTIONS },
+  { key: 'category', label: 'Chuyên mục', options: NEWS_CATEGORY_OPTIONS },
+];
+const categoryLabel = (c: string) => NEWS_CATEGORY_OPTIONS.find((o) => o.value === c)?.label ?? c;
 
-const NewsPreviewModal = dynamic(
-  () => import('./_components/modals/news-preview-modal').then((m) => m.NewsPreviewModal),
-  { ssr: false },
-);
+const COLUMNS: Column<NewsArticle>[] = [
+  {
+    key: 'title',
+    header: 'Bài viết',
+    className: 'max-w-96',
+    render: (a) => (
+      <span className="flex items-center gap-2">
+        <span className="block min-w-0 truncate font-medium text-slate-900">{a.title}</span>
+        {a.isFeatured && <Tag tone="violet">Tiêu điểm</Tag>}
+      </span>
+    ),
+  },
+  { key: 'category', header: 'Chuyên mục', wide: true, render: (a) => categoryLabel(a.category) },
+  { key: 'status', header: 'Trạng thái', render: statusTag },
+  { key: 'views', header: 'Lượt xem', className: 'text-right tabular-nums', render: (a) => a.viewCount },
+  { key: 'date', header: 'Cập nhật', wide: true, render: (a) => new Date(a.updatedAt).toLocaleDateString('vi-VN') },
+];
 
-export default function AdminNewsPage() {
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [formSessionKey, setFormSessionKey] = useState(0);
-  const [editingArticle, setEditingArticle] = useState<NewsArticle | null>(null);
-  const [previewArticle, setPreviewArticle] = useState<NewsArticle | null>(null);
-  const [deletingArticle, setDeletingArticle] = useState<NewsArticle | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+export default function PlatformNewsPage() {
+  const { can, isReady } = usePlatformCan();
+  const canRead = can('news:read') || can('news:publish') || can('news:create') || can('news:update');
+  const [search, setSearch] = useState('');
+  const [filters, setFilters] = useState<Record<string, string>>({});
+  const status = filters.status ?? '';
+  const category = filters.category ?? '';
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const term = useDebounce(search.trim(), 300);
 
-  const { data: summaryData } = useQuery({
-    queryKey: ['admin-news', 'summary-stats'],
-    queryFn: () => getAdminNewsList({ limit: 500 }),
+  const q = useInfiniteQuery({
+    queryKey: ['admin-news', term, status, category],
+    queryFn: ({ pageParam }) =>
+      getAdminNewsList({
+        offset: pageParam,
+        limit: LIMIT,
+        search: term || undefined,
+        status: (status as NewsStatus) || undefined,
+        category: (category as NewsCategory) || undefined,
+      }),
+    initialPageParam: 0,
+    getNextPageParam: (last) => (last.meta?.next ? last.meta.offset + last.meta.limit : undefined),
+    enabled: isReady && canRead,
   });
+  const items = q.data?.pages.flatMap((p) => p.items) ?? [];
+  const total = q.data?.pages[0]?.meta?.total ?? items.length;
+  const selected = items.find((a) => a.id === selectedId) ?? null;
+  const filtered = !!(term || status || category);
 
-  const allItems = summaryData?.items || [];
-  const totalCount = summaryData?.meta?.total ?? allItems.length;
-  const publishedCount = allItems.filter((item) => item.status === 'published').length;
-  const draftCount = allItems.filter((item) => item.status === 'draft').length;
-  const featuredCount = allItems.filter((item) => item.isFeatured).length;
+  if (!isReady)
+    return (
+      <div className="p-4 md:p-6">
+        <ListState kind="loading" />
+      </div>
+    );
+  if (!canRead) return <AccessDenied />;
 
-  const stats = [
-    {
-      title: 'Tổng số bài viết',
-      value: totalCount,
-      icon: <Newspaper />,
-      trend: 0,
-      trendDirection: 'up' as const,
-    },
-    {
-      title: 'Đã xuất bản',
-      value: publishedCount,
-      icon: <CheckCircle2 />,
-      trend: 0,
-      trendDirection: 'up' as const,
-    },
-    {
-      title: 'Bản nháp',
-      value: draftCount,
-      icon: <FileEdit />,
-      trend: 0,
-      trendDirection: 'up' as const,
-    },
-    {
-      title: 'Bài viết tiêu điểm',
-      value: featuredCount,
-      icon: <Sparkles />,
-      trend: 0,
-      trendDirection: 'up' as const,
-    },
-  ];
-
-  const handleOpenCreate = () => {
-    setEditingArticle(null);
-    setFormSessionKey((prev) => prev + 1);
-    setIsFormOpen(true);
-  };
-
-  const handleOpenEdit = (article: NewsArticle) => {
-    setEditingArticle(article);
-    setFormSessionKey((prev) => prev + 1);
-    setIsFormOpen(true);
-  };
-
-  const handleFormSuccess = () => {
-    queryClient.invalidateQueries({ queryKey: ['admin-news'] });
-    queryClient.invalidateQueries({ queryKey: ['public-news-list'] });
-  };
-
-  const handleConfirmDelete = async () => {
-    if (!deletingArticle) return;
-    setIsDeleting(true);
-    try {
-      await deleteNewsArticle(deletingArticle.id);
-      setDeletingArticle(null);
-      showSuccessToast('Đã xóa cứng bài viết và dọn sạch dữ liệu media liên quan!');
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['admin-news'] }),
-        queryClient.invalidateQueries({ queryKey: ['public-news-list'] }),
-      ]);
-    } catch (err) {
-      showErrorToast(err, 'Không thể xóa bài viết');
-    } finally {
-      setIsDeleting(false);
-    }
-  };
+  let body;
+  if (q.isLoading) body = <ListState kind="loading" />;
+  else if (q.isError) body = <ListState kind="error" onRetry={() => q.refetch()} />;
+  else if (items.length === 0) body = <ListState kind="empty" emptyText={filtered ? 'Không có bài viết khớp bộ lọc.' : 'Chưa có bài viết nào.'} />;
+  else
+    body = (
+      <div className="flex flex-col gap-3">
+        <DataTable
+          caption="Danh sách bài viết"
+          rows={items}
+          rowKey={(a) => a.id}
+          columns={COLUMNS}
+          onOpen={(a) => setSelectedId(a.id)}
+          card={(a) => (
+            <div className="flex flex-col gap-1">
+              <p className="line-clamp-2 text-sm font-medium text-slate-900 [overflow-wrap:anywhere]">{a.title}</p>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {statusTag(a)}
+                {a.isFeatured && <Tag tone="violet">Tiêu điểm</Tag>}
+                <span className="text-xs text-slate-500">
+                  {categoryLabel(a.category)} · {a.viewCount} lượt xem
+                </span>
+              </div>
+            </div>
+          )}
+        />
+        <LoadMore visible={items.length} total={total} loading={q.isFetchingNextPage} onClick={() => q.fetchNextPage()} />
+      </div>
+    );
 
   return (
-    <div className="p-4 flex flex-col gap-4">
-      <PageHeading title="Quản trị tin tức" description="Đăng và quản lý bài viết tin tức." className="mb-0" />
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {stats.map((stat, idx) => (
-          <StatsCard
-            key={idx}
-            title={stat.title}
-            value={stat.value}
-            icon={stat.icon}
-            trend={stat.trend}
-            trendDirection={stat.trendDirection}
-          />
-        ))}
+    <div className="flex flex-col gap-3 p-4 md:gap-4 md:p-6">
+      <PageHeading className="mb-0" title="Tin tức" description="Đăng và quản lý bài viết tin tức." />
+      <div className="flex items-center gap-2">
+        <SearchField value={search} onChange={setSearch} label="Tìm bài viết" placeholder="Tiêu đề, tóm tắt, đường dẫn" />
+        <div className="ml-auto flex flex-none items-center gap-2">
+          <FilterDrawer groups={GROUPS} value={filters} onChange={setFilters} />
+          {can('news:create') && (
+            <Link
+              href="/platform/news/new"
+              aria-label="Viết bài mới"
+              className="inline-flex h-11 min-w-11 flex-none items-center justify-center gap-2 rounded-control bg-primary px-3 text-sm font-medium text-white active:scale-95 md:h-10 md:px-4"
+            >
+              <Plus size={18} aria-hidden="true" />
+              <span className="hidden md:inline">Viết bài mới</span>
+            </Link>
+          )}
+        </div>
       </div>
-
-      <NewsAdminTable
-        onCreateClick={handleOpenCreate}
-        onEditClick={handleOpenEdit}
-        onPreviewClick={(article) => setPreviewArticle(article)}
-        onDeleteClick={(article) => setDeletingArticle(article)}
-      />
-
-      {isFormOpen && (
-        <NewsFormModal
-          key={editingArticle ? `edit-${editingArticle.id}-${formSessionKey}` : `create-${formSessionKey}`}
-          isOpen={isFormOpen}
-          onClose={() => setIsFormOpen(false)}
-          initialData={editingArticle}
-          onSuccess={handleFormSuccess}
-        />
-      )}
-
-      {previewArticle && (
-        <NewsPreviewModal
-          isOpen={Boolean(previewArticle)}
-          onClose={() => setPreviewArticle(null)}
-          article={previewArticle}
-        />
-      )}
-
-      <ConfirmActionModal
-        isOpen={Boolean(deletingArticle)}
-        onClose={() => setDeletingArticle(null)}
-        title="Xóa vĩnh viễn bài viết tin tức"
-        description={
-          <>
-            Bạn có chắc chắn muốn xóa cứng bài viết{' '}
-            <strong className="text-slate-900">{deletingArticle?.title}</strong>?
-          </>
-        }
-        warningNote="Lưu ý: Bài viết, toàn bộ bình luận đi kèm và tất cả file ảnh bìa / ảnh / video trong bài trên MinIO sẽ bị xóa vĩnh viễn không thể khôi phục."
-        confirmText="Xóa vĩnh viễn"
-        variant="danger"
-        loading={isDeleting}
-        onConfirm={handleConfirmDelete}
-      />
+      {body}
+      <NewsDrawer article={selected} onClose={() => setSelectedId(null)} />
     </div>
   );
 }

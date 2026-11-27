@@ -27,6 +27,8 @@ export interface Employee {
   deletedAt?: string | null;
   roles: EmployeeRole[];
   positions: Position[];
+  /** API báo sẵn thao tác làm được với bản ghi này (theo phạm vi own/dept/org) */
+  _can?: { update?: boolean; delete?: boolean };
 }
 
 export interface EmployeePagination {
