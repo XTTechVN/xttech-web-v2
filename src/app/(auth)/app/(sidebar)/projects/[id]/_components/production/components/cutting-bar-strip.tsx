@@ -31,7 +31,7 @@ export function CuttingBarStrip({
 }: CuttingBarStripProps) {
   const wastePercent = Math.max(bar.wasteMm / bar.stockLengthMm, 0) * 100;
   return (
-    <div className="flex items-center gap-2 text-[11px]">
+    <div className="flex items-center gap-2 text-xs">
       <span className="w-14 shrink-0 tabular-nums font-semibold text-slate-500">
         {bar.sourceType === 'offcut' ? `Dư #${index}` : `Cây ${index}`}
       </span>
@@ -61,7 +61,7 @@ export function CuttingBarStrip({
       </span>
       {bar.isOffcutReturned ? (
         <span
-          className="inline-flex items-center rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 border border-emerald-200"
+          className="inline-flex items-center rounded bg-emerald-50 px-1.5 py-0.5 text-xs font-medium text-emerald-700 border border-emerald-200"
           title="Đoạn dư đã được lưu vào kho tái sử dụng"
         >
           Đã về kho

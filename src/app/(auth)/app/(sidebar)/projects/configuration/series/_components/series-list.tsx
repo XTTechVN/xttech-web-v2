@@ -2,6 +2,7 @@
 
 import { DataTable, Tag, type Column } from '@/components-remake';
 import type { DoorSeries } from '@/types';
+import { SystemTag } from '../../_components/shared-catalog';
 import { jointLabel } from './format';
 
 const status = (s: DoorSeries) => (s.isActive !== false ? <Tag tone="green">Hoạt động</Tag> : <Tag>Tạm ngưng</Tag>);
@@ -17,8 +18,9 @@ const COLUMNS: Column<DoorSeries>[] = [
         <span className="block truncate text-sm font-semibold text-slate-900" title={s.name}>
           {s.name}
         </span>
-        <span className="mt-1 block">
+        <span className="mt-1 flex flex-wrap items-center gap-1.5">
           <Tag tone="blue">{s.code}</Tag>
+          {s.isSystem && <SystemTag />}
         </span>
       </>
     ),
@@ -55,6 +57,7 @@ export function SeriesList({ rows, onOpen }: Props) {
           </div>
           <p className="flex flex-wrap items-center gap-1.5">
             <Tag tone="blue">{s.code}</Tag>
+            {s.isSystem && <SystemTag />}
             {s.cornerJointType && <Tag tone="violet">{jointLabel(s.cornerJointType)}</Tag>}
           </p>
           <p className="text-xs text-slate-500">Độ dày {thickness(s)}</p>

@@ -3,6 +3,7 @@
 import { Copy, Pencil, Trash2 } from 'lucide-react';
 import { Drawer, DrawerBody, DrawerHeader, DrawerSection, IconAction, InfoRow, Tag } from '@/components-remake';
 import type { ProfileBar } from '@/types';
+import { CopyToOrg, SystemTag } from '../../_components/shared-catalog';
 import { BAR_TYPE_MAP } from './profile-bar-config';
 import { groupCompanionsByWay } from './profile-companion-utils';
 import { SectionThumb, barTypeLabel, mm, weight } from './profile-bar-list';
@@ -33,17 +34,18 @@ export function ProfileBarDrawer({ bar: b, canCreate, canEdit, canDelete, onClos
             onClose={onClose}
             actions={
               <>
-                {canCreate && (
+                {b.isSystem && <CopyToOrg variant="icon" kind="profile-bar" id={b.id} name={b.name} onCopied={onClose} />}
+                {canCreate && !b.isSystem && (
                   <IconAction label="Sao chép" onClick={() => onCopy(b)}>
                     <Copy size={16} />
                   </IconAction>
                 )}
-                {canEdit && (
+                {canEdit && !b.isSystem && (
                   <IconAction label="Sửa" onClick={() => onEdit(b)}>
                     <Pencil size={16} />
                   </IconAction>
                 )}
-                {canDelete && (
+                {canDelete && !b.isSystem && (
                   <IconAction label="Xóa" danger onClick={() => onDelete(b)}>
                     <Trash2 size={16} />
                   </IconAction>
@@ -59,6 +61,7 @@ export function ProfileBarDrawer({ bar: b, canCreate, canEdit, canDelete, onClos
                   <h3 className="text-base font-semibold text-slate-900 [overflow-wrap:anywhere]">{b.name}</h3>
                   <p className="mt-2 flex flex-wrap items-center gap-1.5">
                     <Tag tone="blue">{b.code || '–'}</Tag>
+                    {b.isSystem && <SystemTag />}
                     <Tag tone="violet">{barTypeLabel(b)}</Tag>
                     {b.isFullCompanion && <Tag tone="amber">Combine toàn phần</Tag>}
                     {b.isVirtual && <Tag tone="teal">Ảo</Tag>}
@@ -97,9 +100,7 @@ export function ProfileBarDrawer({ bar: b, canCreate, canEdit, canDelete, onClos
                   <DrawerSection title={`Combine (${combos.length})`}>
                     {combos.map((g) => (
                       <InfoRow key={g.groupId} label={g.code || `${b.code}+combine`}>
-                        {g.items
-                          .map((it) => `${it.companionCode || 'Thanh kèm'} · ${it.offsetMm ?? 0}mm × ${it.qty ?? 1}`)
-                          .join('; ')}
+                        {g.items.map((it) => `${it.companionCode || 'Thanh kèm'} · ${it.offsetMm ?? 0}mm × ${it.qty ?? 1}`).join('; ')}
                       </InfoRow>
                     ))}
                   </DrawerSection>

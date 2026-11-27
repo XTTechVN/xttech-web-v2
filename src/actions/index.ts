@@ -34,7 +34,6 @@ export * from './door';
 // Accessories
 export * from './accessory';
 
-
 // Materials
 export * from './material';
 
@@ -82,6 +81,7 @@ export * from './dashboard';
 
 // Aluminum & Profile Master Data
 export * from './brand';
+export * from './catalog';
 export * from './door-series';
 export * from './profile';
 export * from './glass';
@@ -111,5 +111,3 @@ export * from './lead';
 
 // Staff Tasks
 export * from './task';
-
-

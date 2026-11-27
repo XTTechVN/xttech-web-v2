@@ -4,6 +4,7 @@ import { ExternalLink, Star, Trash2 } from 'lucide-react';
 import { Tag } from '@/components-remake';
 import type { Brand } from '@/types';
 import { cn } from '@/utils/cn';
+import { CopyToOrg, SystemTag } from '../../_components/shared-catalog';
 import { BrandLogo } from './brand-logo';
 import { useBrandFavorite } from './brand-favorite';
 
@@ -41,6 +42,7 @@ export function BrandCard({ brand: b, brands, canFavorite, onDelete, onOpen }: P
         </span>
         <span className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1">
           <Tag tone="blue">{b.code}</Tag>
+          {b.isSystem && <SystemTag />}
           {b.originCountry && <span className="min-w-0 truncate text-xs text-slate-500">{b.originCountry}</span>}
         </span>
         {!!b.barLengthMm && <span className="text-xs text-slate-500">Cây {b.barLengthMm.toLocaleString('vi-VN')} mm</span>}
@@ -62,7 +64,8 @@ export function BrandCard({ brand: b, brands, canFavorite, onDelete, onOpen }: P
               <ExternalLink size={14} />
             </a>
           )}
-          {onDelete && (
+          {b.isSystem && <CopyToOrg variant="card" kind="brand" id={b.id} name={b.name} />}
+          {onDelete && !b.isSystem && (
             <button
               type="button"
               aria-label={`Xóa ${b.name}`}

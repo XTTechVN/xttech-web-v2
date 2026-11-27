@@ -91,11 +91,11 @@ export function ProjectContractsLedger({ projectId }: ProjectContractsLedgerProp
       <LedgerSummary ledger={ledger} />
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
-        <div className="xl:col-span-7 bg-white rounded-control border border-slate-200/70 p-4 shadow-2xs space-y-3.5">
+        <div className="xl:col-span-7 bg-white rounded-control border border-slate-200/70 p-4 space-y-3.5">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h3 className="text-xs font-bold text-slate-800">Hợp đồng</h3>
-              <p className="text-[11px] text-slate-400 mt-0.5">
+              <h3 className="text-xs font-semibold text-slate-800">Hợp đồng</h3>
+              <p className="text-xs text-slate-400 mt-0.5">
                 Hợp đồng mới sẽ thay thế hợp đồng cũ và kế thừa số tiền đã thu
               </p>
             </div>
@@ -113,7 +113,7 @@ export function ProjectContractsLedger({ projectId }: ProjectContractsLedgerProp
           </div>
 
           {quotation && !isQuotationAccepted && !isOutdatedQuotation && (
-            <div className="p-2.5 bg-sky-50 border border-sky-200 rounded-control text-[11px] text-sky-800 flex items-start gap-1.5">
+            <div className="p-2.5 bg-sky-50 border border-sky-200 rounded-control text-xs text-sky-800 flex items-start gap-1.5">
               <AlertCircle size={14} className="text-sky-600 shrink-0 mt-px" />
               Báo giá {quotation.code} chưa được khách đồng ý. Trình admin duyệt và gửi khách ở tab Báo giá, khách
               đồng ý xong mới lập được hợp đồng.
@@ -121,7 +121,7 @@ export function ProjectContractsLedger({ projectId }: ProjectContractsLedgerProp
           )}
 
           {isOutdatedQuotation && (
-            <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-control text-[11px] text-amber-800 flex items-start gap-1.5">
+            <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-control text-xs text-amber-800 flex items-start gap-1.5">
               <AlertCircle size={14} className="text-amber-600 shrink-0 mt-px" />
               Báo giá đã cũ so với danh sách cửa. Hãy đồng bộ lại báo giá (tab Báo giá) trước khi lập hoặc ký
               hợp đồng.

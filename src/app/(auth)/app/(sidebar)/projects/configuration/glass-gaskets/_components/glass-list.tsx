@@ -4,6 +4,7 @@ import { DataTable, Tag, type Column } from '@/components-remake';
 import type { Glass, GlassCategory } from '@/types';
 import { formatCurrency } from '@/utils';
 import { glassTypeOf } from './format';
+import { SystemTag } from '../../_components/shared-catalog';
 
 const status = (g: Glass) => (g.isActive !== false ? <Tag tone="green">Hoạt động</Tag> : <Tag>Tạm khóa</Tag>);
 const thickness = (g: Glass) => (g.thicknessMm ? `${g.thicknessMm} mm` : '–');
@@ -29,6 +30,7 @@ export function GlassList({ rows, categories, onOpen }: Props) {
           </span>
           <span className="mt-1 flex flex-wrap items-center gap-1.5">
             <Tag tone="blue">{g.code || '–'}</Tag>
+            {g.isSystem && <SystemTag />}
             {g.isDefault && <Tag tone="amber">Mặc định</Tag>}
           </span>
         </>
@@ -36,7 +38,12 @@ export function GlassList({ rows, categories, onOpen }: Props) {
     },
     { key: 'type', header: 'Chủng loại', className: 'w-40', render: (g) => <Tag tone={glassTypeOf(g).tone}>{glassTypeOf(g).label}</Tag> },
     { key: 'thickness', header: 'Độ dày', className: 'w-24 whitespace-nowrap tabular-nums', render: thickness },
-    { key: 'price', header: 'Đơn giá (m²)', className: 'w-36 whitespace-nowrap text-right tabular-nums', render: (g) => formatCurrency(g.unitPrice || 0) },
+    {
+      key: 'price',
+      header: 'Đơn giá (m²)',
+      className: 'w-36 whitespace-nowrap text-right tabular-nums',
+      render: (g) => formatCurrency(g.unitPrice || 0),
+    },
     { key: 'group', header: 'Nhóm', className: 'max-w-0 truncate', wide: true, render: (g) => catName(g) || '–' },
     { key: 'status', header: 'Trạng thái', className: 'w-32', wide: true, render: status },
   ];
@@ -56,6 +63,7 @@ export function GlassList({ rows, categories, onOpen }: Props) {
           </div>
           <p className="flex flex-wrap items-center gap-1.5">
             <Tag tone="blue">{g.code || '–'}</Tag>
+            {g.isSystem && <SystemTag />}
             <Tag tone={glassTypeOf(g).tone}>{glassTypeOf(g).label}</Tag>
             {g.isDefault && <Tag tone="amber">Mặc định</Tag>}
           </p>

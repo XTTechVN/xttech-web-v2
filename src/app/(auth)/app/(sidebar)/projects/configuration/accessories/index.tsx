@@ -4,20 +4,13 @@ import { useMemo, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { CheckCircle2, Download, Layers, PauseCircle, Plus, Settings2, Upload, Wrench } from 'lucide-react';
 import toast from 'react-hot-toast';
-import {
-  deleteAccessory,
-  deleteAccessoryCategory,
-  exportAccessoriesExcel,
-  getAccessories,
-  getAccessoryCategories,
-  getBrands,
-} from '@/actions';
+import { deleteAccessory, deleteAccessoryCategory, exportAccessoriesExcel, getAccessories, getAccessoryCategories, getBrands } from '@/actions';
 import { Button, ConfirmDelete, FilterDrawer, SearchField, StatGrid, TabState } from '@/components-remake';
 import { useCan, useDebounce } from '@/hooks';
 import { getDefaultBrandId, type Accessory, type AccessoryCategory } from '@/types';
 import { showErrorToast } from '@/utils';
 import queryClient from '@/utils/query';
-import { BrandSidebar } from '../../_components';
+import { BrandTiles } from '../../_components';
 import { AccessoryCategoryManagerDrawer } from './_components/accessory-category-manager-drawer';
 import { AccessoryDeleteConfirm } from './_components/accessory-delete-confirm';
 import { AccessoryDrawer } from './_components/accessory-drawer';
@@ -32,7 +25,7 @@ const refreshAccessories = () => {
   );
 };
 
-// Phụ kiện, roan và keo theo hãng; cột hãng bên trái giữ nguyên
+// Phụ kiện, roan và keo theo hãng; hãng chọn trong bộ lọc
 export default function AccessoriesTab() {
   const { can } = useCan();
   const [search, setSearch] = useState('');
@@ -70,7 +63,16 @@ export default function AccessoriesTab() {
   const accessoriesQuery = useQuery({
     queryKey: ['accessories', brandId, categoryId, kw],
     queryFn: async () =>
-      (await getAccessories({ brandId: brandId!, categoryId: categoryId || undefined, limit: 1000, offset: 0, allowDeleted: false, search: kw || undefined })).items,
+      (
+        await getAccessories({
+          brandId: brandId!,
+          categoryId: categoryId || undefined,
+          limit: 1000,
+          offset: 0,
+          allowDeleted: false,
+          search: kw || undefined,
+        })
+      ).items,
     enabled: brandId !== null,
   });
   const rows = useMemo(() => accessoriesQuery.data ?? [], [accessoriesQuery.data]);
@@ -133,6 +135,16 @@ export default function AccessoriesTab() {
         <SearchField value={search} onChange={setSearch} label="Tìm phụ kiện" placeholder="Tìm theo mã hoặc tên phụ kiện..." />
         <FilterDrawer
           groups={[{ key: 'category', label: 'Danh mục', options: categories.map((c) => ({ value: String(c.id), label: c.name })) }]}
+          after={
+            <BrandTiles
+              brands={sortedBrands}
+              value={brandId}
+              onChange={(id) => {
+                setPickedBrandId(id);
+                setFilter({});
+              }}
+            />
+          }
           value={filter}
           onChange={setFilter}
         />
@@ -161,14 +173,6 @@ export default function AccessoriesTab() {
       </div>
 
       <div className="flex flex-col gap-4 md:flex-row">
-        <BrandSidebar
-          brands={brands}
-          selectedBrandId={brandId}
-          onSelectBrand={(id) => {
-            setPickedBrandId(id);
-            setFilter({});
-          }}
-        />
         <div className="w-full min-w-0 flex-1">
           <TabState
             loading={brandsQuery.isLoading || accessoriesQuery.isLoading}
@@ -206,7 +210,13 @@ export default function AccessoriesTab() {
           setDeleting(a);
         }}
       />
-      <AccessoryFormDrawer isOpen={!!form} onClose={() => setForm(null)} accessory={form?.accessory ?? null} brands={brands} defaultBrandId={brandId} />
+      <AccessoryFormDrawer
+        isOpen={!!form}
+        onClose={() => setForm(null)}
+        accessory={form?.accessory ?? null}
+        brands={brands}
+        defaultBrandId={brandId}
+      />
       <AccessoryCategoryManagerDrawer
         isOpen={managing}
         onClose={() => setManaging(false)}
@@ -227,7 +237,12 @@ export default function AccessoriesTab() {
         defaultBrandId={brandId}
         onImportSuccess={onImported}
       />
-      <AccessoryDeleteConfirm accessory={deleting} pending={remove.isPending} onClose={() => setDeleting(null)} onConfirm={() => deleting && remove.mutate(deleting.id)} />
+      <AccessoryDeleteConfirm
+        accessory={deleting}
+        pending={remove.isPending}
+        onClose={() => setDeleting(null)}
+        onConfirm={() => deleting && remove.mutate(deleting.id)}
+      />
       <ConfirmDelete
         isOpen={!!deletingCategory}
         title="Xác nhận xóa danh mục"

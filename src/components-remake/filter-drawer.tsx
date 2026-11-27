@@ -5,13 +5,15 @@ import { SlidersHorizontal } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button } from './button';
 import { Drawer } from './drawer';
-import { Select } from './select';
+import { Select, type SelectOption } from './select';
 import { DrawerBody, DrawerFooter, DrawerHeader } from './drawer-parts';
 
 export interface FilterGroup {
   key: string;
   label: string;
-  options: { value: string; label: string }[];
+  options: SelectOption[];
+  /** Mặc định chọn trong drawer con; false = menu thả xuống ngay dưới ô (ít lựa chọn) */
+  side?: boolean;
 }
 
 interface FilterDrawerProps {
@@ -19,11 +21,13 @@ interface FilterDrawerProps {
   value: Record<string, string>;
   onChange: (next: Record<string, string>) => void;
   /** Phần lọc thêm không phải ô chọn (ví dụ khoảng ngày): nội dung, số bộ lọc đang bật, và cách xóa */
+  /** Khối đặt sau các ô chọn (ví dụ danh sách hãng dạng ô hình) */
+  after?: React.ReactNode;
   extra?: { node: React.ReactNode; count: number; onReset: () => void };
 }
 
 // Nút "Lọc" + ngăn kéo; mỗi nhóm một ô chọn (chọn "Tất cả" để bỏ lọc). Áp dụng ngay khi chọn.
-export function FilterDrawer({ groups, value, onChange, extra }: FilterDrawerProps) {
+export function FilterDrawer({ groups, value, onChange, after, extra }: FilterDrawerProps) {
   const [open, setOpen] = useState(false);
   const count = Object.values(value).filter(Boolean).length + (extra?.count ?? 0);
 
@@ -47,7 +51,7 @@ export function FilterDrawer({ groups, value, onChange, extra }: FilterDrawerPro
             {groups.map((g) => (
               <Select
                 key={g.key}
-                side
+                side={g.side ?? true}
                 label={g.label}
                 value={value[g.key] ?? ''}
                 options={g.options}
@@ -56,6 +60,7 @@ export function FilterDrawer({ groups, value, onChange, extra }: FilterDrawerPro
                 clearLabel="Tất cả"
               />
             ))}
+            {after}
             {extra?.node}
           </div>
         </DrawerBody>

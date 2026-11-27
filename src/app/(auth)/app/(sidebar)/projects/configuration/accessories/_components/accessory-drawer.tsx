@@ -5,6 +5,7 @@ import { Drawer, DrawerBody, DrawerHeader, DrawerSection, IconAction, InfoRow, T
 import { formatAccessoryUnit, type Accessory, type Brand } from '@/types';
 import { formatCurrency } from '@/utils';
 import { accessoryImage, colorLabel } from './accessory-list';
+import { CopyToOrg, SystemTag } from '../../_components/shared-catalog';
 
 interface Props {
   accessory: Accessory | null;
@@ -29,12 +30,13 @@ export function AccessoryDrawer({ accessory: a, brands, canEdit, canDelete, onCl
             onClose={onClose}
             actions={
               <>
-                {canEdit && (
+                {a.isSystem && <CopyToOrg variant="icon" kind="accessory" id={a.id} name={a.name} onCopied={onClose} />}
+                {canEdit && !a.isSystem && (
                   <IconAction label="Sửa" onClick={() => onEdit(a)}>
                     <Pencil size={16} />
                   </IconAction>
                 )}
-                {canDelete && (
+                {canDelete && !a.isSystem && (
                   <IconAction label="Xóa" danger onClick={() => onDelete(a)}>
                     <Trash2 size={16} />
                   </IconAction>
@@ -44,10 +46,13 @@ export function AccessoryDrawer({ accessory: a, brands, canEdit, canDelete, onCl
           />
           <DrawerBody>
             <div className="pt-4">
-              {image && <img src={image} alt={a.name} className="mb-4 h-40 w-full rounded-control border border-slate-200 bg-slate-50 object-contain" />}
+              {image && (
+                <img src={image} alt={a.name} className="mb-4 h-40 w-full rounded-control border border-slate-200 bg-slate-50 object-contain" />
+              )}
               <h3 className="text-base font-semibold text-slate-900 [overflow-wrap:anywhere]">{a.name}</h3>
               <p className="mb-4 mt-2 flex flex-wrap items-center gap-1.5">
                 {a.code && <Tag tone="blue">{a.code}</Tag>}
+                {a.isSystem && <SystemTag />}
                 {a.category?.name && <Tag tone="violet">{a.category.name}</Tag>}
                 {a.isActive !== false ? <Tag tone="green">Hoạt động</Tag> : <Tag>Tạm ngưng</Tag>}
               </p>

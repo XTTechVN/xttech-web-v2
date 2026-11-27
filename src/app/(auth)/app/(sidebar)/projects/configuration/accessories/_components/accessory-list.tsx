@@ -4,6 +4,7 @@ import { DataTable, Tag, type Column } from '@/components-remake';
 import { ACCESSORY_COLOR_MAP, formatAccessoryUnit, type Accessory } from '@/types';
 import { formatCurrency } from '@/utils';
 import { BASE_MINIO_URL } from '@/config';
+import { SystemTag } from '../../_components/shared-catalog';
 
 export const accessoryImage = (a: Accessory) =>
   a.imagePath ? (a.imagePath.startsWith('http') ? a.imagePath : `${BASE_MINIO_URL}/${a.imagePath.replace(/^\//, '')}`) : null;
@@ -33,6 +34,7 @@ const COLUMNS: Column<Accessory>[] = [
           </span>
           <span className="mt-1 flex flex-wrap items-center gap-1.5">
             {a.code && <Tag tone="blue">{a.code}</Tag>}
+            {a.isSystem && <SystemTag />}
             {a.category?.name && <Tag tone="violet">{a.category.name}</Tag>}
           </span>
         </div>
@@ -69,6 +71,7 @@ export function AccessoryList({ rows, onOpen }: Props) {
             </div>
             <p className="flex flex-wrap items-center gap-1.5">
               {a.code && <Tag tone="blue">{a.code}</Tag>}
+              {a.isSystem && <SystemTag />}
               {a.category?.name && <Tag tone="violet">{a.category.name}</Tag>}
             </p>
             <p className="text-xs text-slate-500">

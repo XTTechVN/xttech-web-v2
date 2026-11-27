@@ -48,19 +48,19 @@ export function ProductionSheetsModal({
 
   return (
     <div className="production-sheets-modal-root fixed inset-0 z-50 flex flex-col bg-slate-900/60 backdrop-blur-xs">
-      <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-6 shadow-xs">
+      <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-6">
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-control bg-primary/10 text-primary">
             <FileText size={18} />
           </div>
           <div>
-            <h2 className="flex items-center gap-2 text-sm font-bold text-slate-800">
+            <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-800">
               <span>Thẻ sản xuất &amp; lắp ráp cửa</span>
               <span className="rounded bg-primary/10 px-2 py-0.5 tabular-nums text-xs text-primary">
                 {order.code}
               </span>
             </h2>
-            <p className="text-[11px] text-slate-400">
+            <p className="text-xs text-slate-400">
               {order.name} · {sheets.length} bộ cửa trong đợt
             </p>
           </div>
@@ -72,7 +72,7 @@ export function ProductionSheetsModal({
             onClick={() => setSelectedPositionId('all')}
             className={`cursor-pointer rounded-control px-3 py-1 text-xs font-semibold transition-all ${
               selectedPositionId === 'all'
-                ? 'bg-white text-primary shadow-xs'
+                ? 'bg-white text-primary'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -85,7 +85,7 @@ export function ProductionSheetsModal({
               onClick={() => setSelectedPositionId(s.positionId)}
               className={`cursor-pointer whitespace-nowrap rounded-control px-2.5 py-1 tabular-nums text-xs font-semibold transition-all ${
                 selectedPositionId === s.positionId
-                  ? 'bg-white text-primary shadow-xs'
+                  ? 'bg-white text-primary'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >

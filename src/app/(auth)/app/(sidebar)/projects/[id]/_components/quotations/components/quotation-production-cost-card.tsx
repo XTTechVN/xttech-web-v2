@@ -14,7 +14,7 @@ interface QuotationProductionCostCardProps {
   accessoryMode: 'combined' | 'separated';
 }
 
-const TH_CLASS = 'py-2.5 px-3 text-[11px] font-bold text-slate-500';
+const TH_CLASS = 'py-2.5 px-3 text-xs font-semibold text-slate-500';
 const TD_LABEL_CLASS = 'py-2 px-3 text-slate-600 pl-6';
 const TD_NUM_CLASS = 'py-2 px-3 text-right tabular-nums text-slate-700';
 
@@ -30,19 +30,19 @@ export function QuotationProductionCostCard({
   };
 
   return (
-    <div className="rounded-block border border-slate-200/80 bg-white shadow-xs overflow-hidden">
+    <div className="rounded-block border border-slate-200/80 bg-white overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-b border-slate-200/80 bg-slate-50/40">
         <div className="flex items-center gap-2">
           <BarChart3 size={16} className="text-primary shrink-0" />
-          <h3 className="text-xs font-bold tracking-wide text-slate-800">
+          <h3 className="text-xs font-semibold tracking-wide text-slate-800">
             PHÂN TÍCH CẤU THÀNH GIÁ SẢN XUẤT
           </h3>
         </div>
         <div className="text-xs text-slate-500 font-medium tabular-nums">
           Diện tích:{' '}
-          <span className="font-bold text-slate-700">{costBreakdown.totalAreaM2.toFixed(2)} m²</span>
+          <span className="font-semibold text-slate-700">{costBreakdown.totalAreaM2.toFixed(2)} m²</span>
           {' · '}KL nhôm:{' '}
-          <span className="font-bold text-slate-700">
+          <span className="font-semibold text-slate-700">
             {costBreakdown.totalAluminumKg.toFixed(2)} kg
           </span>
         </div>
@@ -61,7 +61,7 @@ export function QuotationProductionCostCard({
           <tbody>
             {/* Nhóm 1: VẬT TƯ */}
             <tr className="bg-slate-50/90 border-b border-slate-200/60">
-              <td colSpan={4} className="py-2 px-3 font-bold text-slate-800">
+              <td colSpan={4} className="py-2 px-3 font-semibold text-slate-800">
                 1. VẬT TƯ
               </td>
             </tr>
@@ -73,7 +73,7 @@ export function QuotationProductionCostCard({
                 <td className={TD_NUM_CLASS}>{row.unitCostPerM2.toLocaleString('vi-VN')}</td>
               </tr>
             ))}
-            <tr className="border-b border-slate-200/80 bg-slate-50/40 font-bold text-slate-800">
+            <tr className="border-b border-slate-200/80 bg-slate-50/40 font-semibold text-slate-800">
               <td className="py-2 px-3 pl-6">CỘNG VẬT TƯ</td>
               <td className="py-2 px-3 text-right tabular-nums">
                 {costBreakdown.totalMaterialCost.toLocaleString('vi-VN')}
@@ -88,7 +88,7 @@ export function QuotationProductionCostCard({
 
             {/* Nhóm 2: SẢN XUẤT & LẮP ĐẶT */}
             <tr className="bg-slate-50/90 border-b border-slate-200/60">
-              <td colSpan={4} className="py-2 px-3 font-bold text-slate-800">
+              <td colSpan={4} className="py-2 px-3 font-semibold text-slate-800">
                 2. SẢN XUẤT &amp; LẮP ĐẶT
               </td>
             </tr>
@@ -112,7 +112,7 @@ export function QuotationProductionCostCard({
                 </tr>
               );
             })}
-            <tr className="border-b border-slate-200/80 bg-slate-50/40 font-bold text-slate-800">
+            <tr className="border-b border-slate-200/80 bg-slate-50/40 font-semibold text-slate-800">
               <td className="py-2 px-3 pl-6">CỘNG NHÂN CÔNG</td>
               <td className="py-2 px-3 text-right tabular-nums">
                 {costBreakdown.totalLaborCost.toLocaleString('vi-VN')}
@@ -126,7 +126,7 @@ export function QuotationProductionCostCard({
             </tr>
           </tbody>
           <tfoot>
-            <tr className="bg-primary/5 border-t-2 border-primary/40 text-primary font-bold">
+            <tr className="bg-primary/5 border-t-2 border-primary/40 text-primary font-semibold">
               <td className="py-2.5 px-3">TỔNG GIÁ GỐC DỰ TOÁN</td>
               <td className="py-2.5 px-3 text-right tabular-nums text-sm">
                 {costBreakdown.totalBaseCost.toLocaleString('vi-VN')}

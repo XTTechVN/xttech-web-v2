@@ -77,7 +77,7 @@ export function TabWarranty({ projectId }: TabWarrantyProps) {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <ShieldCheck size={18} className="text-primary" />
-            <span className="text-sm font-bold text-slate-800">
+            <span className="text-sm font-semibold text-slate-800">
               Bảo hành {summary.warrantyMonths} tháng
             </span>
             <Badge variant={state.variant}>{state.label}</Badge>
@@ -135,7 +135,7 @@ export function TabWarranty({ projectId }: TabWarrantyProps) {
             </div>
 
             <div>
-              <div className="mb-0.5 flex justify-between text-[11px] text-slate-500">
+              <div className="mb-0.5 flex justify-between text-xs text-slate-500">
                 <span>Thời gian bảo hành đã trôi qua</span>
                 <span className="tabular-nums">{summary.elapsedPercent}%</span>
               </div>

@@ -48,7 +48,7 @@ function OutdatedBanner({ quotation, isSyncing, onSync }: QuotationStatusBannerP
       <div className="flex items-start gap-2">
         <AlertTriangle size={15} className="shrink-0 mt-0.5 text-amber-600" />
         <div className="space-y-0.5">
-          <p className="font-bold">Báo giá đã cũ so với dữ liệu cửa hiện tại</p>
+          <p className="font-semibold">Báo giá đã cũ so với dữ liệu cửa hiện tại</p>
           {quotation.outdatedReason && <p>{quotation.outdatedReason}</p>}
           <p className="text-amber-700">{syncHint}</p>
         </div>

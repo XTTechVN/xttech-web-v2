@@ -14,6 +14,8 @@ export interface AccessoryComboItem {
 }
 
 export interface AccessoryCombo {
+  /** Bản ghi dùng chung của nền tảng: org khác chỉ đọc, nhân bản về để chỉnh */
+  isSystem?: boolean;
   id: number;
   code: string;
   name: string;

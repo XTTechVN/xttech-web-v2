@@ -47,23 +47,23 @@ export function ProjectDualProgressCard({ projectId, onSelectTab }: ProjectDualP
         <button
           type="button"
           onClick={() => onSelectTab?.('production')}
-          className="cursor-pointer space-y-2 rounded-control border border-slate-200/80 bg-white p-3.5 text-left shadow-2xs hover:border-primary/40"
+          className="cursor-pointer space-y-2 rounded-block border border-slate-200/80 bg-white p-3.5 text-left hover:border-primary/40"
         >
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
               <Factory size={14} className="text-primary" /> Sản xuất & thi công
             </span>
-            <span className="text-xl font-bold text-slate-900">{production.percent}%</span>
+            <span className="text-xl font-semibold text-slate-900">{production.percent}%</span>
           </div>
           <ProgressBar percent={production.percent} className="bg-primary" />
-          <div className="text-[11px] text-slate-500">
+          <div className="text-xs text-slate-500">
             Xong xưởng {production.factoryPercent}% · {production.totalPositions} cửa · {production.totalAreaM2} m²
           </div>
           <div className="flex flex-wrap gap-1">
             {statusEntries.map(([status, count]) => (
               <span
                 key={status}
-                className="rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-medium text-slate-600"
+                className="rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-xs font-medium text-slate-600"
               >
                 {production.statusLabels[status]}: {count}
               </span>
@@ -74,21 +74,21 @@ export function ProjectDualProgressCard({ projectId, onSelectTab }: ProjectDualP
         <button
           type="button"
           onClick={() => onSelectTab?.('contracts')}
-          className="cursor-pointer space-y-2 rounded-control border border-slate-200/80 bg-white p-3.5 text-left shadow-2xs hover:border-amber-400/60"
+          className="cursor-pointer space-y-2 rounded-block border border-slate-200/80 bg-white p-3.5 text-left hover:border-amber-400/60"
         >
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
               <Wallet size={14} className="text-amber-600" /> Thanh toán
             </span>
-            <span className="text-xl font-bold text-slate-900">{payment.percent}%</span>
+            <span className="text-xl font-semibold text-slate-900">{payment.percent}%</span>
           </div>
           <ProgressBar percent={payment.percent} className="bg-amber-500" />
-          <div className="text-[11px] text-slate-500">
+          <div className="text-xs text-slate-500">
             {payment.hasSignedContract
               ? `Đã thu ${formatVnd(payment.collected)} / ${formatVnd(payment.contractTotal)}`
               : 'Chưa có hợp đồng đã ký'}
           </div>
-          <div className="text-[11px] font-semibold text-slate-700">
+          <div className="text-xs font-semibold text-slate-700">
             {payment.isFullyPaid ? 'Đã thu đủ' : `Còn phải thu: ${formatVnd(payment.remaining)}`}
           </div>
         </button>
@@ -96,10 +96,10 @@ export function ProjectDualProgressCard({ projectId, onSelectTab }: ProjectDualP
 
       {nextActions.length > 0 && (
         <div className="space-y-1 rounded-control border border-amber-200 bg-amber-50/60 p-2.5">
-          <div className="flex items-center gap-1.5 text-[11px] font-bold text-amber-800">
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-800">
             <Lightbulb size={12} /> Việc cần làm tiếp
           </div>
-          <ul className="list-inside list-disc space-y-0.5 text-[11px] text-amber-900">
+          <ul className="list-inside list-disc space-y-0.5 text-xs text-amber-900">
             {nextActions.map((action) => (
               <li key={action}>{action}</li>
             ))}

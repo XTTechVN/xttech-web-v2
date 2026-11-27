@@ -41,9 +41,9 @@ function ReversalForm({ transaction, isSubmitting, onClose, onConfirm }: Reversa
   return (
     <div className="space-y-4">
       <div className="p-3 bg-red-50 border border-red-200 rounded-control text-xs text-red-800 space-y-1">
-        <span className="font-bold block">Xác nhận hoàn tiền cho giao dịch:</span>
+        <span className="font-semibold block">Xác nhận hoàn tiền cho giao dịch:</span>
         <span>Mã GD: {transaction.transactionCode}</span>
-        <span className="block font-bold">Số tiền hoàn trả: -{formatCurrency(transaction.amount)}</span>
+        <span className="block font-semibold">Số tiền hoàn trả: -{formatCurrency(transaction.amount)}</span>
       </div>
       <Input
         label="Lý do hoàn tiền (bắt buộc) *"

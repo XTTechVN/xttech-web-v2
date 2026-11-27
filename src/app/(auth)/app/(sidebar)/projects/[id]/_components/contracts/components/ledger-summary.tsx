@@ -15,13 +15,13 @@ interface LedgerCardProps {
 
 function LedgerCard({ label, value, hint, icon, tone }: LedgerCardProps) {
   return (
-    <div className="bg-white p-3.5 rounded-control border border-slate-200/70 shadow-2xs">
+    <div className="bg-white p-3.5 rounded-control border border-slate-200/70">
       <div className="flex items-center justify-between">
         <span className={`text-xs font-medium ${tone}`}>{label}</span>
         {icon}
       </div>
-      <div className={`text-base font-bold mt-1 ${tone}`}>{value}</div>
-      <div className="text-[11px] text-slate-400 mt-0.5">{hint}</div>
+      <div className={`text-base font-semibold mt-1 ${tone}`}>{value}</div>
+      <div className="text-xs text-slate-400 mt-0.5">{hint}</div>
     </div>
   );
 }

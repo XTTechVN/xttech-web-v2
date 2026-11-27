@@ -6,6 +6,7 @@ import { DoorThumbnail } from '@/components';
 import { Tag } from '@/components-remake';
 import { BASE_MINIO_URL } from '@/config';
 import { getDoorTypeConfig, type Door } from '@/types';
+import { SystemTag } from '../../_components/shared-catalog';
 
 // Bản vẽ của mẫu cửa: ưu tiên bản vẽ SVG từ cấu hình, sau đó ảnh, cuối cùng là khung trống
 export function DoorPreview({ door }: { door: Door }) {
@@ -47,6 +48,7 @@ export function DoorCard({ door, onOpen }: { door: Door; onOpen: (door: Door) =>
       <span className="flex min-w-0 flex-1 flex-col gap-1.5 border-t border-slate-100 p-3">
         <span className="flex flex-wrap items-center gap-1.5">
           {door.code && <Tag tone="blue">{door.code}</Tag>}
+          {door.isSystem && <SystemTag />}
           {door.type && <Tag tone="violet">{type.label}</Tag>}
         </span>
         <span className="line-clamp-2 text-sm font-semibold leading-snug text-slate-900 [overflow-wrap:anywhere]">{door.name}</span>

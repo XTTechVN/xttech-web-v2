@@ -50,14 +50,14 @@ export function PositionCard({
   const displayDesc = pos.description || pos.supplierDoor?.name || (pos.doorType === 'window' ? 'Cửa sổ' : 'Cửa đi');
 
   return (
-    <div className="group bg-white rounded-block border border-slate-200 hover:border-primary hover:shadow-md transition-all flex flex-col justify-between overflow-hidden">
+    <div className="group bg-white rounded-block border border-slate-200 hover:border-primary transition-all flex flex-col justify-between overflow-hidden">
       <div className="p-2.5 bg-white border-b border-slate-100 flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 min-w-0">
-          <span className="font-semibold text-[11px] text-slate-700 truncate" title={pos.code}>
+          <span className="font-semibold text-xs text-slate-700 truncate" title={pos.code}>
             {pos.code}
           </span>
           {isOutsourced && (
-            <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold shrink-0 ${DOOR_FULFILLMENT_TYPE_MAP.outsourced.badgeClass}`}>
+            <span className={`px-1.5 py-0.5 rounded text-xs font-semibold shrink-0 ${DOOR_FULFILLMENT_TYPE_MAP.outsourced.badgeClass}`}>
               {DOOR_FULFILLMENT_TYPE_MAP.outsourced.shortLabel}
             </span>
           )}
@@ -82,16 +82,16 @@ export function PositionCard({
           <img
             src={resolvedVisual.imageUrl}
             alt={pos.code}
-            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300 rounded"
+            className="w-full h-full object-contain rounded"
           />
         ) : resolvedVisual.systemConfig ? (
-          <div className="w-full h-full p-1 group-hover:scale-105 transition-transform duration-300 pointer-events-none">
+          <div className="w-full h-full p-1 pointer-events-none">
             <DoorThumbnail systemConfig={resolvedVisual.systemConfig} hideDimensions={false} className="w-full h-full" />
           </div>
         ) : (
           <div className="flex flex-col items-center gap-1 text-slate-300">
             <ImageOff size={26} />
-            <span className="text-[10px]">{isOutsourced ? 'Chưa có ảnh / phác thảo 2D' : 'Chưa có bản vẽ CAD'}</span>
+            <span className="text-xs">{isOutsourced ? 'Chưa có ảnh / phác thảo 2D' : 'Chưa có bản vẽ CAD'}</span>
           </div>
         )}
       </div>
@@ -104,15 +104,15 @@ export function PositionCard({
         </div>
 
         <div className="flex items-center justify-between text-xs text-slate-600">
-          <span className="tabular-nums font-medium">
+          <span className="min-w-0 truncate tabular-nums font-medium">
             {pos.width} × {pos.height} mm
           </span>
-          <span className="tabular-nums text-slate-400 text-[11px]">
+          <span className="flex-none whitespace-nowrap tabular-nums text-slate-500 text-xs">
             {(pos.areaM2 ?? 0).toFixed(2)} m²
           </span>
         </div>
 
-        <div className="text-[11px] text-slate-400 flex items-center justify-between gap-2">
+        <div className="text-xs text-slate-400 flex items-center justify-between gap-2">
           <span className="truncate">{pos.floor?.name || 'Tầng 1'}</span>
           {isOutsourced && pos.supplier?.name && (
             <span className="truncate text-primary font-medium" title={pos.supplier.name}>
@@ -123,17 +123,17 @@ export function PositionCard({
 
         {isOutsourced && (
           <div className="pt-1 flex items-center justify-between gap-1.5">
-            <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${costConfig.badgeClass}`}>
+            <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${costConfig.badgeClass}`}>
               {costConfig.shortLabel}
             </span>
-            <span className="tabular-nums text-[11px] font-bold text-slate-800">
+            <span className="tabular-nums text-xs font-semibold text-slate-800">
               {new Intl.NumberFormat('vi-VN').format(pos.supplierCostPrice || 0)} đ/bộ
             </span>
           </div>
         )}
 
         {pos.measureNote && (
-          <p className="text-[11px] text-slate-500 break-words leading-tight">
+          <p className="text-xs text-slate-500 break-words leading-tight">
             <span className="font-medium text-slate-600">Ghi chú:</span> {pos.measureNote}
           </p>
         )}
@@ -143,7 +143,7 @@ export function PositionCard({
             <button
               type="button"
               onClick={() => onOpenStudio(pos)}
-              className="h-7 px-2 flex items-center justify-center gap-1 rounded-control border border-slate-200 text-[11px] font-semibold text-slate-700 hover:border-primary/40 hover:text-primary hover:bg-primary/5 cursor-pointer transition-colors"
+              className="h-11 md:h-8 px-2 flex items-center justify-center gap-1 rounded-control border border-slate-200 text-xs font-semibold text-slate-700 hover:border-primary/40 hover:text-primary hover:bg-primary/5 cursor-pointer transition-colors"
             >
               <PenTool size={12} />
               <span className="truncate">Phác thảo 2D</span>
@@ -151,7 +151,7 @@ export function PositionCard({
             <button
               type="button"
               onClick={() => onOpenSupplierQuote(pos)}
-              className="h-7 px-2 flex items-center justify-center gap-1 rounded-control border border-primary/30 bg-primary/5 text-[11px] font-semibold text-primary hover:bg-primary/10 cursor-pointer transition-colors"
+              className="h-11 md:h-8 px-2 flex items-center justify-center gap-1 rounded-control border border-primary/30 bg-primary/5 text-xs font-semibold text-primary hover:bg-primary/10 cursor-pointer transition-colors"
             >
               <BadgeDollarSign size={12} />
               <span className="truncate">Báo giá NCC</span>
@@ -164,8 +164,9 @@ export function PositionCard({
             <button
               type="button"
               title="Chỉnh sửa thông tin cửa"
+              aria-label="Chỉnh sửa thông tin cửa"
               onClick={() => onEdit(pos)}
-              className="h-7 flex items-center justify-center border border-slate-200 text-slate-600 hover:text-primary hover:border-primary/40 hover:bg-primary/5 rounded-control cursor-pointer transition-colors"
+              className="h-11 md:h-8 flex items-center justify-center border border-slate-200 text-slate-600 hover:text-primary hover:border-primary/40 hover:bg-primary/5 rounded-control cursor-pointer transition-colors"
             >
               <Edit size={13} />
             </button>
@@ -173,16 +174,18 @@ export function PositionCard({
           <button
             type="button"
             title="Đo đạc ô chờ thực tế"
+            aria-label="Đo đạc ô chờ thực tế"
             onClick={() => onMeasure(pos)}
-            className="h-7 flex items-center justify-center border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-control cursor-pointer transition-colors"
+            className="h-11 md:h-8 flex items-center justify-center border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-control cursor-pointer transition-colors"
           >
             <Ruler size={13} />
           </button>
           <button
             type="button"
             title="Xem mã QR"
+            aria-label="Xem mã QR"
             onClick={() => onQrCode(pos)}
-            className="h-7 flex items-center justify-center border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-control cursor-pointer transition-colors"
+            className="h-11 md:h-8 flex items-center justify-center border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-control cursor-pointer transition-colors"
           >
             <QrCode size={13} />
           </button>
@@ -190,9 +193,10 @@ export function PositionCard({
             <button
               type="button"
               title="Nhân bản bộ cửa"
+              aria-label="Nhân bản bộ cửa"
               disabled={isDuplicating}
               onClick={() => onDuplicate(pos)}
-              className="h-7 flex items-center justify-center border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-control cursor-pointer transition-colors disabled:opacity-50"
+              className="h-11 md:h-8 flex items-center justify-center border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-control cursor-pointer transition-colors disabled:opacity-50"
             >
               <Copy size={13} />
             </button>
@@ -201,8 +205,9 @@ export function PositionCard({
             <button
               type="button"
               title="Xóa bộ cửa"
+              aria-label="Xóa bộ cửa"
               onClick={() => onDelete(pos)}
-              className="h-7 flex items-center justify-center border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 rounded-control cursor-pointer transition-colors"
+              className="h-11 md:h-8 flex items-center justify-center border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 rounded-control cursor-pointer transition-colors"
             >
               <Trash2 size={13} />
             </button>

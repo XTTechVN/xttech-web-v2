@@ -46,7 +46,7 @@ function ContractTermsForm({ contract, isSubmitting, onClose, onSave }: Contract
   return (
     <div className="space-y-4">
       {isReadOnly && (
-        <p className="text-[11px] text-slate-500">
+        <p className="text-xs text-slate-500">
           Hợp đồng đã ký hoặc đã hủy nên chỉ xem, không chỉnh sửa được.
         </p>
       )}

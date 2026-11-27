@@ -31,10 +31,10 @@ export function ProjectProgressCard({ project, updatingField, onUpdate }: Projec
     <div className="space-y-1.5">
       <h3 className="text-xs font-semibold text-slate-700 font-lexend block">Tiến độ &amp; Phụ trách</h3>
 
-      <div className="bg-white rounded-control border border-slate-200/80 p-3.5 shadow-2xs space-y-2.5 text-xs">
+      <div className="bg-white rounded-control border border-slate-200/80 p-3.5 space-y-2.5 text-xs">
         <div className="flex items-center justify-between">
           <span className="text-slate-500">Mã công trình</span>
-          <span className="tabular-nums font-semibold text-slate-700 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200/70 text-[11px]">
+          <span className="tabular-nums font-semibold text-slate-700 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200/70 text-xs">
             {project.code || `DA-${project.id}`}
           </span>
         </div>
@@ -61,7 +61,7 @@ export function ProjectProgressCard({ project, updatingField, onUpdate }: Projec
             <div className="text-right">
               <span className="font-semibold text-slate-800 block">{user.fullName}</span>
               {user.phoneNumber && (
-                <a href={`tel:${user.phoneNumber}`} className="text-[11px] text-slate-500 hover:text-primary block">
+                <a href={`tel:${user.phoneNumber}`} className="text-xs text-slate-500 hover:text-primary block">
                   {user.phoneNumber}
                 </a>
               )}
@@ -75,7 +75,7 @@ export function ProjectProgressCard({ project, updatingField, onUpdate }: Projec
             <div className="text-right">
               <span className="font-semibold text-slate-800 block">{staff.fullName}</span>
               {staff.phoneNumber && (
-                <a href={`tel:${staff.phoneNumber}`} className="text-[11px] text-slate-500 hover:text-primary block">
+                <a href={`tel:${staff.phoneNumber}`} className="text-xs text-slate-500 hover:text-primary block">
                   {staff.phoneNumber}
                 </a>
               )}

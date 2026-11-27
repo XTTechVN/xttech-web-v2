@@ -149,6 +149,8 @@ export interface DoorImage {
 }
 
 export interface Door {
+  /** Bản ghi dùng chung của nền tảng: org khác chỉ đọc, nhân bản về để chỉnh */
+  isSystem?: boolean;
   id: number;
   doorSeriesId?: number | null;
   doorSeries?: DoorSeries | null;

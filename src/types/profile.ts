@@ -66,6 +66,8 @@ export interface ProfileBarCompanion {
 }
 
 export interface ProfileBar {
+  /** Bản ghi dùng chung của nền tảng: org khác chỉ đọc, nhân bản về để chỉnh */
+  isSystem?: boolean;
   id: number;
   brandId: number;
   seriesId: number;

@@ -133,7 +133,7 @@ export function ProgressUpdateModal({
               type="button"
               disabled={isUploading}
               onClick={() => fileInputRef.current?.click()}
-              className="inline-flex cursor-pointer items-center gap-1 text-[11px] font-semibold text-primary hover:text-primary-hover disabled:opacity-50"
+              className="inline-flex cursor-pointer items-center gap-1 text-xs font-semibold text-primary hover:text-primary-hover disabled:opacity-50"
             >
               <Upload size={13} />
               <span>Thêm ảnh / video</span>
@@ -202,7 +202,7 @@ export function ProgressUpdateModal({
                     </div>
                   ))}
                 </div>
-                <p className="text-center text-[11px] text-slate-400">
+                <p className="text-center text-xs text-slate-400">
                   Kéo thả thêm ảnh/video vào khung này hoặc bấm &quot;Thêm ảnh / video&quot;
                 </p>
               </div>
@@ -214,7 +214,7 @@ export function ProgressUpdateModal({
                 <p className="text-xs font-medium text-slate-600">
                   Kéo thả ảnh/video vào đây hoặc <span className="font-semibold text-primary">bấm để chọn tệp</span>
                 </p>
-                <span className="text-[11px] text-slate-400">
+                <span className="text-xs text-slate-400">
                   Hỗ trợ tải lên nhiều hình ảnh &amp; video nghiệm thu cùng lúc
                 </span>
               </div>
@@ -225,14 +225,14 @@ export function ProgressUpdateModal({
         <div className="flex items-center justify-between rounded-control border border-slate-200/80 bg-slate-50 p-3">
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-slate-500">Mốc hiện tại:</span>
-            <span className="text-xs font-bold text-slate-700">
+            <span className="text-xs font-semibold text-slate-700">
               {currentStep ? PROGRESS_STEP_LABEL[currentStep] : '---'}
             </span>
           </div>
           <ArrowRight size={14} className="text-primary" />
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-slate-500">Chuyển sang:</span>
-            <span className="text-xs font-bold text-primary">
+            <span className="text-xs font-semibold text-primary">
               {targetStep ? PROGRESS_STEP_LABEL[targetStep] : '---'}
             </span>
           </div>
@@ -246,7 +246,7 @@ export function ProgressUpdateModal({
             {selectedPositions.map((pos) => (
               <span
                 key={pos.id}
-                className="inline-flex items-center rounded border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-bold text-slate-700 shadow-2xs"
+                className="inline-flex items-center rounded border border-slate-200 bg-white px-2 py-0.5 text-xs font-semibold text-slate-700"
               >
                 {pos.code}
               </span>

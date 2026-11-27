@@ -136,25 +136,25 @@ function ContractForm({
                 {quotation.code} (v{quotation.version})
               </strong>
             </span>
-            <span className="font-bold text-slate-800">{formatCurrency(quotation.totalAmount)}</span>
+            <span className="font-semibold text-slate-800">{formatCurrency(quotation.totalAmount)}</span>
           </div>
         )}
 
         {isOutdated && (
           <div className="p-3 bg-amber-50 border border-amber-200 rounded-control text-xs text-amber-800 space-y-1">
-            <div className="font-bold flex items-center gap-1.5">
+            <div className="font-semibold flex items-center gap-1.5">
               <RefreshCw size={14} className="text-amber-600" /> Báo giá đã cũ so với danh sách cửa
             </div>
-            <p className="text-[11px] text-amber-700">Hãy đóng cửa sổ này, đồng bộ lại báo giá ở tab Báo giá rồi lập hợp đồng.</p>
+            <p className="text-xs text-amber-700">Hãy đóng cửa sổ này, đồng bộ lại báo giá ở tab Báo giá rồi lập hợp đồng.</p>
           </div>
         )}
 
         {liveContract && (
           <div className="p-3 bg-blue-50 border border-blue-200 rounded-control text-xs text-blue-800 space-y-1">
-            <div className="font-bold flex items-center gap-1.5">
+            <div className="font-semibold flex items-center gap-1.5">
               <AlertCircle size={14} className="text-blue-600" /> Hợp đồng {liveContract.contractCode} sẽ bị hủy và thay thế
             </div>
-            <p className="text-[11px] text-blue-700">
+            <p className="text-xs text-blue-700">
               Số tiền đã thu {formatCurrency(collectedAmount)} được kế thừa sang hợp đồng mới; các đợt chưa thu được chia lại để tổng khớp giá trị báo
               giá.
             </p>

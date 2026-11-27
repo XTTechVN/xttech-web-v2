@@ -27,8 +27,8 @@ interface CuttingPlanModalProps {
 function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-control border border-slate-200/60 bg-slate-50 p-2.5">
-      <span className="block text-[10px] font-bold text-slate-400">{label}</span>
-      <span className="tabular-nums text-base font-bold text-slate-800">{value}</span>
+      <span className="block text-xs font-semibold text-slate-400">{label}</span>
+      <span className="tabular-nums text-base font-semibold text-slate-800">{value}</span>
     </div>
   );
 }
@@ -145,7 +145,7 @@ export function CuttingPlanModal({ projectId, order, onClose }: CuttingPlanModal
               <Badge variant={isIssued ? 'success' : 'warning'} size="sm">
                 {isIssued ? 'Đã tạo phiếu xuất kho' : 'Bản nháp'}
               </Badge>
-              <span className="text-[11px] text-slate-400">
+              <span className="text-xs text-slate-400">
                 Bản {plan.version} · Mạch cưa {plan.kerfMm} mm
               </span>
             </div>
@@ -173,7 +173,7 @@ export function CuttingPlanModal({ projectId, order, onClose }: CuttingPlanModal
             <div className="max-h-[45vh] space-y-4 overflow-y-auto pr-1">
               {groups.map((group) => (
                 <section key={group.key} className="space-y-1.5">
-                  <h4 className="text-xs font-bold text-slate-700">
+                  <h4 className="text-xs font-semibold text-slate-700">
                     {group.profileName}{' '}
                     <span className="tabular-nums text-slate-400">({group.profileCode})</span> -{' '}
                     {group.colorName} · {group.bars.length} cây

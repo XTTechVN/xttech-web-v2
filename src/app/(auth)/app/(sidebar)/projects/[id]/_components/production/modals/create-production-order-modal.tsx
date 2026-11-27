@@ -160,14 +160,14 @@ export function CreateProductionOrderModal({
         <div>
           <div className="mb-2 flex items-center justify-between">
             <div>
-              <span className="text-xs font-bold text-slate-800">
+              <span className="text-xs font-semibold text-slate-800">
                 Chọn các bộ cửa đưa vào lệnh
               </span>
-              <span className="ml-1.5 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+              <span className="ml-1.5 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
                 {selectedIds.length} đã chọn
               </span>
             </div>
-            <span className="text-[11px] font-medium text-slate-400">
+            <span className="text-xs font-medium text-slate-400">
               {isRework
                 ? '(Chỉ chọn cửa đã hoàn thành xuất xưởng hoặc đang lắp đặt)'
                 : '(Chỉ chọn cửa đã chốt số đo & chờ sản xuất)'}
@@ -175,8 +175,8 @@ export function CreateProductionOrderModal({
           </div>
 
           {outsourcedCount > 0 && (
-            <div className="mb-2 rounded-control border border-primary/20 bg-primary/5 px-3 py-1.5 text-[11px] text-primary">
-              Đã ẩn <span className="font-bold">{outsourcedCount}</span> cửa nhập nguyên bộ NCC
+            <div className="mb-2 rounded-control border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs text-primary">
+              Đã ẩn <span className="font-semibold">{outsourcedCount}</span> cửa nhập nguyên bộ NCC
               (không lập lệnh sản xuất tại xưởng).
             </div>
           )}
@@ -199,7 +199,7 @@ export function CreateProductionOrderModal({
 
                 return Object.entries(grouped).map(([floorName, floorPositions]) => (
                   <div key={floorName} className="space-y-2">
-                    <h4 className="text-xs font-bold text-slate-500 border-b border-slate-200 pb-1">
+                    <h4 className="text-xs font-semibold text-slate-500 border-b border-slate-200 pb-1">
                       {floorName}
                     </h4>
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">

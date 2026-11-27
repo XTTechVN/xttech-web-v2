@@ -41,8 +41,8 @@ export function BrandColors({ brand }: { brand: Brand }) {
     onError: (e) => showErrorToast(e, 'Không thể xóa màu'),
   });
 
-  const canUpdate = can('catalog:update');
-  const canDelete = can('catalog:delete');
+  const canUpdate = can('catalog:update') && !brand.isSystem;
+  const canDelete = can('catalog:delete') && !brand.isSystem;
 
   return (
     <div className="flex flex-col gap-3 pt-2">
@@ -50,7 +50,7 @@ export function BrandColors({ brand }: { brand: Brand }) {
         <div className="min-w-0 flex-1">
           <SearchField label="Tìm màu" placeholder="Tìm mã hoặc tên màu" value={search} onChange={setSearch} />
         </div>
-        {can('catalog:create') && <SectionAdd label="Thêm màu" onClick={() => setAdding(true)} />}
+        {can('catalog:create') && !brand.isSystem && <SectionAdd label="Thêm màu" onClick={() => setAdding(true)} />}
       </div>
 
       <TabState

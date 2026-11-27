@@ -43,10 +43,10 @@ function CancelContractForm({ contract, isSubmitting, onClose, onConfirm }: Canc
   return (
     <div className="space-y-4">
       <div className="p-3 bg-red-50 border border-red-200 rounded-control text-xs text-red-800 space-y-1">
-        <div className="font-bold flex items-center gap-1.5">
+        <div className="font-semibold flex items-center gap-1.5">
           <AlertCircle size={14} /> Hủy hợp đồng {contract.contractCode}?
         </div>
-        <p className="text-[11px] text-red-700">
+        <p className="text-xs text-red-700">
           Báo giá sẽ được mở khóa để chỉnh sửa. Các phiếu thu đã ghi nhận vẫn được giữ nguyên.
         </p>
       </div>

@@ -71,8 +71,8 @@ export function QuotationMaterialAnalysisSection({
   return (
     <div className="space-y-4">
       {/* Thanh lọc phạm vi bóc tách O(1) */}
-      <div className="rounded-block border border-slate-200/80 bg-white p-3 shadow-xs flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
+      <div className="rounded-block border border-slate-200/80 bg-white p-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
           <Layers size={15} className="text-primary shrink-0" />
           <span>Phạm vi bóc tách định mức &amp; vật tư:</span>
         </div>
@@ -82,7 +82,7 @@ export function QuotationMaterialAnalysisSection({
             onClick={() => handleSelectPosition(null)}
             className={`px-3 py-1.5 rounded-control text-xs font-semibold transition-colors cursor-pointer ${
               selectedPosition === null
-                ? 'bg-primary text-white shadow-xs'
+                ? 'bg-primary text-white'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
             }`}
           >
@@ -98,11 +98,11 @@ export function QuotationMaterialAnalysisSection({
                 title={`${pos.positionCode} · ${pos.doorName} (${pos.width}×${pos.height} mm - ${pos.floorName})`}
                 className={`px-2.5 py-1.5 rounded-control text-xs font-medium transition-colors cursor-pointer ${
                   isActive
-                    ? 'bg-primary text-white font-semibold shadow-xs'
+                    ? 'bg-primary text-white font-semibold'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
                 }`}
               >
-                <span className="tabular-nums font-bold">{pos.positionCode}</span>
+                <span className="tabular-nums font-semibold">{pos.positionCode}</span>
                 <span className="opacity-85"> · {pos.doorName}</span>
               </button>
             );

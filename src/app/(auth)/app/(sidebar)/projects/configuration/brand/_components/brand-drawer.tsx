@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ExternalLink, Pencil, Trash2 } from 'lucide-react';
 import { Button, Drawer, DrawerBody, DrawerFooter, DrawerHeader, DrawerSection, IconAction, InfoRow, Tabs, Tag } from '@/components-remake';
 import type { Brand } from '@/types';
+import { CopyToOrg, SystemTag } from '../../_components/shared-catalog';
 import { BrandColors } from './brand-colors';
 import { BrandFavorite } from './brand-favorite';
 import { BRAND_FORM_ID, BrandForm } from './brand-form';
@@ -48,12 +49,13 @@ export function BrandDrawer({ brand: b, brands, canEdit, canDelete, onClose, onD
               !editing &&
               current === 'info' && (
                 <>
-                  {canEdit && (
+                  {b.isSystem && <CopyToOrg variant="icon" kind="brand" id={b.id} name={b.name} onCopied={close} />}
+                  {canEdit && !b.isSystem && (
                     <IconAction label="Sửa" onClick={() => setEditing(true)}>
                       <Pencil size={16} />
                     </IconAction>
                   )}
-                  {canDelete && (
+                  {canDelete && !b.isSystem && (
                     <IconAction label="Xóa" danger onClick={() => onDelete(b)}>
                       <Trash2 size={16} />
                     </IconAction>
@@ -88,6 +90,7 @@ export function BrandDrawer({ brand: b, brands, canEdit, canDelete, onClose, onD
                         <h3 className="text-base font-semibold text-slate-900 [overflow-wrap:anywhere]">{b.name}</h3>
                         <p className="mt-1 flex flex-wrap items-center gap-1.5">
                           <Tag tone="blue">{b.code}</Tag>
+                          {b.isSystem && <SystemTag />}
                           {b.isActive ? <Tag tone="green">Hoạt động</Tag> : <Tag>Tạm ngưng</Tag>}
                         </p>
                       </div>
@@ -108,7 +111,7 @@ export function BrandDrawer({ brand: b, brands, canEdit, canDelete, onClose, onD
                       </InfoRow>
                       <InfoRow label="Ghi chú">{b.description || '–'}</InfoRow>
                     </DrawerSection>
-                    {canEdit && (
+                    {canEdit && !b.isSystem && (
                       <div className="mt-4">
                         <BrandFavorite brand={b} brands={brands} />
                       </div>

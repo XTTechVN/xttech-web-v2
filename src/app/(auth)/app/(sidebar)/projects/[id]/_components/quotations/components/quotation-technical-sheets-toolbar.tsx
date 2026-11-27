@@ -44,10 +44,10 @@ export function QuotationTechnicalSheetsToolbar({
   ];
 
   return (
-    <div className="space-y-3 rounded-block border border-slate-200/80 bg-white p-3 shadow-xs">
+    <div className="space-y-3 rounded-block border border-slate-200/80 bg-white p-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2.5">
-          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
             <Layers size={15} className="shrink-0 text-primary" />
             <span>Hồ sơ kỹ thuật định mức 1 bộ:</span>
           </div>
@@ -74,7 +74,7 @@ export function QuotationTechnicalSheetsToolbar({
                   onClick={() => onFulfillmentChange(option.value)}
                   className={`cursor-pointer rounded-control px-2.5 py-1 text-xs font-medium transition-colors ${
                     isActive
-                      ? 'bg-primary font-semibold text-white shadow-xs'
+                      ? 'bg-primary font-semibold text-white'
                       : 'text-slate-600 hover:bg-white hover:text-slate-900'
                   }`}
                 >
@@ -106,7 +106,7 @@ export function QuotationTechnicalSheetsToolbar({
             onClick={() => onSelectPosition('all')}
             className={`cursor-pointer rounded-control px-3 py-1 text-xs font-semibold transition-colors ${
               selectedPositionId === 'all'
-                ? 'bg-primary text-white shadow-xs'
+                ? 'bg-primary text-white'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
             }`}
           >
@@ -123,7 +123,7 @@ export function QuotationTechnicalSheetsToolbar({
                 title={`${sheet.positionCode} · ${sheet.doorName} (${Math.round(sheet.width)}×${Math.round(sheet.height)} mm - ${sheet.floorName})`}
                 className={`cursor-pointer rounded-control px-2.5 py-1 tabular-nums text-xs font-medium transition-colors ${
                   isActive
-                    ? 'bg-primary font-semibold text-white shadow-xs'
+                    ? 'bg-primary font-semibold text-white'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
                 }`}
               >

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Pencil, Trash2 } from 'lucide-react';
 import { Button, Drawer, DrawerBody, DrawerFooter, DrawerHeader, DrawerSection, IconAction, InfoRow, Tag } from '@/components-remake';
 import type { Brand, DoorSeries } from '@/types';
+import { CopyToOrg, SystemTag } from '../../_components/shared-catalog';
 import { jointLabel } from './format';
 import { SERIES_FORM_ID, SeriesForm } from './series-form';
 
@@ -37,12 +38,13 @@ export function SeriesDrawer({ series: s, brands, canEdit, canDelete, onClose, o
             actions={
               !editing && (
                 <>
-                  {canEdit && (
+                  {s.isSystem && <CopyToOrg variant="icon" kind="series" id={s.id} name={s.name} onCopied={close} />}
+                  {canEdit && !s.isSystem && (
                     <IconAction label="Sửa" onClick={() => setEditing(true)}>
                       <Pencil size={16} />
                     </IconAction>
                   )}
-                  {canDelete && (
+                  {canDelete && !s.isSystem && (
                     <IconAction label="Xóa" danger onClick={() => onDelete(s)}>
                       <Trash2 size={16} />
                     </IconAction>
@@ -60,6 +62,7 @@ export function SeriesDrawer({ series: s, brands, canEdit, canDelete, onClose, o
                   <h3 className="text-base font-semibold text-slate-900 [overflow-wrap:anywhere]">{s.name}</h3>
                   <p className="mb-4 mt-2 flex flex-wrap items-center gap-1.5">
                     <Tag tone="blue">{s.code}</Tag>
+                    {s.isSystem && <SystemTag />}
                     {s.isActive !== false ? <Tag tone="green">Hoạt động</Tag> : <Tag>Tạm ngưng</Tag>}
                   </p>
                   <DrawerSection title="Thông tin">

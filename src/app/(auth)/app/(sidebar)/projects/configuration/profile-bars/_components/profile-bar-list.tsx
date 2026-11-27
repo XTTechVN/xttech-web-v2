@@ -3,6 +3,7 @@
 import { DataTable, Tag, type Column } from '@/components-remake';
 import type { ProfileBar } from '@/types';
 import { BAR_TYPE_MAP } from './profile-bar-config';
+import { SystemTag } from '../../_components/shared-catalog';
 
 export const barTypeLabel = (b: ProfileBar) => BAR_TYPE_MAP[b.barType?.toUpperCase()] || b.barType || '–';
 export const mm = (v?: number | null) => (v && v > 0 ? String(v) : '–');
@@ -47,6 +48,7 @@ const COLUMNS: Column<ProfileBar>[] = [
           </span>
           <span className="mt-1 flex flex-wrap items-center gap-1.5">
             <Tag tone="blue">{b.code || '–'}</Tag>
+            {b.isSystem && <SystemTag />}
             <Flags bar={b} />
           </span>
         </div>
@@ -82,6 +84,7 @@ export function ProfileBarList({ rows, onOpen }: Props) {
             <p className="truncate text-sm font-semibold text-slate-900">{b.name}</p>
             <p className="flex flex-wrap items-center gap-1.5">
               <Tag tone="blue">{b.code || '–'}</Tag>
+              {b.isSystem && <SystemTag />}
               <Tag tone="violet">{barTypeLabel(b)}</Tag>
               <Flags bar={b} />
             </p>

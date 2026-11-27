@@ -9,17 +9,9 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { getProject } from '@/actions';
 import { TabOverview } from './_components/overview';
-import {
-  FolderOpen,
-  Loader2,
-  Layers,
-  Calculator,
-  FileText,
-  CheckCircle2,
-  ClipboardCheck,
-  ShieldCheck,
-} from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { Badge, Skeleton } from '@/components';
+import { Tabs } from '@/components-remake';
 import { PROJECT_STATUS_MAP } from '@/config';
 
 const TabFallback = () => <Skeleton className="h-64 w-full rounded-block" />;
@@ -51,13 +43,13 @@ const TabWarranty = dynamic(
 );
 
 const PROJECT_TABS = [
-  { value: 'overview', label: 'Thông tin', icon: <FolderOpen size={14} /> },
-  { value: 'positions', label: 'Thiết kế', icon: <Layers size={14} /> },
-  { value: 'quotations', label: 'Báo giá', icon: <Calculator size={14} /> },
-  { value: 'contracts', label: 'Hợp đồng', icon: <FileText size={14} /> },
-  { value: 'production', label: 'Sản xuất', icon: <CheckCircle2 size={14} /> },
-  { value: 'acceptance', label: 'Nghiệm thu', icon: <ClipboardCheck size={14} /> },
-  { value: 'warranty', label: 'Bảo hành', icon: <ShieldCheck size={14} /> },
+  { value: 'overview', label: 'Thông tin' },
+  { value: 'positions', label: 'Thiết kế' },
+  { value: 'quotations', label: 'Báo giá' },
+  { value: 'contracts', label: 'Hợp đồng' },
+  { value: 'production', label: 'Sản xuất' },
+  { value: 'acceptance', label: 'Nghiệm thu' },
+  { value: 'warranty', label: 'Bảo hành' },
 ];
 
 // Mỗi tab cần quyền xem riêng; tab Thông tin chỉ cần quyền xem dự án (đã chặn ở menu)
@@ -135,19 +127,19 @@ function ProjectDetailContent({ projectId }: { projectId: number }) {
 
   return (
     <div className="p-4 sm:p-6 flex flex-col gap-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-3 border-b border-slate-200/70">
+      <div className="flex flex-col gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2.5 flex-wrap">
-            <h1 className="text-lg sm:text-xl font-bold text-primary font-lexend tracking-tight capitalize truncate">
+            <h1 className="text-xl sm:text-2xl font-semibold text-primary font-lexend tracking-tight capitalize truncate">
               {project.name}
             </h1>
             {project.status && (
-              <Badge variant={statusConfig.variant} size="sm" className="font-medium rounded">
+              <Badge variant={statusConfig.variant} size="md" className="font-medium rounded">
                 {statusConfig.label}
               </Badge>
             )}
           </div>
-          <div className="flex items-center gap-2 text-xs text-slate-500 font-normal mt-0.5 flex-wrap">
+          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-normal text-slate-500">
             {project.customer?.name && (
               <span className="text-slate-700 font-medium">{project.customer.name}</span>
             )}
@@ -171,29 +163,15 @@ function ProjectDetailContent({ projectId }: { projectId: number }) {
           </div>
         </div>
 
-        <div className="inline-flex p-1 bg-slate-100/90 rounded-control border border-slate-200/70 gap-1 overflow-x-auto shrink-0">
-          {visibleTabs.map((tab) => {
-            const isActive = tab.value === activeTab;
-            return (
-              <button
-                key={tab.value}
-                type="button"
-                onClick={() => handleSelectTab(tab.value)}
-                className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded text-xs transition-all whitespace-nowrap cursor-pointer select-none ${
-                  isActive
-                    ? 'bg-white text-slate-900 font-semibold shadow-xs'
-                    : 'text-slate-600 font-medium hover:text-slate-900 hover:bg-white/50'
-                }`}
-              >
-                <span className={`shrink-0 ${isActive ? 'text-primary' : 'text-slate-400'}`}>
-                  {tab.icon}
-                </span>
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
       </div>
+
+      <Tabs
+        tabs={visibleTabs.map((t) => ({ value: t.value, label: t.label }))}
+        value={activeTab}
+        onChange={handleSelectTab}
+        label="Các giai đoạn của dự án"
+        className="my-2 px-0"
+      />
 
       {activeTab === 'overview' && (
         <TabOverview projectId={projectId} project={project} onSelectTab={handleSelectTab} />

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Check, ChevronDown, ChevronRight } from 'lucide-react';
 import { cn } from '@/utils/cn';
@@ -13,6 +13,8 @@ export interface SelectOption {
   value: string;
   label: string;
   hint?: string;
+  /** Hình nhỏ đứng trước nhãn (logo, avatar) */
+  icon?: ReactNode;
 }
 
 interface SelectProps {
@@ -46,6 +48,7 @@ function OptionList({ options, value, onPick }: { options: SelectOption[]; value
                 on ? 'font-medium text-primary' : 'text-slate-700',
               )}
             >
+              {o.icon}
               <span className="min-w-0 flex-1">
                 <span className="block truncate">{o.label}</span>
                 {o.hint && <span className="block truncate text-xs font-normal text-slate-500">{o.hint}</span>}
@@ -124,6 +127,7 @@ export function Select({ label, value, options, onChange, placeholder = 'Chọn.
           open ? 'border-primary bg-white ring-2 ring-primary/20' : 'border-transparent bg-slate-100 md:hover:bg-slate-200/70',
         )}
       >
+        {!loading && current?.icon}
         <span className={cn('min-w-0 flex-1 truncate', current ? 'text-slate-900' : 'text-slate-400')}>
           {loading ? 'Đang tải...' : (current?.label ?? placeholder)}
         </span>

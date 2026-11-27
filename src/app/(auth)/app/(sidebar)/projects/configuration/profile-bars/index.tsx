@@ -10,17 +10,16 @@ import { useCan, useDebounce } from '@/hooks';
 import { getDefaultBrandId, type ProfileBar } from '@/types';
 import { showErrorToast } from '@/utils';
 import queryClient from '@/utils/query';
-import { BrandSidebar } from '../../_components';
+import { BrandTiles } from '../../_components';
 import { ProfileBarDrawer } from './_components/profile-bar-drawer';
 import { ProfileBarList } from './_components/profile-bar-list';
 import { ProfileBarFormDrawer } from './_components/profile-bar-form-drawer';
 import { ProfileBarExcelDrawer } from './_components/modals';
 
-// Thanh profile theo hãng và hệ nhôm; cột hãng bên trái giữ nguyên
+// Thanh profile theo hãng và hệ nhôm; hãng và hệ nhôm chọn trong bộ lọc
 export default function ProfileBarsTab() {
   const { can } = useCan();
   const [search, setSearch] = useState('');
-  const [pickedBrandId, setPickedBrandId] = useState<number | null>(null);
   const [filter, setFilter] = useState<Record<string, string>>({});
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [form, setForm] = useState<{ bar: ProfileBar | null; copy: boolean } | null>(null);
@@ -35,7 +34,7 @@ export default function ProfileBarsTab() {
   });
   const brands = useMemo(() => brandsQuery.data ?? [], [brandsQuery.data]);
   const sortedBrands = useMemo(() => [...brands].sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' })), [brands]);
-  const brandId = pickedBrandId ?? getDefaultBrandId(sortedBrands);
+  const brandId = filter.brand ? Number(filter.brand) : getDefaultBrandId(sortedBrands);
   const seriesId = filter.series ? Number(filter.series) : null;
 
   const seriesQuery = useQuery({
@@ -96,12 +95,14 @@ export default function ProfileBarsTab() {
           groups={[
             {
               key: 'series',
+              side: false,
               label: 'Hệ nhôm',
               options: (seriesQuery.data ?? []).map((s) => ({ value: String(s.id), label: `${s.name} (${s.code})` })),
             },
           ]}
-          value={filter}
-          onChange={setFilter}
+          after={<BrandTiles brands={sortedBrands} value={brandId} onChange={(id) => setFilter({ brand: String(id) })} />}
+          value={brandId ? { ...filter, brand: String(brandId) } : filter}
+          onChange={(next) => setFilter(next.brand !== filter.brand ? { ...next, series: '' } : next)}
         />
         <div className="ml-auto flex flex-none items-center gap-2">
           {can('catalog:export') && (
@@ -125,14 +126,6 @@ export default function ProfileBarsTab() {
       </div>
 
       <div className="flex flex-col gap-4 md:flex-row">
-        <BrandSidebar
-          brands={brands}
-          selectedBrandId={brandId}
-          onSelectBrand={(id) => {
-            setPickedBrandId(id);
-            setFilter({});
-          }}
-        />
         <div className="w-full min-w-0 flex-1">
           <TabState
             loading={brandsQuery.isLoading || barsQuery.isLoading}

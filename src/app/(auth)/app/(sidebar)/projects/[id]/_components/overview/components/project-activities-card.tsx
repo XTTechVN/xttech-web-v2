@@ -17,12 +17,12 @@ export function ProjectActivitiesCard({ activities, isLoading }: ProjectActiviti
           <History size={13} className="text-primary" />
           Nhật ký hoạt động dự án
         </h3>
-        <span className="text-[11px] font-medium text-slate-400">
+        <span className="text-xs font-medium text-slate-400">
           {activities.length} sự kiện gần nhất
         </span>
       </div>
 
-      <div className="rounded-control border border-slate-200/80 bg-white p-4 shadow-2xs">
+      <div className="rounded-block border border-slate-200/80 bg-white p-4">
         {isLoading ? (
           <div className="flex items-center justify-center gap-2 py-8 text-xs text-slate-400">
             <Loader2 size={15} className="animate-spin text-primary" />
@@ -51,20 +51,20 @@ export function ProjectActivitiesCard({ activities, isLoading }: ProjectActiviti
 
                   <div className="flex flex-col justify-between gap-1.5 rounded-control border border-slate-100 bg-slate-50/60 p-2.5 transition-colors hover:bg-slate-50 sm:flex-row sm:items-center">
                     <div className="flex flex-wrap items-center gap-1.5 text-xs">
-                      <span className="font-bold text-slate-800">
+                      <span className="font-semibold text-slate-800">
                         {item.user?.fullName || 'Hệ thống'}
                       </span>
                       <span className="text-slate-600">
                         {item.actionTitle || 'Cập nhật dự án'}
                       </span>
                       {item.targetName && (
-                        <span className="max-w-[220px] truncate rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[11px] font-medium text-slate-700">
+                        <span className="max-w-[220px] truncate rounded border border-slate-200 bg-white px-1.5 py-0.5 text-xs font-medium text-slate-700">
                           {item.targetName}
                         </span>
                       )}
                     </div>
 
-                    <div className="flex shrink-0 items-center gap-1 text-[11px] text-slate-400">
+                    <div className="flex shrink-0 items-center gap-1 text-xs text-slate-400">
                       <Clock size={11} />
                       <span>{timeStr}</span>
                     </div>

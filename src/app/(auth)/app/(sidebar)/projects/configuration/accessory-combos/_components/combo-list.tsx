@@ -3,6 +3,7 @@
 import { DataTable, Tag, type Column, type TagTone } from '@/components-remake';
 import { getDoorTypeConfig, type AccessoryCombo } from '@/types';
 import { formatCurrency } from '@/utils';
+import { SystemTag } from '../../_components/shared-catalog';
 
 export const APPLY_FOR: Record<string, { label: string; tone: TagTone }> = {
   khung: { label: 'Khung', tone: 'slate' },
@@ -40,6 +41,7 @@ const COLUMNS: Column<AccessoryCombo>[] = [
         </span>
         <span className="mt-1 flex flex-wrap items-center gap-1.5">
           <Tag tone="blue">{c.code}</Tag>
+          {c.isSystem && <SystemTag />}
           {c.isDefault && <Tag tone="amber">Mặc định</Tag>}
         </span>
       </>
@@ -47,13 +49,22 @@ const COLUMNS: Column<AccessoryCombo>[] = [
   },
   { key: 'apply', header: 'Dành cho', className: 'w-36', render: (c) => <Tag tone={applyOf(c).tone}>{applyOf(c).label}</Tag> },
   { key: 'count', header: 'Số món', className: 'w-24 whitespace-nowrap', render: count },
-  { key: 'price', header: 'Tổng giá', className: 'w-36 whitespace-nowrap text-right tabular-nums', render: (c) => formatCurrency(c.totalComboPrice || 0) },
+  {
+    key: 'price',
+    header: 'Tổng giá',
+    className: 'w-36 whitespace-nowrap text-right tabular-nums',
+    render: (c) => formatCurrency(c.totalComboPrice || 0),
+  },
   {
     key: 'doors',
     header: 'Loại cửa',
     className: 'max-w-0 truncate',
     wide: true,
-    render: (c) => (c.doorTypes?.filter(Boolean).map((d) => getDoorTypeConfig(d).label).join(', ') || '–'),
+    render: (c) =>
+      c.doorTypes
+        ?.filter(Boolean)
+        .map((d) => getDoorTypeConfig(d).label)
+        .join(', ') || '–',
   },
   { key: 'status', header: 'Trạng thái', className: 'w-32', render: status },
 ];
@@ -79,6 +90,7 @@ export function ComboList({ rows, onOpen }: Props) {
           </div>
           <p className="flex flex-wrap items-center gap-1.5">
             <Tag tone="blue">{c.code}</Tag>
+            {c.isSystem && <SystemTag />}
             <Tag tone={applyOf(c).tone}>{applyOf(c).label}</Tag>
             {c.isDefault && <Tag tone="amber">Mặc định</Tag>}
           </p>

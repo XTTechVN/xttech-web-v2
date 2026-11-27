@@ -39,6 +39,8 @@ export interface GlassCategoryQueryParams {
 }
 
 export interface Glass {
+  /** Bản ghi dùng chung của nền tảng: org khác chỉ đọc, nhân bản về để chỉnh */
+  isSystem?: boolean;
   id: number;
   categoryId: number;
   code: string;

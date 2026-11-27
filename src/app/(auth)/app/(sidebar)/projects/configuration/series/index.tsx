@@ -5,17 +5,17 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { CheckCircle2, Layers, PauseCircle, Plus, Tag as TagIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { deleteDoorSeries, getBrands, getDoorSeriesList } from '@/actions';
-import { Button, ConfirmDelete, SearchField, StatGrid, TabState } from '@/components-remake';
+import { Button, ConfirmDelete, FilterDrawer, SearchField, StatGrid, TabState } from '@/components-remake';
 import { useCan } from '@/hooks';
 import { getDefaultBrandId, type DoorSeries } from '@/types';
 import { includesSearchText, showErrorToast } from '@/utils';
-import { BrandSidebar } from '../../_components';
+import { BrandTiles } from '../../_components';
 import { refreshSeries } from './_components/format';
 import { SeriesDrawer } from './_components/series-drawer';
 import SeriesFormDrawer from './_components/series-form-drawer';
 import { SeriesList } from './_components/series-list';
 
-// Hệ nhôm theo từng hãng; cột hãng bên trái giữ nguyên
+// Hệ nhôm theo từng hãng; hãng chọn trong bộ lọc
 export default function SeriesTab() {
   const { can } = useCan();
   const [search, setSearch] = useState('');
@@ -72,6 +72,12 @@ export default function SeriesTab() {
       <StatGrid items={stats} />
       <div className="flex items-center gap-2">
         <SearchField value={search} onChange={setSearch} label="Tìm hệ nhôm" placeholder="Tìm theo mã hoặc tên hệ..." />
+        <FilterDrawer
+          groups={[]}
+          value={{}}
+          onChange={() => {}}
+          after={<BrandTiles brands={sortedBrands} value={brandId} onChange={setPickedBrandId} />}
+        />
         {can('catalog:create') && (
           <Button className="ml-auto" icon={<Plus size={18} />} iconOnly="mobile" onClick={() => setAdding(true)}>
             Thêm hệ nhôm
@@ -80,8 +86,6 @@ export default function SeriesTab() {
       </div>
 
       <div className="flex flex-col gap-4 md:flex-row">
-        <BrandSidebar brands={brands} selectedBrandId={brandId} onSelectBrand={setPickedBrandId} />
-
         <div className="w-full min-w-0 flex-1">
           <TabState
             loading={brandsQuery.isLoading || seriesQuery.isLoading}

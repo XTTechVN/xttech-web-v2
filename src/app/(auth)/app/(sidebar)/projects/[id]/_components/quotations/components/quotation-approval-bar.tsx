@@ -80,12 +80,12 @@ export function QuotationApprovalBar({ projectId, quotation }: QuotationApproval
   const isBlocked = quotation.isOutdated;
 
   return (
-    <div className="flex flex-col gap-3 rounded-control border border-slate-200 bg-white px-4 py-3 shadow-xs lg:flex-row lg:items-center lg:justify-between">
+    <div className="flex flex-col gap-3 rounded-control border border-slate-200 bg-white px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
       <div className="flex items-start gap-2 text-xs text-slate-600">
         <ShieldCheck size={15} className="mt-0.5 shrink-0 text-primary" />
         <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-bold text-slate-800">
+            <span className="font-semibold text-slate-800">
               {quotation.code} (v{quotation.version})
             </span>
             <Badge variant={status.variant} size="sm">

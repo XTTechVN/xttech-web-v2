@@ -23,7 +23,7 @@ const PARTY_A_FIELDS: PartyField[] = [
 export function ContractPartyAForm({ partyA, onChange }: ContractPartyAFormProps) {
   return (
     <div className="space-y-3">
-      <p className="text-[11px] text-slate-500">
+      <p className="text-xs text-slate-500">
         Thông tin chỉ áp dụng cho hợp đồng này, không làm thay đổi hồ sơ khách hàng.
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

@@ -57,7 +57,7 @@ export function MaterialStandardCard({
         Tiêu chuẩn vật tư
       </h3>
 
-      <div className="bg-white rounded-control border border-slate-200/80 p-3.5 shadow-2xs space-y-2.5 text-xs">
+      <div className="bg-white rounded-control border border-slate-200/80 p-3.5 space-y-2.5 text-xs">
         <div className="flex items-center justify-between">
           <span className="text-slate-500">Hãng nhôm mặc định</span>
           <CompactSelect

@@ -11,7 +11,7 @@ import { useCan } from '@/hooks';
 import { getDefaultBrandId, normalizeDoorType, type Door } from '@/types';
 import { includesSearchText, showErrorToast } from '@/utils';
 import queryClient from '@/utils/query';
-import { BrandSidebar } from '../../_components';
+import { BrandTiles } from '../../_components';
 import { DoorCard } from './_components/door-card';
 import { DoorTemplateDrawer } from './_components/door-template-drawer';
 
@@ -29,7 +29,7 @@ const DOOR_TYPES = [
 
 const NO_SERIES = 'Chưa phân hệ nhôm';
 
-// Mẫu cửa dựng sẵn theo hãng; cột hãng bên trái giữ nguyên
+// Mẫu cửa dựng sẵn theo hãng; hãng chọn trong bộ lọc
 export default function DoorTemplatesTab() {
   const { can } = useCan();
   const [search, setSearch] = useState('');
@@ -122,6 +122,16 @@ export default function DoorTemplatesTab() {
             { key: 'series', label: 'Hệ nhôm', options: seriesOptions },
             { key: 'type', label: 'Loại cửa', options: DOOR_TYPES },
           ]}
+          after={
+            <BrandTiles
+              brands={sortedBrands}
+              value={brandId}
+              onChange={(id) => {
+                setPickedBrandId(id);
+                setFilter({});
+              }}
+            />
+          }
           value={filter}
           onChange={setFilter}
         />
@@ -133,14 +143,6 @@ export default function DoorTemplatesTab() {
       </div>
 
       <div className="flex flex-col gap-4 md:flex-row">
-        <BrandSidebar
-          brands={brands}
-          selectedBrandId={brandId}
-          onSelectBrand={(id) => {
-            setPickedBrandId(id);
-            setFilter({});
-          }}
-        />
         <div className="w-full min-w-0 flex-1">
           <TabState
             loading={brandsQuery.isLoading || doorsQuery.isLoading}

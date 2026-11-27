@@ -154,7 +154,7 @@ export function DailyProgressPanel({
             <div className="flex flex-wrap items-center gap-2.5">
               <span
                 className={cn(
-                  'rounded-control border px-2.5 py-1 text-xs font-bold',
+                  'rounded-control border px-2.5 py-1 text-xs font-semibold',
                   config.badgeClass,
                 )}
               >
@@ -162,14 +162,14 @@ export function DailyProgressPanel({
               </span>
               <div className="h-px flex-1 bg-slate-200" />
               <div className="flex flex-wrap items-center gap-3">
-                <span className="text-[11px] text-slate-400">
+                <span className="text-xs text-slate-400">
                   {hasDoors ? `${stepDoors.length} mẫu · ${totalArea.toFixed(1)} m²` : '0 mẫu'}
                 </span>
                 {outsourcedInStep.length > 0 && canManageOutsourcedProcurement && (
                   <button
                     type="button"
                     onClick={() => handleSelectOutsourcedSurveyed(stepDoors)}
-                    className="cursor-pointer rounded-control border border-primary/25 bg-primary/5 px-2 py-0.5 text-[11px] font-semibold text-primary hover:bg-primary/10"
+                    className="cursor-pointer rounded-control border border-primary/25 bg-primary/5 px-2 py-0.5 text-xs font-semibold text-primary hover:bg-primary/10"
                   >
                     Chọn nhanh cửa NCC ({outsourcedInStep.length})
                   </button>
@@ -178,7 +178,7 @@ export function DailyProgressPanel({
                   <button
                     type="button"
                     onClick={() => handleSelectAllInStep(stepDoors)}
-                    className="cursor-pointer text-[11px] font-semibold text-primary hover:underline"
+                    className="cursor-pointer text-xs font-semibold text-primary hover:underline"
                   >
                     {isAllSelectedInGroup ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
                   </button>

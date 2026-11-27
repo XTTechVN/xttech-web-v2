@@ -44,7 +44,7 @@ export function DoorProgressCard({
     >
       <div className="flex items-center justify-between gap-2 border-b border-slate-100 bg-white px-3 py-2">
         <div className="flex min-w-0 items-center gap-1.5">
-          <span className="text-xs font-bold tracking-tight text-slate-800" title={position.code}>
+          <span className="text-xs font-semibold tracking-tight text-slate-800" title={position.code}>
             {position.code}
           </span>
           {isOutsourced && (
@@ -69,7 +69,7 @@ export function DoorProgressCard({
 
       <div className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden bg-slate-50/60 p-2">
         {visual.systemConfig ? (
-          <div className="pointer-events-none h-full w-full p-1 transition-transform duration-300 group-hover:scale-105">
+          <div className="pointer-events-none h-full w-full p-1 transition-transform duration-300">
             <DoorThumbnail
               systemConfig={visual.systemConfig}
               hideDimensions={false}
@@ -81,12 +81,12 @@ export function DoorProgressCard({
           <img
             src={visual.imageUrl}
             alt={doorName}
-            className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105"
+            className="max-h-full max-w-full object-contain transition-transform duration-300"
           />
         ) : (
           <div className="flex flex-col items-center gap-1 text-slate-300">
             <ImageOff size={24} />
-            <span className="text-[10px]">Chưa có hình ảnh</span>
+            <span className="text-xs">Chưa có hình ảnh</span>
           </div>
         )}
       </div>
@@ -96,14 +96,14 @@ export function DoorProgressCard({
           {doorName}
         </p>
 
-        <div className="flex items-center justify-between text-[11px] text-slate-500 tabular-nums">
+        <div className="flex items-center justify-between text-xs text-slate-500 tabular-nums">
           <span>
             {position.width} × {position.height} mm
           </span>
           <span className="text-slate-400">{(position.areaM2 ?? 0).toFixed(2)} m²</span>
         </div>
 
-        <div className="flex items-center justify-between pt-0.5 text-[10px] text-slate-400">
+        <div className="flex items-center justify-between pt-0.5 text-xs text-slate-400">
           <span className="truncate">{floorText}</span>
           {secondaryMeta && (
             <span className="max-w-[95px] truncate" title={secondaryMeta}>
@@ -113,7 +113,7 @@ export function DoorProgressCard({
         </div>
 
         {position.measureNote && (
-          <p className="mt-1 text-[10px] text-slate-500 break-words leading-tight">
+          <p className="mt-1 text-xs text-slate-500 break-words leading-tight">
             <span className="font-medium text-slate-600">Ghi chú:</span> {position.measureNote}
           </p>
         )}

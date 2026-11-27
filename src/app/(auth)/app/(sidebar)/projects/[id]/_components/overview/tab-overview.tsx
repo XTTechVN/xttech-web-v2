@@ -46,7 +46,7 @@ export function TabOverview({ projectId, project, onSelectTab }: TabOverviewProp
   if (!project) return null;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start pt-1">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
       {/* Cột trái: Tiêu chuẩn vật tư & Tiến độ phụ trách */}
       <div className="lg:col-span-4 flex flex-col gap-5">
         <MaterialStandardCard

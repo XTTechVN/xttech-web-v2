@@ -94,7 +94,7 @@ export function MilestoneEditor({ milestones, totalAmount, onChange }: Milestone
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <span className="text-xs font-semibold text-slate-800">Các đợt thanh toán</span>
-          <span className="text-[11px] text-slate-400 block">
+          <span className="text-xs text-slate-400 block">
             Nhập tỷ lệ % hoặc số tiền trực tiếp (tự động quy đổi qua lại)
           </span>
         </div>
@@ -107,11 +107,11 @@ export function MilestoneEditor({ milestones, totalAmount, onChange }: Milestone
             }`}
           >
             <span>
-              Tổng: <b className="font-bold">{totalPercentage}%</b>
+              Tổng: <b className="font-semibold">{totalPercentage}%</b>
             </span>
             <span className="text-slate-300">|</span>
             <span>
-              <b className="font-bold">{formatCurrency(totalExpectedAmount)}</b> / {formatCurrency(totalAmount)}
+              <b className="font-semibold">{formatCurrency(totalExpectedAmount)}</b> / {formatCurrency(totalAmount)}
             </span>
           </div>
           <Button
@@ -128,7 +128,7 @@ export function MilestoneEditor({ milestones, totalAmount, onChange }: Milestone
       </div>
 
       <div className="border border-slate-200/80 rounded-control overflow-hidden bg-white">
-        <div className="grid grid-cols-12 gap-2 px-3 py-2 bg-slate-50 border-b border-slate-200/80 text-[11px] font-semibold text-slate-500">
+        <div className="grid grid-cols-12 gap-2 px-3 py-2 bg-slate-50 border-b border-slate-200/80 text-xs font-semibold text-slate-500">
           <div className="col-span-1 text-center">Đợt</div>
           <div className="col-span-4">Tên đợt thanh toán</div>
           <div className="col-span-2">Tỷ lệ (%)</div>
@@ -144,7 +144,7 @@ export function MilestoneEditor({ milestones, totalAmount, onChange }: Milestone
 
             return (
               <div key={index} className="grid grid-cols-12 gap-2.5 px-3 py-2.5 items-center">
-                <div className="col-span-1 text-center font-bold text-slate-700 text-xs">#{index + 1}</div>
+                <div className="col-span-1 text-center font-semibold text-slate-700 text-xs">#{index + 1}</div>
                 <div className="col-span-4">
                   <input
                     type="text"
@@ -164,7 +164,7 @@ export function MilestoneEditor({ milestones, totalAmount, onChange }: Milestone
                       value={m.percentage === 0 ? '' : m.percentage}
                       placeholder="0"
                       onChange={(e) => handlePercentageChange(index, e.target.value)}
-                      className={`${CELL_INPUT} pr-5 font-bold`}
+                      className={`${CELL_INPUT} pr-5 font-semibold`}
                     />
                     <span className="absolute right-1.5 top-1.5 text-slate-400 text-xs pointer-events-none">
                       %
@@ -180,7 +180,7 @@ export function MilestoneEditor({ milestones, totalAmount, onChange }: Milestone
                       onChange={(e) => handleAmountChange(index, e.target.value)}
                       className={`${CELL_INPUT} pr-6 font-semibold text-right text-emerald-700`}
                     />
-                    <span className="absolute right-2 top-1.5 text-slate-400 text-[11px] pointer-events-none">
+                    <span className="absolute right-2 top-1.5 text-slate-400 text-xs pointer-events-none">
                       đ
                     </span>
                   </div>
@@ -210,7 +210,7 @@ export function MilestoneEditor({ milestones, totalAmount, onChange }: Milestone
       </div>
 
       {!isValidTotal && (
-        <p className="text-[11px] text-amber-600 font-medium">
+        <p className="text-xs text-amber-600 font-medium">
           * Tổng các đợt thanh toán phải bằng 100% hoặc khớp giá trị hợp đồng ({formatCurrency(totalAmount)}).
         </p>
       )}

@@ -35,7 +35,7 @@ function CollectionProgress({ ledger }: { ledger?: ProjectLedgerSummary }) {
     <div className="bg-slate-50/80 rounded-control p-3 border border-slate-100 space-y-1.5">
       <div className="flex items-center justify-between text-xs">
         <span className="text-slate-600 font-medium">Tiến độ thanh toán</span>
-        <span className="font-bold text-emerald-600">{percent}%</span>
+        <span className="font-semibold text-emerald-600">{percent}%</span>
       </div>
       <div className="w-full bg-slate-200/70 rounded-full h-1.5 overflow-hidden">
         <div
@@ -43,7 +43,7 @@ function CollectionProgress({ ledger }: { ledger?: ProjectLedgerSummary }) {
           style={{ width: `${percent}%` }}
         />
       </div>
-      <div className="flex items-center justify-between text-[11px] text-slate-400 pt-0.5">
+      <div className="flex items-center justify-between text-xs text-slate-400 pt-0.5">
         <span>Đã thu: {formatCurrency(collected)}</span>
         <span>Còn lại: {formatCurrency(ledger?.remainingDebt)}</span>
       </div>
@@ -72,17 +72,17 @@ function TransactionRow({
     >
       <div className="space-y-1 min-w-0">
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="font-bold text-slate-800">{transaction.transactionCode}</span>
-          <span className="text-[11px] text-slate-400">
+          <span className="font-semibold text-slate-800">{transaction.transactionCode}</span>
+          <span className="text-xs text-slate-400">
             {formatDateTime(transaction.transactionDate || transaction.createdAt)}
           </span>
-          <span className="text-[10px] px-1 rounded bg-slate-100 text-slate-600">
+          <span className="text-xs px-1 rounded bg-slate-100 text-slate-600">
             {PAYMENT_METHOD_MAP[transaction.paymentMethod] ?? transaction.paymentMethod}
           </span>
         </div>
-        {transaction.note && <p className="text-slate-600 text-[11px] truncate">{transaction.note}</p>}
+        {transaction.note && <p className="text-slate-600 text-xs truncate">{transaction.note}</p>}
         {transaction.bankReference && (
-          <span className="text-[10px] text-slate-400 block">
+          <span className="text-xs text-slate-400 block">
             Mã GD ngân hàng: {transaction.bankReference}
           </span>
         )}
@@ -90,7 +90,7 @@ function TransactionRow({
           <button
             type="button"
             onClick={() => onPreviewImage(transaction)}
-            className="mt-1 inline-flex cursor-pointer items-center gap-1.5 rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-medium text-primary hover:bg-primary/5"
+            className="mt-1 inline-flex cursor-pointer items-center gap-1.5 rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-xs font-medium text-primary hover:bg-primary/5"
             title="Nhấn để phóng to ảnh chứng từ"
           >
             <img
@@ -104,7 +104,7 @@ function TransactionRow({
         )}
       </div>
       <div className="text-right shrink-0 space-y-1">
-        <div className={`font-bold text-xs ${isNegative ? 'text-red-600' : 'text-emerald-600'}`}>
+        <div className={`font-semibold text-xs ${isNegative ? 'text-red-600' : 'text-emerald-600'}`}>
           {transaction.amount > 0 ? `+${formatCurrency(transaction.amount)}` : formatCurrency(transaction.amount)}
         </div>
         {canReverse && can('payment:reverse') && (
@@ -112,7 +112,7 @@ function TransactionRow({
             type="button"
             title="Hoàn tiền cho khoản này"
             onClick={() => onReverse(transaction)}
-            className="px-1.5 py-0.5 bg-red-50 hover:bg-red-100 text-red-600 rounded text-[10px] font-medium cursor-pointer transition-colors inline-flex items-center gap-1 border-0"
+            className="px-1.5 py-0.5 bg-red-50 hover:bg-red-100 text-red-600 rounded text-xs font-medium cursor-pointer transition-colors inline-flex items-center gap-1 border-0"
           >
             <RotateCcw size={10} /> Hoàn tiền
           </button>
@@ -134,16 +134,16 @@ export function TransactionHistory({
   const [previewTx, setPreviewTx] = useState<PaymentTransactionItem | null>(null);
 
   return (
-    <div className="bg-white rounded-control border border-slate-200/70 p-4 shadow-2xs space-y-3.5">
+    <div className="bg-white rounded-control border border-slate-200/70 p-4 space-y-3.5">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h3 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+          <h3 className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
             Lịch sử thanh toán
-            <span className="px-1.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-semibold">
+            <span className="px-1.5 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold">
               {transactions.length}
             </span>
           </h3>
-          <p className="text-[11px] text-slate-400 mt-0.5">Danh sách các lần thu tiền và hoàn tiền</p>
+          <p className="text-xs text-slate-400 mt-0.5">Danh sách các lần thu tiền và hoàn tiền</p>
         </div>
         {can('payment:create') && (
           <Button

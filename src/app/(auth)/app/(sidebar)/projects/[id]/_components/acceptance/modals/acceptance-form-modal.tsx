@@ -151,16 +151,16 @@ function AcceptanceForm({
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
             <span>Danh sách bộ cửa nghiệm thu ({selectedItems.length}/{installedPositions.length})</span>
-            <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[11px] font-bold text-emerald-700 border border-emerald-200">
+            <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200">
               {passedCount} Đạt
             </span>
             {failedCount > 0 && (
-              <span className="rounded bg-red-50 px-1.5 py-0.5 text-[11px] font-bold text-red-600 border border-red-200">
+              <span className="rounded bg-red-50 px-1.5 py-0.5 text-xs font-semibold text-red-600 border border-red-200">
                 {failedCount} Chưa đạt (sẽ nghiệm thu lại lần sau)
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2 text-[11px]">
+          <div className="flex items-center gap-2 text-xs">
             <button
               type="button"
               onClick={() => toggleAll(true)}
@@ -203,12 +203,12 @@ function AcceptanceForm({
                       onChange={(e) => updateDoorEval(position.id, { checked: e.target.checked })}
                       className="h-4 w-4 rounded border-slate-300"
                     />
-                    <span className="font-bold text-slate-800">{position.code}</span>
+                    <span className="font-semibold text-slate-800">{position.code}</span>
                     <span className="text-slate-500">
                       · {position.description || `${position.width} × ${position.height} mm`}
                     </span>
                     {position.floor?.name && (
-                      <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-600">
+                      <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600">
                         {position.floor.name}
                       </span>
                     )}
@@ -219,9 +219,9 @@ function AcceptanceForm({
                       <button
                         type="button"
                         onClick={() => updateDoorEval(position.id, { result: 'passed' })}
-                        className={`inline-flex cursor-pointer items-center gap-1 rounded px-2 py-1 text-[11px] font-semibold transition-colors ${
+                        className={`inline-flex cursor-pointer items-center gap-1 rounded px-2 py-1 text-xs font-semibold transition-colors ${
                           isPassed
-                            ? 'bg-emerald-600 text-white shadow-2xs'
+                            ? 'bg-emerald-600 text-white'
                             : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
                         }`}
                       >
@@ -231,9 +231,9 @@ function AcceptanceForm({
                       <button
                         type="button"
                         onClick={() => updateDoorEval(position.id, { result: 'failed' })}
-                        className={`inline-flex cursor-pointer items-center gap-1 rounded px-2 py-1 text-[11px] font-semibold transition-colors ${
+                        className={`inline-flex cursor-pointer items-center gap-1 rounded px-2 py-1 text-xs font-semibold transition-colors ${
                           !isPassed
-                            ? 'bg-red-600 text-white shadow-2xs'
+                            ? 'bg-red-600 text-white'
                             : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
                         }`}
                       >
@@ -287,7 +287,7 @@ function AcceptanceForm({
               }`}
             >
               <div className="text-xs font-semibold text-slate-800">{option.label}</div>
-              <div className="text-[10px] text-slate-500">{option.hint}</div>
+              <div className="text-xs text-slate-500">{option.hint}</div>
             </button>
           ))}
         </div>

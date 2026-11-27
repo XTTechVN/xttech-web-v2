@@ -44,7 +44,7 @@ export function CuttingShortagePanel({
     enabled: isReceiptOpen,
   });
 
-  if (isLoading) return <p className="text-[11px] text-slate-400">Đang kiểm tra tồn kho...</p>;
+  if (isLoading) return <p className="text-xs text-slate-400">Đang kiểm tra tồn kho...</p>;
 
   if (shortages.length === 0) {
     return (
@@ -60,7 +60,7 @@ export function CuttingShortagePanel({
   return (
     <div className="space-y-2 rounded-control border border-red-200 bg-red-50/60 p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="flex items-center gap-1.5 text-xs font-bold text-red-800">
+        <span className="flex items-center gap-1.5 text-xs font-semibold text-red-800">
           <AlertTriangle size={14} /> Thiếu hụt / chưa khai báo {shortages.length} mặt hàng vật tư
         </span>
         <Button
@@ -75,7 +75,7 @@ export function CuttingShortagePanel({
         </Button>
       </div>
 
-      <ul className="max-h-32 space-y-1 overflow-y-auto text-[11px] text-slate-700">
+      <ul className="max-h-32 space-y-1 overflow-y-auto text-xs text-slate-700">
         {shortages.map((item) => (
           <li
             key={`${item.itemCode}-${item.colorId ?? ''}`}
@@ -85,17 +85,17 @@ export function CuttingShortagePanel({
               <span className="tabular-nums font-semibold">{item.itemCode}</span> - {item.itemName}
               {item.colorName ? ` (${item.colorName})` : ''}
               {!item.itemId && item.isConfigured !== false && (
-                <span className="ml-1.5 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
+                <span className="ml-1.5 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-semibold text-amber-800">
                   Chưa khai báo trong kho
                 </span>
               )}
               {item.isConfigured === false && (
-                <span className="ml-1.5 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
+                <span className="ml-1.5 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-semibold text-amber-800">
                   Chưa gán profile
                 </span>
               )}
             </span>
-            <span className="shrink-0 tabular-nums font-bold text-red-600">
+            <span className="shrink-0 tabular-nums font-semibold text-red-600">
               +{item.shortageQty.toLocaleString('vi-VN')} {toDisplayUnit(item.unit)}
             </span>
           </li>
@@ -103,7 +103,7 @@ export function CuttingShortagePanel({
       </ul>
 
       {hasUnconfigured && (
-        <p className="text-[11px] text-amber-700">
+        <p className="text-xs text-amber-700">
           Thanh nhôm chưa gán profile không thể lập phiếu mua. Hãy hoàn tất cấu hình profile trong
           Door Studio.
         </p>

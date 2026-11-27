@@ -73,7 +73,7 @@ function PaymentTransactionForm({
   return (
     <div className="space-y-4">
       {signedContract && (
-        <p className="text-[11px] text-slate-500">
+        <p className="text-xs text-slate-500">
           Thu tiền cho hợp đồng <strong className="text-slate-700">{signedContract.contractCode}</strong>
         </p>
       )}
@@ -141,7 +141,7 @@ function PaymentTransactionForm({
             <button
               type="button"
               onClick={() => setReceiptImage('')}
-              className="absolute -right-2 -top-2 cursor-pointer rounded-full bg-red-500 p-1 text-white shadow-xs hover:bg-red-600"
+              className="absolute -right-2 -top-2 cursor-pointer rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
               title="Xóa ảnh chứng từ"
             >
               <Trash2 size={12} />

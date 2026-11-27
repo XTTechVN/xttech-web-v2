@@ -50,7 +50,7 @@ export function DailyProgressActionBar({
   return (
     <div className="animate-in fade-in slide-in-from-bottom-3 fixed bottom-4 left-1/2 z-40 flex max-w-[95vw] flex-wrap -translate-x-1/2 items-center gap-3 rounded-block border border-slate-700/60 bg-slate-900/95 px-4 py-2.5 text-white shadow-xl backdrop-blur-md transition-all duration-200">
       <div className="flex items-center gap-2">
-        <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
+        <span className="h-2 w-2 rounded-full bg-emerald-400" />
         <span className="text-xs font-medium">
           Đã chọn <b className="tabular-nums text-emerald-400">{selectedCount}</b> cửa ở
           mốc{' '}
@@ -63,7 +63,7 @@ export function DailyProgressActionBar({
       {nextStep ? (
         <div className="flex items-center gap-1.5 border-l border-slate-700 pl-3 text-xs text-slate-300">
           <span>Mốc tiếp theo:</span>
-          <span className="flex items-center gap-1 font-bold text-emerald-400">
+          <span className="flex items-center gap-1 font-semibold text-emerald-400">
             <ChevronRight size={13} />
             {nextStepLabel}
           </span>
@@ -71,12 +71,12 @@ export function DailyProgressActionBar({
       ) : selectedStep === 'installed' ? (
         <Link
           href="?tab=acceptance"
-          className="border-l border-slate-700 pl-3 text-[11px] font-semibold text-emerald-300 hover:underline"
+          className="border-l border-slate-700 pl-3 text-xs font-semibold text-emerald-300 hover:underline"
         >
           Lắp xong → lập biên bản nghiệm thu (2 bên ký) ở tab Nghiệm thu
         </Link>
       ) : (
-        <span className="border-l border-slate-700 pl-3 text-[11px] text-amber-300">
+        <span className="border-l border-slate-700 pl-3 text-xs text-amber-300">
           {blockedHint ??
             (selectedStep === 'accepted'
               ? '(Đã nghiệm thu)'
@@ -94,7 +94,7 @@ export function DailyProgressActionBar({
             disabled={!nextStep || isPending}
             loading={isPending}
             onClick={onAdvance}
-            className="gap-1.5 text-xs font-semibold shadow-xs"
+            className="gap-1.5 text-xs font-semibold"
           >
             <CheckCircle2 size={14} />
             {actionButtonLabel}

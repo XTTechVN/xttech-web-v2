@@ -61,10 +61,10 @@ export function ProjectGlassOrdersPanel({ projectId }: ProjectGlassOrdersPanelPr
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-4 rounded-block border border-slate-200 shadow-xs">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-4 rounded-block border border-slate-200">
         <div className="flex items-center gap-2">
           <Boxes className="w-5 h-5 text-primary" />
-          <h3 className="text-sm font-bold text-slate-800">
+          <h3 className="text-sm font-semibold text-slate-800">
             Quản Lý Đơn Đặt Kính Dự Án ({glassOrders.length} đơn)
           </h3>
         </div>

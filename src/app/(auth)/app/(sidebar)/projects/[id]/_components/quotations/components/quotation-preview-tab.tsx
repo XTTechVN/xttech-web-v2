@@ -42,7 +42,7 @@ export function QuotationPreviewTab({ projectId, quotationId, initialMode }: Quo
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2 bg-white rounded-control border border-slate-200/60 p-3 shadow-xs">
+      <div className="flex flex-wrap items-center justify-between gap-2 bg-white rounded-control border border-slate-200/60 p-3">
         <div className="inline-flex rounded-control border border-slate-200 p-0.5 bg-slate-50">
           {MODE_OPTIONS.map((option) => (
             <Button

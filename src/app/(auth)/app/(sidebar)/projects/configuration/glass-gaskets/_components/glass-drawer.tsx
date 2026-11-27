@@ -5,6 +5,7 @@ import { Drawer, DrawerBody, DrawerHeader, DrawerSection, IconAction, InfoRow, T
 import type { Glass, GlassCategory } from '@/types';
 import { formatCurrency } from '@/utils';
 import { glassTypeOf } from './format';
+import { CopyToOrg, SystemTag } from '../../_components/shared-catalog';
 
 interface Props {
   glass: Glass | null;
@@ -30,17 +31,18 @@ export function GlassDrawer({ glass: g, categories, canEdit, canDelete, settingD
             onClose={onClose}
             actions={
               <>
-                {canEdit && !g.isDefault && (
+                {g.isSystem && <CopyToOrg variant="icon" kind="glass" id={g.id} name={g.code || g.name} onCopied={onClose} />}
+                {canEdit && !g.isDefault && !g.isSystem && (
                   <IconAction label="Đặt làm mặc định" disabled={settingDefault} onClick={() => onSetDefault(g)}>
                     <Star size={16} />
                   </IconAction>
                 )}
-                {canEdit && (
+                {canEdit && !g.isSystem && (
                   <IconAction label="Sửa" onClick={() => onEdit(g)}>
                     <Pencil size={16} />
                   </IconAction>
                 )}
-                {canDelete && (
+                {canDelete && !g.isSystem && (
                   <IconAction label="Xóa" danger onClick={() => onDelete(g)}>
                     <Trash2 size={16} />
                   </IconAction>
@@ -53,6 +55,7 @@ export function GlassDrawer({ glass: g, categories, canEdit, canDelete, settingD
               <h3 className="text-base font-semibold text-slate-900 [overflow-wrap:anywhere]">{g.name}</h3>
               <p className="mb-4 mt-2 flex flex-wrap items-center gap-1.5">
                 <Tag tone="blue">{g.code || '–'}</Tag>
+                {g.isSystem && <SystemTag />}
                 <Tag tone={glassTypeOf(g).tone}>{glassTypeOf(g).label}</Tag>
                 {g.isDefault && <Tag tone="amber">Mặc định</Tag>}
                 {g.isActive !== false ? <Tag tone="green">Hoạt động</Tag> : <Tag>Tạm khóa</Tag>}

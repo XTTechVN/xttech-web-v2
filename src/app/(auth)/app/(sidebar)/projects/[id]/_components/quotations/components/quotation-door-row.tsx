@@ -23,7 +23,7 @@ interface QuotationDoorRowProps {
 }
 
 const INPUT_CLASS =
-  'text-right text-xs font-bold tabular-nums placeholder:font-normal placeholder:text-slate-400 border rounded px-2 py-1 outline-none focus:border-primary disabled:bg-slate-50';
+  'text-right text-xs font-semibold tabular-nums placeholder:font-normal placeholder:text-slate-400 border rounded px-2 py-1 outline-none focus:border-primary disabled:bg-slate-50';
 
 export function QuotationDoorRow({ item, isSeparated, isLocked, drafts }: QuotationDoorRowProps) {
   const isOutsourced = item.fulfillmentType === 'outsourced';
@@ -43,31 +43,31 @@ export function QuotationDoorRow({ item, isSeparated, isLocked, drafts }: Quotat
     <tr className={`border-b border-slate-100 ${isBelowCost ? 'bg-red-50/60' : 'hover:bg-slate-50/60'}`}>
       <td className="py-2 px-2">
         <div className="whitespace-nowrap">
-          <span className="font-bold text-slate-800">{item.positionCode}</span>
+          <span className="font-semibold text-slate-800">{item.positionCode}</span>
           <span className="text-slate-500"> · {item.doorName}</span>
         </div>
         {isOutsourced && (
           <div className="mt-1 flex flex-wrap items-center gap-1">
-            <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${DOOR_FULFILLMENT_TYPE_MAP.outsourced.badgeClass}`}>
+            <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${DOOR_FULFILLMENT_TYPE_MAP.outsourced.badgeClass}`}>
               {DOOR_FULFILLMENT_TYPE_MAP.outsourced.shortLabel}
             </span>
             {item.supplierName && (
-              <span className="text-[10px] text-slate-600 font-medium truncate max-w-[140px]">
+              <span className="text-xs text-slate-600 font-medium truncate max-w-[140px]">
                 {item.supplierName}
               </span>
             )}
             {isEstimated && (
-              <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${POSITION_COST_STATUS_MAP.estimated.badgeClass}`}>
+              <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${POSITION_COST_STATUS_MAP.estimated.badgeClass}`}>
                 {POSITION_COST_STATUS_MAP.estimated.shortLabel}
               </span>
             )}
           </div>
         )}
         {extraGlasses.length > 0 && (
-          <div className="mt-1 space-y-0.5 text-[11px] text-slate-600">
+          <div className="mt-1 space-y-0.5 text-xs text-slate-600">
             {extraGlasses.map((eg, idx) => (
               <div key={`${eg.glassId ?? eg.glassName}-${idx}`} className="flex flex-wrap items-center gap-1">
-                <span className="px-1.5 py-0.2 rounded bg-sky-50 text-sky-700 border border-sky-200 text-[10px] font-semibold">
+                <span className="px-1.5 py-0.2 rounded bg-sky-50 text-sky-700 border border-sky-200 text-xs font-semibold">
                   Bổ sung
                 </span>
                 <span className="font-medium text-slate-700">
@@ -81,7 +81,7 @@ export function QuotationDoorRow({ item, isSeparated, isLocked, drafts }: Quotat
               </div>
             ))}
             {!isSeparated && (
-              <p className="text-[10px] italic text-slate-500">
+              <p className="text-xs italic text-slate-500">
                 Đơn giá/m² đang gồm kính bổ sung và sẽ tự tách dòng riêng trên bảng Xem trước báo giá / Excel.
               </p>
             )}
@@ -96,13 +96,13 @@ export function QuotationDoorRow({ item, isSeparated, isLocked, drafts }: Quotat
       <td className="py-2 px-2 whitespace-nowrap text-right text-slate-600">
         <span className="tabular-nums">{item.areaM2.toLocaleString('vi-VN')}</span>
         {isOutsourced && (
-          <span className="block text-[10px] font-medium text-primary">ĐVT: Bộ</span>
+          <span className="block text-xs font-medium text-primary">ĐVT: Bộ</span>
         )}
       </td>
 
       <td className="py-2 px-2 whitespace-nowrap text-right text-slate-700">
         <span className="font-semibold tabular-nums">{formatCurrency(item.costPrice)}</span>
-        <span className="block text-[10px] text-slate-400 font-normal">
+        <span className="block text-xs text-slate-400 font-normal">
           {isOutsourced
             ? isEstimated
               ? 'Tạm tính NCC / bộ'
@@ -124,7 +124,7 @@ export function QuotationDoorRow({ item, isSeparated, isLocked, drafts }: Quotat
                   onChange={(digits) => drafts.setDoorTotalPriceDraft(item, digits)}
                   widthClass="w-32"
                 />
-                <span className="block text-[10px] text-slate-400 mt-0.5">đ/bộ (trọn bộ)</span>
+                <span className="block text-xs text-slate-400 mt-0.5">đ/bộ (trọn bộ)</span>
               </div>
             ) : (
               <DraftPriceInput
@@ -141,7 +141,7 @@ export function QuotationDoorRow({ item, isSeparated, isLocked, drafts }: Quotat
             {isOutsourced ? (
               <div className="text-slate-400">
                 <span className="tabular-nums font-medium">0 đ</span>
-                <span className="block text-[10px]">Gồm theo bộ</span>
+                <span className="block text-xs">Gồm theo bộ</span>
               </div>
             ) : (
               <DraftPriceInput
@@ -155,18 +155,18 @@ export function QuotationDoorRow({ item, isSeparated, isLocked, drafts }: Quotat
             )}
           </td>
           <td className="py-2 px-2 whitespace-nowrap text-right">
-            <span className={`font-bold tabular-nums ${isBelowCost ? 'text-red-600' : 'text-slate-800'}`}>
+            <span className={`font-semibold tabular-nums ${isBelowCost ? 'text-red-600' : 'text-slate-800'}`}>
               {formatCurrency(drafts.getTotalLive(item))}
             </span>
-            {isLiveManual && <span className="block text-[10px] text-amber-600">Đã sửa giá tay</span>}
-            {isBelowCost && <span className="block text-[10px] text-red-600">Thấp hơn chi phí</span>}
+            {isLiveManual && <span className="block text-xs text-amber-600">Đã sửa giá tay</span>}
+            {isBelowCost && <span className="block text-xs text-red-600">Thấp hơn chi phí</span>}
           </td>
         </>
       ) : (
         <>
           <td className="py-2 px-2 whitespace-nowrap text-right">
             {isOutsourced ? (
-              <span className="text-[11px] font-medium text-slate-400">Theo bộ</span>
+              <span className="text-xs font-medium text-slate-400">Theo bộ</span>
             ) : (
               <DraftPriceInput
                 disabled={isLocked}
@@ -189,10 +189,10 @@ export function QuotationDoorRow({ item, isSeparated, isLocked, drafts }: Quotat
               isDanger={isBelowCost}
             />
             {isOutsourced && (
-              <span className="block text-[10px] text-slate-400 mt-0.5">đ/bộ</span>
+              <span className="block text-xs text-slate-400 mt-0.5">đ/bộ</span>
             )}
-            {isLiveManual && <span className="block text-[10px] text-amber-600">Đã sửa giá tay</span>}
-            {isBelowCost && <span className="block text-[10px] text-red-600">Thấp hơn chi phí</span>}
+            {isLiveManual && <span className="block text-xs text-amber-600">Đã sửa giá tay</span>}
+            {isBelowCost && <span className="block text-xs text-red-600">Thấp hơn chi phí</span>}
           </td>
         </>
       )}

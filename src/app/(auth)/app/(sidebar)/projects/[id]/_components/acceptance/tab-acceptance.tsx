@@ -97,10 +97,10 @@ export function TabAcceptance({ projectId }: TabAcceptanceProps) {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-slate-200 bg-white p-3">
         <div className="space-y-0.5">
-          <div className="flex items-center gap-1.5 text-sm font-bold text-slate-800">
+          <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-800">
             <ClipboardCheck size={16} className="text-primary" /> Nghiệm thu bàn giao
           </div>
-          <p className="text-[11px] text-slate-500">
+          <p className="text-xs text-slate-500">
             Biên bản cần ảnh thực tế + chữ ký số của đại diện công ty và khách hàng. Các cửa đánh dấu &ldquo;Không
             đạt&rdquo; sẽ giữ trạng thái Đã lắp đặt để lập biên bản nghiệm thu lại vào đợt sau.
           </p>
@@ -133,21 +133,21 @@ export function TabAcceptance({ projectId }: TabAcceptanceProps) {
           <div key={acceptance.id} className="space-y-3 rounded-control border border-slate-200 bg-white p-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="tabular-nums text-sm font-bold text-slate-800">{acceptance.code}</span>
+                <span className="tabular-nums text-sm font-semibold text-slate-800">{acceptance.code}</span>
                 <Badge variant={status.variant}>{status.label}</Badge>
                 {items.length > 0 && (
                   <>
-                    <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 border border-emerald-200">
+                    <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200">
                       {passedCount} Đạt
                     </span>
                     {failedCount > 0 && (
-                      <span className="rounded bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-red-600 border border-red-200">
+                      <span className="rounded bg-red-50 px-1.5 py-0.5 text-xs font-semibold text-red-600 border border-red-200">
                         {failedCount} Không đạt
                       </span>
                     )}
                   </>
                 )}
-                <span className="text-[11px] text-slate-400">
+                <span className="text-xs text-slate-400">
                   {new Date(acceptance.createdAt).toLocaleString('vi-VN')}
                 </span>
               </div>
@@ -203,17 +203,17 @@ export function TabAcceptance({ projectId }: TabAcceptanceProps) {
                           ) : (
                             <XCircle size={13} className="shrink-0 text-red-600" />
                           )}
-                          <span className="font-bold text-slate-800">{item.positionCode}</span>
+                          <span className="font-semibold text-slate-800">{item.positionCode}</span>
                           {item.doorName && <span className="truncate text-slate-500">· {item.doorName}</span>}
                         </div>
                         {item.note && (
-                          <p className={`pl-5 text-[11px] ${isPassed ? 'text-slate-600' : 'font-medium text-red-700'}`}>
+                          <p className={`pl-5 text-xs ${isPassed ? 'text-slate-600' : 'font-medium text-red-700'}`}>
                             Ghi chú: {item.note}
                           </p>
                         )}
                       </div>
                       <span
-                        className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold ${
+                        className={`shrink-0 rounded px-1.5 py-0.5 text-xs font-semibold ${
                           isPassed ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
                         }`}
                       >
@@ -279,14 +279,14 @@ export function TabAcceptance({ projectId }: TabAcceptanceProps) {
                     {signature ? (
                       <>
                         <img src={signature.signatureImage} alt={signature.signerName} className="mx-auto h-12 object-contain" />
-                        <div className="text-[11px] font-semibold text-slate-800">{signature.signerName}</div>
-                        <div className="text-[10px] text-slate-400">
+                        <div className="text-xs font-semibold text-slate-800">{signature.signerName}</div>
+                        <div className="text-xs text-slate-400">
                           {party === 'company' ? 'Đại diện công ty' : 'Khách hàng'} ·{' '}
                           {new Date(signature.signedAt).toLocaleDateString('vi-VN')}
                         </div>
                       </>
                     ) : (
-                      <div className="py-4 text-[11px] text-slate-400">
+                      <div className="py-4 text-xs text-slate-400">
                         {party === 'company' ? 'Công ty' : 'Khách hàng'}: chưa ký
                       </div>
                     )}

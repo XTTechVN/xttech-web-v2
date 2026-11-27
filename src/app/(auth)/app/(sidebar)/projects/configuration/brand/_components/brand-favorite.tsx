@@ -31,7 +31,15 @@ export function useBrandFavorite(brand: Brand, brands: Brand[]) {
     onError: (e) => showErrorToast(e, 'Không thể cập nhật hãng mặc định'),
   });
 
-  return { on, toggle: () => toggle.mutate(), pending: toggle.isPending };
+  const run = () => {
+    if (brand.isSystem) {
+      toast('Hãng của hệ thống không đặt mặc định được. Hãy sao chép về doanh nghiệp rồi đặt bản riêng.');
+      return;
+    }
+    toggle.mutate();
+  };
+
+  return { on, toggle: run, pending: toggle.isPending };
 }
 
 // Nút trong drawer chi tiết

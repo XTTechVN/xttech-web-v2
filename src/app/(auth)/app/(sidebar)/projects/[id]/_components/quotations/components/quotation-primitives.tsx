@@ -11,8 +11,8 @@ export function PricingModeHelpTooltip() {
       position="top"
       className="w-80 sm:w-96 whitespace-normal text-left p-3.5 leading-relaxed right-0 left-auto translate-x-0 font-normal shadow-xl border border-slate-700"
       content={
-        <div className="space-y-2.5 text-[11px] text-slate-100">
-          <div className="font-bold text-xs text-white border-b border-slate-700 pb-1.5">
+        <div className="space-y-2.5 text-xs text-slate-100">
+          <div className="font-semibold text-xs text-white border-b border-slate-700 pb-1.5">
             Phân biệt 2 cách tính giá bán (chưa gồm thuế VAT)
           </div>
 
@@ -45,7 +45,7 @@ export function PricingModeHelpTooltip() {
             </div>
           </div>
 
-          <div className="text-[10px] text-slate-300 bg-primary/30 border border-primary/40 rounded px-2 py-1">
+          <div className="text-xs text-slate-300 bg-primary/30 border border-primary/40 rounded px-2 py-1">
             💡 <b>Lưu ý:</b> Cùng nhập một con số % (ví dụ 30%), <b>Cách 2</b> sẽ cho ra giá bán và
             tiền lãi cao hơn <b>Cách 1</b>.
           </div>
@@ -76,10 +76,10 @@ export function PriceBlock({
   children: React.ReactNode;
 }) {
   return (
-    <section className={`bg-white rounded-control border border-slate-200/60 p-5 shadow-xs space-y-4 ${className}`}>
+    <section className={`bg-white rounded-control border border-slate-200/60 p-5 space-y-4 ${className}`}>
       <div>
-        <span className="text-xs font-bold text-slate-700 block">{title}</span>
-        <span className="text-[11px] text-slate-400 block mt-0.5">{description}</span>
+        <span className="text-xs font-semibold text-slate-700 block">{title}</span>
+        <span className="text-xs text-slate-400 block mt-0.5">{description}</span>
       </div>
       {children}
     </section>
@@ -87,7 +87,7 @@ export function PriceBlock({
 }
 
 export function Hint({ children }: { children: React.ReactNode }) {
-  return <p className="text-[11px] text-slate-400 -mt-1.5">{children}</p>;
+  return <p className="text-xs text-slate-400 -mt-1.5">{children}</p>;
 }
 
 const ROW_TONE_CLASS = {
@@ -111,8 +111,8 @@ export function ResultRow({
   const toneClass = tone ? ROW_TONE_CLASS[tone] : 'text-slate-700';
   return (
     <div className="flex justify-between gap-3 py-1.5 text-xs">
-      <span className={strong ? 'font-bold text-slate-600' : 'text-slate-400'}>{label}</span>
-      <span className={`${strong ? 'font-bold' : ''} ${toneClass}`}>{value}</span>
+      <span className={strong ? 'font-semibold text-slate-600' : 'text-slate-400'}>{label}</span>
+      <span className={`${strong ? 'font-semibold' : ''} ${toneClass}`}>{value}</span>
     </div>
   );
 }
@@ -158,8 +158,8 @@ export function CompositionPanel({ data }: { data: CompositionData }) {
                 {row.key} · {row.label}
               </span>
               <span className="flex items-baseline gap-3">
-                <span className="text-[11px] text-slate-400">{percent.toFixed(0)}%</span>
-                <span className="font-bold text-slate-800 min-w-20 text-right">
+                <span className="text-xs text-slate-400">{percent.toFixed(0)}%</span>
+                <span className="font-semibold text-slate-800 min-w-20 text-right">
                   {row.value.toLocaleString('vi-VN')}
                 </span>
               </span>
@@ -174,8 +174,8 @@ export function CompositionPanel({ data }: { data: CompositionData }) {
         );
       })}
       <div className="flex justify-between gap-3 border-t border-slate-100 mt-2 pt-2 text-xs">
-        <span className="font-bold text-slate-700">Tổng giá (chưa tính thuế)</span>
-        <span className="font-bold text-slate-800">{total.toLocaleString('vi-VN')}</span>
+        <span className="font-semibold text-slate-700">Tổng giá (chưa tính thuế)</span>
+        <span className="font-semibold text-slate-800">{total.toLocaleString('vi-VN')}</span>
       </div>
     </div>
   );

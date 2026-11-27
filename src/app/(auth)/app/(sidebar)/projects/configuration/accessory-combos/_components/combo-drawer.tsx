@@ -5,6 +5,7 @@ import { Drawer, DrawerBody, DrawerHeader, DrawerSection, IconAction, InfoRow, T
 import { getDoorTypeConfig, type AccessoryCombo } from '@/types';
 import { formatCurrency } from '@/utils';
 import { OPENING_TYPE, applyOf } from './combo-list';
+import { CopyToOrg, SystemTag } from '../../_components/shared-catalog';
 
 interface Props {
   combo: AccessoryCombo | null;
@@ -32,22 +33,23 @@ export function ComboDrawer({ combo: c, canCreate, canEdit, canDelete, togglingD
             onClose={onClose}
             actions={
               <>
-                {canEdit && (
+                {c.isSystem && <CopyToOrg variant="icon" kind="combo" id={c.id} name={c.name} onCopied={onClose} />}
+                {canEdit && !c.isSystem && (
                   <IconAction label={c.isDefault ? 'Bỏ mặc định' : 'Đặt làm mặc định'} disabled={togglingDefault} onClick={() => onToggleDefault(c)}>
                     <Star size={16} className={c.isDefault ? 'fill-primary text-primary' : ''} />
                   </IconAction>
                 )}
-                {canCreate && (
+                {canCreate && !c.isSystem && (
                   <IconAction label="Sao chép" onClick={() => onCopy(c)}>
                     <Copy size={16} />
                   </IconAction>
                 )}
-                {canEdit && (
+                {canEdit && !c.isSystem && (
                   <IconAction label="Sửa" onClick={() => onEdit(c)}>
                     <Pencil size={16} />
                   </IconAction>
                 )}
-                {canDelete && (
+                {canDelete && !c.isSystem && (
                   <IconAction label="Xóa" danger onClick={() => onDelete(c)}>
                     <Trash2 size={16} />
                   </IconAction>
@@ -60,13 +62,16 @@ export function ComboDrawer({ combo: c, canCreate, canEdit, canDelete, togglingD
               <h3 className="text-base font-semibold text-slate-900 [overflow-wrap:anywhere]">{c.name}</h3>
               <p className="mb-4 mt-2 flex flex-wrap items-center gap-1.5">
                 <Tag tone="blue">{c.code}</Tag>
+                {c.isSystem && <SystemTag />}
                 <Tag tone={applyOf(c).tone}>{applyOf(c).label}</Tag>
                 {c.isDefault && <Tag tone="amber">Mặc định</Tag>}
                 {c.isActive ? <Tag tone="green">Hoạt động</Tag> : <Tag>Tạm ngưng</Tag>}
               </p>
               <DrawerSection title="Thông tin">
                 <InfoRow label="Hãng">{c.brand?.name || '–'}</InfoRow>
-                {c.applyFor === 'huong_mo' && <InfoRow label="Kiểu mở">{(c.openingType && OPENING_TYPE[c.openingType]) || c.openingType || '–'}</InfoRow>}
+                {c.applyFor === 'huong_mo' && (
+                  <InfoRow label="Kiểu mở">{(c.openingType && OPENING_TYPE[c.openingType]) || c.openingType || '–'}</InfoRow>
+                )}
                 <InfoRow label="Loại cửa">{doorTypes.length ? doorTypes.map((d) => getDoorTypeConfig(d).label).join(', ') : '–'}</InfoRow>
                 <InfoRow label="Tổng giá">{formatCurrency(c.totalComboPrice || 0)}</InfoRow>
                 <InfoRow label="Mô tả">{c.description || '–'}</InfoRow>

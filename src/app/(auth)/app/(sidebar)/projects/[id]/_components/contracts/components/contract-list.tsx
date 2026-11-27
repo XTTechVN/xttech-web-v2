@@ -107,7 +107,7 @@ function ContractRow({
         <div className="space-y-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-semibold text-slate-800 text-xs">{contract.contractCode}</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold border bg-blue-50 text-blue-700 border-blue-200/60">
+            <span className="text-xs px-1.5 py-0.5 rounded font-semibold border bg-blue-50 text-blue-700 border-blue-200/60">
               {CONTRACT_KIND_MAP[contract.kind] ?? contract.kind}
             </span>
             <Badge variant={status?.variant ?? 'default'} size="sm">
@@ -116,12 +116,12 @@ function ContractRow({
           </div>
           <div className="text-xs font-medium text-slate-700 truncate">{contract.contractName}</div>
           {contract.replacedByContractId && (
-            <div className="text-[11px] font-medium text-amber-600">
+            <div className="text-xs font-medium text-amber-600">
               Đã outdate — được thay bằng hợp đồng mới, lịch sử thanh toán/sản xuất đã chuyển sang hợp đồng mới
             </div>
           )}
           {!!contract.signatures?.length && (
-            <div className="text-[11px] text-emerald-700">
+            <div className="text-xs text-emerald-700">
               Chữ ký số:{' '}
               {contract.signatures
                 .map((sig) => `${sig.party === 'company' ? 'Công ty' : 'Khách hàng'} – ${sig.signerName}`)
@@ -129,7 +129,7 @@ function ContractRow({
             </div>
           )}
           {contract.replacedContractCode && (
-            <div className="text-[11px] text-slate-400">
+            <div className="text-xs text-slate-400">
               Thay thế {contract.replacedContractCode}
               {contract.inheritedPaidAmount > 0 &&
                 `, kế thừa ${formatCurrency(contract.inheritedPaidAmount)} đã thu`}
@@ -139,21 +139,21 @@ function ContractRow({
 
         <div className="flex items-center justify-between sm:justify-end gap-3.5 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
           <div className="text-left sm:text-right">
-            <div className="text-xs font-bold text-slate-800">{formatCurrency(contract.totalAmount)}</div>
-            <div className="text-[11px] text-slate-400">
+            <div className="text-xs font-semibold text-slate-800">{formatCurrency(contract.totalAmount)}</div>
+            <div className="text-xs text-slate-400">
               Đã thu: <span className="text-emerald-600 font-medium">{formatCurrency(contract.paidAmount)}</span>
             </div>
           </div>
 
           <div className="flex items-center gap-1.5">
-            <Button variant="outline" size="sm" className="h-7 text-[11px] px-2" onClick={() => onPreview(contract)}>
+            <Button variant="outline" size="sm" className="h-7 text-xs px-2" onClick={() => onPreview(contract)}>
               <Printer size={12} className="mr-1" /> Xem / In
             </Button>
             {can('contract:update') && (
               <Button
                 variant="outline"
                 size="sm"
-                className="h-7 text-[11px] px-2"
+                className="h-7 text-xs px-2"
                 onClick={() => onEditTerms(contract)}
               >
                 {isDraft ? 'Soạn điều khoản' : 'Xem điều khoản'}
@@ -163,7 +163,7 @@ function ContractRow({
               <Button
                 variant="outline"
                 size="sm"
-                className="h-7 text-[11px] px-2"
+                className="h-7 text-xs px-2"
                 loading={isRequestingSigning}
                 disabled={isOutdatedQuotation}
                 onClick={() => onRequestSigning(contract)}
@@ -197,7 +197,7 @@ function ContractRow({
               <Button
                 variant="outline"
                 size="sm"
-                className="h-7 text-[11px] px-2 text-red-600 border-red-200 hover:bg-red-50"
+                className="h-7 text-xs px-2 text-red-600 border-red-200 hover:bg-red-50"
                 onClick={() => onCancel(contract)}
               >
                 Hủy hợp đồng
@@ -228,7 +228,7 @@ function ContractRow({
 function MilestoneList({ payments }: { payments: ProjectPaymentMilestoneItem[] }) {
   return (
     <div className="px-3.5 pb-3.5 pt-1 bg-slate-50/70 border-t border-slate-100 space-y-2">
-      <div className="text-[11px] font-semibold text-slate-500">Kế hoạch thanh toán theo đợt:</div>
+      <div className="text-xs font-semibold text-slate-500">Kế hoạch thanh toán theo đợt:</div>
       <div className="space-y-1.5">
         {payments.map((p) => {
           const status = PAYMENT_MILESTONE_STATUS_MAP[p.status];
@@ -241,21 +241,21 @@ function MilestoneList({ payments }: { payments: ProjectPaymentMilestoneItem[] }
                 <span className="font-medium text-slate-700">
                   Đợt {p.milestoneOrder}: {p.installmentName}
                 </span>
-                <span className="text-slate-400 ml-1.5 text-[11px]">({p.percentage}%)</span>
+                <span className="text-slate-400 ml-1.5 text-xs">({p.percentage}%)</span>
                 {status && (
                   <Badge variant={status.variant} size="sm" className="ml-1.5">
                     {status.label}
                   </Badge>
                 )}
                 {p.dueDate && (
-                  <span className="text-[11px] text-slate-400 block">
+                  <span className="text-xs text-slate-400 block">
                     Hạn thanh toán: {new Date(p.dueDate).toLocaleDateString('vi-VN')}
                   </span>
                 )}
               </div>
               <div className="text-right">
                 <div className="font-semibold text-slate-800">{formatCurrency(p.expectedAmount)}</div>
-                <div className="text-[11px] text-emerald-600">Đã thu: {formatCurrency(p.paidAmount)}</div>
+                <div className="text-xs text-emerald-600">Đã thu: {formatCurrency(p.paidAmount)}</div>
               </div>
             </div>
           );

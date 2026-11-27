@@ -36,12 +36,12 @@ const TABS: ConfigTab[] = [
   { id: 'brand', title: 'Hãng cung cấp', description: 'Thương hiệu nhôm, phụ kiện và hệ màu.', component: BrandTab },
   { id: 'series', title: 'Hệ nhôm', description: 'Các hệ nhôm theo từng hãng.', component: SeriesTab },
   { id: 'profile-bars', title: 'Thanh profile', description: 'Thanh nhôm theo hệ và hãng.', component: ProfileBarsTab },
-  { id: 'glass-gaskets', title: 'Kính, panel và lưới muỗi', description: 'Quy cách kính, tấm và lưới.', component: GlassGasketsTab },
-  { id: 'doors', title: 'Biên dạng cửa', description: 'Biên dạng cửa và định mức vật tư.', component: DoorsTab },
   { id: 'door-templates', title: 'Mẫu cửa', description: 'Mẫu cửa dựng sẵn.', component: DoorTemplatesTab },
-  { id: 'supplier-doors', title: 'Cửa nhập nhà cung cấp', description: 'Cửa mua nguyên bộ từ nhà cung cấp.', component: SupplierDoorsTab },
-  { id: 'accessories', title: 'Phụ kiện, roan và keo', description: 'Phụ kiện cửa, roan và keo.', component: AccessoriesTab },
+  { id: 'supplier-doors', title: 'Cửa nhập', description: 'Cửa mua nguyên bộ từ nhà cung cấp.', component: SupplierDoorsTab },
+  { id: 'accessories', title: 'Phụ kiện', description: 'Phụ kiện cửa, roan và keo.', component: AccessoriesTab },
   { id: 'accessory-combos', title: 'Combo phụ kiện', description: 'Bộ phụ kiện đi cùng nhau.', component: AccessoryCombosTab },
+  { id: 'glass-gaskets', title: 'Kính', description: 'Quy cách kính, tấm và lưới.', component: GlassGasketsTab },
+  { id: 'doors', title: 'Biên dạng cửa', description: 'Biên dạng cửa và định mức vật tư.', component: DoorsTab },
 ];
 
 // Thanh tab: các mục từng có trong menu (Biên dạng cửa vẫn vào được bằng ?tab=doors, như trước)
@@ -70,7 +70,9 @@ function ProjectConfigurationContent() {
         label="Nhóm danh mục vật tư"
         className="px-4 md:px-6"
       />
-      <Active key={tab.id} />
+      <div className="pt-4">
+        <Active key={tab.id} />
+      </div>
     </div>
   );
 }

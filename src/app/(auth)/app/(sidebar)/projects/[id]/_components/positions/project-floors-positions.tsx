@@ -134,7 +134,7 @@ export function ProjectFloorsPositions({ projectId }: ProjectFloorsPositionsProp
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(11.5rem,1fr))] gap-4">
             {positions.map((pos) => (
               <PositionCard
                 key={pos.id}

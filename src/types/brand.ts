@@ -1,4 +1,6 @@
 export interface Brand {
+  /** Bản ghi dùng chung của nền tảng: org khác chỉ đọc, nhân bản về để chỉnh */
+  isSystem?: boolean;
   id: number;
   code: string;
   name: string;
@@ -97,13 +99,12 @@ export interface BrandColorQueryParams {
   limit?: number;
 }
 
-export function isBrandFavorite(brand: Pick<Brand, 'sortOrder'>): boolean {
-  return (brand.sortOrder ?? 0) > 0;
+// Hãng của hệ thống không đặt mặc định được (doanh nghiệp không sửa được), nên không tính là mặc định
+export function isBrandFavorite(brand: Pick<Brand, 'sortOrder' | 'isSystem'>): boolean {
+  return !brand.isSystem && (brand.sortOrder ?? 0) > 0;
 }
 
-export function getDefaultBrandId<T extends Pick<Brand, 'id' | 'sortOrder'>>(
-  brands: T[],
-): number | null {
+export function getDefaultBrandId<T extends Pick<Brand, 'id' | 'sortOrder' | 'isSystem'>>(brands: T[]): number | null {
   const favoriteBrand = brands.find(isBrandFavorite);
   return favoriteBrand?.id ?? brands[0]?.id ?? null;
 }

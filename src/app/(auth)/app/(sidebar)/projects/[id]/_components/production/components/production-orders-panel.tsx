@@ -58,13 +58,13 @@ export function ProductionOrdersPanel({
   };
 
   return (
-    <div className="space-y-4 rounded-control border border-slate-200/60 bg-white p-5 shadow-xs">
+    <div className="space-y-4 rounded-control border border-slate-200/60 bg-white p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3 className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+          <h3 className="flex items-center gap-1.5 text-xs font-semibold text-slate-800">
             <Factory size={15} className="text-primary" /> Lệnh sản xuất ({orders.length})
           </h3>
-          <span className="mt-0.5 block text-[11px] text-slate-400">
+          <span className="mt-0.5 block text-xs text-slate-400">
             Gom cửa đã đo thực tế theo đợt, tối ưu thanh cắt, lập phiếu xuất kho và in thẻ cắt A4
           </span>
         </div>
@@ -91,7 +91,7 @@ export function ProductionOrdersPanel({
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-left">
             <thead>
-              <tr className="border-b border-slate-100 text-[11px] font-bold text-slate-400">
+              <tr className="border-b border-slate-100 text-xs font-semibold text-slate-400">
                 <th className="px-3 py-2.5">Mã Lệnh</th>
                 <th className="px-3 py-2.5">Tên đợt</th>
                 <th className="px-3 py-2.5">Số cửa</th>
@@ -108,14 +108,14 @@ export function ProductionOrdersPanel({
 
                 return (
                   <tr key={order.id} className="transition-colors hover:bg-slate-50/60">
-                    <td className="px-3 py-3 tabular-nums font-bold text-primary">{order.code}</td>
+                    <td className="px-3 py-3 tabular-nums font-semibold text-primary">{order.code}</td>
                     <td className="px-3 py-3 font-medium text-slate-800">{order.name}</td>
                     <td className="px-3 py-3 font-semibold text-slate-600">
                       {order.completedItems} / {order.totalItems} bộ
                     </td>
                     <td className="px-3 py-3">
                       <div className="flex items-center gap-2">
-                        <span className="tabular-nums text-[11px] font-bold text-slate-700">
+                        <span className="tabular-nums text-xs font-semibold text-slate-700">
                           {(order.progressPercent ?? 0).toFixed(0)}%
                         </span>
                         <div className="h-1.5 w-20 overflow-hidden rounded-full bg-slate-100">
@@ -126,7 +126,7 @@ export function ProductionOrdersPanel({
                         </div>
                       </div>
                     </td>
-                    <td className="px-3 py-3 text-[11px] text-slate-500">
+                    <td className="px-3 py-3 text-xs text-slate-500">
                       {formatProductionDate(order.startDate)} ➔ {formatProductionDate(order.dueDate)}
                     </td>
                     <td className="px-3 py-3">
@@ -141,7 +141,7 @@ export function ProductionOrdersPanel({
                             variant="outline"
                             size="sm"
                             leftIcon={<Scissors size={12} />}
-                            className="h-7 px-2 text-[11px]"
+                            className="h-7 px-2 text-xs"
                             onClick={() => onOpenCutting(order)}
                           >
                             Thanh cắt
@@ -152,7 +152,7 @@ export function ProductionOrdersPanel({
                             variant="outline"
                             size="sm"
                             leftIcon={<FileText size={12} />}
-                            className="h-7 px-2 text-[11px]"
+                            className="h-7 px-2 text-xs"
                             onClick={() => onOpenSheets(order)}
                           >
                             Chi tiết

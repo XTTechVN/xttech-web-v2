@@ -29,9 +29,9 @@ export function QuotationPreviewPanel({
   onSave,
 }: QuotationPreviewPanelProps) {
   return (
-    <div className="bg-white rounded-control border border-slate-200/60 p-5 shadow-xs space-y-4 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
+    <div className="bg-white rounded-control border border-slate-200/60 p-5 space-y-4 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-bold text-slate-700">
+        <span className="text-xs font-semibold text-slate-700">
           Kết quả tính thử (theo dữ liệu cửa hiện tại)
         </span>
         {isCalculating && <Loader2 size={14} className="animate-spin text-slate-400" />}
@@ -91,7 +91,7 @@ function PreviewResult({
         <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-control text-xs text-amber-800 flex items-start gap-2">
           <AlertTriangle size={15} className="shrink-0 mt-0.5 text-amber-600" />
           <span>
-            Có <span className="font-bold">{estimatedOutsourcedCount}</span> cửa nhập nguyên bộ NCC
+            Có <span className="font-semibold">{estimatedOutsourcedCount}</span> cửa nhập nguyên bộ NCC
             đang dùng giá tạm tính.
           </span>
         </div>
@@ -106,7 +106,7 @@ function PreviewResult({
       ))}
 
       <div>
-        <span className="text-[11px] font-bold text-slate-500 block mb-1">Khối lượng công trình</span>
+        <span className="text-xs font-semibold text-slate-500 block mb-1">Khối lượng công trình</span>
         <div className="divide-y divide-slate-100">
           <ResultRow label="Số bộ cửa" value={result.totalPositions.toLocaleString('vi-VN')} />
           <ResultRow label="Tổng diện tích cửa" value={`${result.totalAreaM2.toLocaleString('vi-VN')} m²`} />
@@ -115,12 +115,12 @@ function PreviewResult({
       </div>
 
       <div>
-        <span className="text-[11px] font-bold text-slate-500 block mb-1">Cơ cấu tổng báo giá</span>
+        <span className="text-xs font-semibold text-slate-500 block mb-1">Cơ cấu tổng báo giá</span>
         <CompositionPanel data={result} />
       </div>
 
       <div>
-        <span className="text-[11px] font-bold text-slate-500 block mb-1">Từ giá bán đến số tiền khách trả</span>
+        <span className="text-xs font-semibold text-slate-500 block mb-1">Từ giá bán đến số tiền khách trả</span>
         <div className="divide-y divide-slate-100">
           <ResultRow label="Tổng giá bán (đã gồm thuế)" value={formatCurrency(result.subtotalSellingPrice)} />
           <ResultRow label="Giảm giá cho khách" value={`-${formatCurrency(result.discountAmount)}`} tone="red" />

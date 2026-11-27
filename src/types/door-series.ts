@@ -1,6 +1,8 @@
 import type { Brand } from './brand';
 
 export interface DoorSeries {
+  /** Bản ghi dùng chung của nền tảng: org khác chỉ đọc, nhân bản về để chỉnh */
+  isSystem?: boolean;
   id: number;
   brandId: number;
   code: string;

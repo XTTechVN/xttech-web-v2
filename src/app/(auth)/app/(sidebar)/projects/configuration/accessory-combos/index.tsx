@@ -11,7 +11,7 @@ import { useCan } from '@/hooks';
 import { COMBO_APPLY_FOR_OPTIONS, COMBO_DOOR_TYPE_OPTIONS, getDefaultBrandId, type AccessoryCombo } from '@/types';
 import { includesSearchText, showErrorToast } from '@/utils';
 import queryClient from '@/utils/query';
-import { BrandSidebar } from '../../_components';
+import { BrandTiles } from '../../_components';
 import { ComboDrawer } from './_components/combo-drawer';
 import { ComboList } from './_components/combo-list';
 
@@ -20,7 +20,7 @@ const refreshCombos = () => {
   queryClient.invalidateQueries({ queryKey: ['accessory-combos-list'] });
 };
 
-// Combo phụ kiện theo hãng; cột hãng bên trái giữ nguyên
+// Combo phụ kiện theo hãng; hãng chọn trong bộ lọc
 export default function AccessoryCombosTab() {
   const { can } = useCan();
   const [search, setSearch] = useState('');
@@ -101,6 +101,16 @@ export default function AccessoryCombosTab() {
             { key: 'applyFor', label: 'Dành cho', options: COMBO_APPLY_FOR_OPTIONS },
             { key: 'doorType', label: 'Loại cửa áp dụng', options: COMBO_DOOR_TYPE_OPTIONS },
           ]}
+          after={
+            <BrandTiles
+              brands={sortedBrands}
+              value={brandId}
+              onChange={(id) => {
+                setPickedBrandId(id);
+                setFilter({});
+              }}
+            />
+          }
           value={filter}
           onChange={setFilter}
         />
@@ -112,7 +122,6 @@ export default function AccessoryCombosTab() {
       </div>
 
       <div className="flex flex-col gap-4 md:flex-row">
-        <BrandSidebar brands={brands} selectedBrandId={brandId} onSelectBrand={setPickedBrandId} />
         <div className="w-full min-w-0 flex-1">
           <TabState
             loading={brandsQuery.isLoading || combosQuery.isLoading}

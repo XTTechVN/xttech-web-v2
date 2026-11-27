@@ -50,10 +50,10 @@ export function ProjectKpiSummaryCard({
           <button
             type="button"
             onClick={() => onSelectTab?.('quotations')}
-            className="group rounded-control border border-slate-200/80 bg-white p-3.5 text-left shadow-2xs transition-all hover:border-primary/40 cursor-pointer"
+            className="group rounded-block border border-slate-200/80 bg-white p-3.5 text-left transition-all hover:border-primary/40 cursor-pointer"
           >
             <div className="flex items-center justify-between text-slate-400">
-              <span className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
+              <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
                 <Calculator size={13} className="text-primary" />
                 Dự toán báo giá
               </span>
@@ -62,10 +62,10 @@ export function ProjectKpiSummaryCard({
                 className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-primary"
               />
             </div>
-            <div className="mt-2 tabular-nums text-base font-bold text-slate-900">
+            <div className="mt-2 tabular-nums text-base font-semibold text-slate-900">
               {activeQuotation ? formatCurrency(activeQuotation.totalAmount) : 'Chưa lập'}
             </div>
-            <div className="mt-1 flex items-center justify-between text-[11px] text-slate-400">
+            <div className="mt-1 flex items-center justify-between text-xs text-slate-400">
               <span>
                 {activeQuotation
                   ? `${activeQuotation.code} (${activeQuotation.isSelected ? 'Đang chọn' : 'Bản nháp'})`
@@ -79,10 +79,10 @@ export function ProjectKpiSummaryCard({
           <button
             type="button"
             onClick={() => onSelectTab?.('contracts')}
-            className="group rounded-control border border-slate-200/80 bg-white p-3.5 text-left shadow-2xs transition-all hover:border-primary/40 cursor-pointer"
+            className="group rounded-block border border-slate-200/80 bg-white p-3.5 text-left transition-all hover:border-primary/40 cursor-pointer"
           >
             <div className="flex items-center justify-between text-slate-400">
-              <span className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
+              <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
                 <FileSignature size={13} className="text-indigo-600" />
                 Giá trị hợp đồng
               </span>
@@ -91,10 +91,10 @@ export function ProjectKpiSummaryCard({
                 className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-primary"
               />
             </div>
-            <div className="mt-2 tabular-nums text-base font-bold text-slate-900">
+            <div className="mt-2 tabular-nums text-base font-semibold text-slate-900">
               {formatCurrency(totalContractValue)}
             </div>
-            <div className="mt-1 flex items-center justify-between text-[11px] text-slate-400">
+            <div className="mt-1 flex items-center justify-between text-xs text-slate-400">
               <span>Hợp đồng hiệu lực</span>
               <span className="font-semibold text-slate-600">{activeContractsCount} hợp đồng</span>
             </div>
@@ -104,21 +104,21 @@ export function ProjectKpiSummaryCard({
           <button
             type="button"
             onClick={() => onSelectTab?.('contracts')}
-            className="group rounded-control border border-slate-200/80 bg-white p-3.5 text-left shadow-2xs transition-all hover:border-primary/40 cursor-pointer"
+            className="group rounded-block border border-slate-200/80 bg-white p-3.5 text-left transition-all hover:border-primary/40 cursor-pointer"
           >
             <div className="flex items-center justify-between text-slate-400">
-              <span className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
+              <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
                 <Wallet size={13} className="text-emerald-600" />
                 Đã thu / Công nợ
               </span>
-              <span className="tabular-nums text-[11px] font-bold text-emerald-600">
+              <span className="tabular-nums text-xs font-semibold text-emerald-600">
                 {collectionRate}%
               </span>
             </div>
-            <div className="mt-2 tabular-nums text-base font-bold text-emerald-600">
+            <div className="mt-2 tabular-nums text-base font-semibold text-emerald-600">
               {formatCurrency(totalCollected)}
             </div>
-            <div className="mt-1 flex items-center justify-between text-[11px] text-slate-400">
+            <div className="mt-1 flex items-center justify-between text-xs text-slate-400">
               <span>Còn phải thu:</span>
               <span className="tabular-nums font-semibold text-amber-600">
                 {formatCurrency(remainingDebt)}

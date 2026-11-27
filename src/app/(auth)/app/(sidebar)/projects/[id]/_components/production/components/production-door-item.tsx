@@ -51,7 +51,7 @@ export function ProductionDoorItem({
       {/* Header card: Mã cửa + Checkbox */}
       <div className="flex items-center justify-between gap-1.5 border-b border-slate-100 bg-white px-2.5 py-1.5">
         <div className="flex min-w-0 items-center gap-1">
-          <span className="text-xs font-bold tracking-tight text-slate-800" title={position.code}>
+          <span className="text-xs font-semibold tracking-tight text-slate-800" title={position.code}>
             {position.code}
           </span>
           {isOutsourced && (
@@ -81,7 +81,7 @@ export function ProductionDoorItem({
           <div className="absolute top-1.5 left-1.5 z-10">
             <span
               className={cn(
-                'rounded px-1.5 py-0.5 text-[9px] font-semibold tracking-tight shadow-xs backdrop-blur-xs',
+                'rounded px-1.5 py-0.5 text-[9px] font-semibold tracking-tight backdrop-blur-xs',
                 statusVariant === 'amber' && 'border border-amber-200 bg-amber-50/90 text-amber-700',
                 statusVariant === 'emerald' && 'border border-emerald-200 bg-emerald-50/90 text-emerald-700',
                 statusVariant === 'purple' && 'border border-purple-200 bg-purple-50/90 text-purple-700',
@@ -94,7 +94,7 @@ export function ProductionDoorItem({
         )}
 
         {visual.systemConfig ? (
-          <div className="pointer-events-none h-full w-full p-0.5 transition-transform duration-300 group-hover:scale-105">
+          <div className="pointer-events-none h-full w-full p-0.5 transition-transform duration-300">
             <DoorThumbnail
               systemConfig={visual.systemConfig}
               hideDimensions={false}
@@ -106,7 +106,7 @@ export function ProductionDoorItem({
           <img
             src={visual.imageUrl}
             alt={doorName}
-            className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105"
+            className="max-h-full max-w-full object-contain transition-transform duration-300"
           />
         ) : (
           <div className="flex flex-col items-center gap-1 text-slate-300">
@@ -121,16 +121,16 @@ export function ProductionDoorItem({
           {doorName}
         </p>
 
-        <div className="flex items-center justify-between text-[11px] text-slate-500">
+        <div className="flex items-center justify-between text-xs text-slate-500">
           <span className="font-medium tabular-nums">
             {position.width} × {position.height} mm
           </span>
-          <span className="tabular-nums text-[10px] text-slate-400">
+          <span className="tabular-nums text-xs text-slate-400">
             {(position.areaM2 ?? 0).toFixed(2)} m²
           </span>
         </div>
 
-        <div className="flex items-center justify-between pt-0.5 text-[10px] text-slate-400">
+        <div className="flex items-center justify-between pt-0.5 text-xs text-slate-400">
           <span className="truncate">{floorText}</span>
           {position.color?.name && (
             <span className="max-w-[70px] truncate" title={position.color.name}>

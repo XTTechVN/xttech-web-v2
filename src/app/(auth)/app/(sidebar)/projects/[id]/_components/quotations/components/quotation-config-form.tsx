@@ -292,7 +292,7 @@ function FloorPicker({ floors, selectedIds, isReadOnly, isMissingFloors, onToggl
         )}
       </div>
       {isMissingFloors && (
-        <span className="text-[11px] text-amber-600 block">Hãy chọn ít nhất 1 tầng để xem giá.</span>
+        <span className="text-xs text-amber-600 block">Hãy chọn ít nhất 1 tầng để xem giá.</span>
       )}
     </div>
   );

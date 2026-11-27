@@ -1,21 +1,7 @@
 import type { AccessoryCategory } from './accessory-category';
 import type { Brand } from './brand';
 
-export type AccessoryUnit =
-  | 'set'
-  | 'pcs'
-  | 'pair'
-  | 'unit'
-  | 'roll'
-  | 'box'
-  | 'bag'
-  | 'meter'
-  | 'bottle'
-  | 'sheet'
-  | 'bar'
-  | 'sqm'
-  | 'kg'
-  | 'tube';
+export type AccessoryUnit = 'set' | 'pcs' | 'pair' | 'unit' | 'roll' | 'box' | 'bag' | 'meter' | 'bottle' | 'sheet' | 'bar' | 'sqm' | 'kg' | 'tube';
 
 export interface AccessoryUnitConfig {
   label: string;
@@ -130,6 +116,8 @@ export const ACCESSORY_COLOR_MAP: Record<string, string> = {
 };
 
 export interface Accessory {
+  /** Bản ghi dùng chung của nền tảng: org khác chỉ đọc, nhân bản về để chỉnh */
+  isSystem?: boolean;
   id: number;
   code: string | null;
   categoryId?: number | null;

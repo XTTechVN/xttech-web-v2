@@ -173,7 +173,7 @@ function CreateOptionForm({
             ))}
             {!movable.length && <p className="px-3 py-3 text-slate-400">Không còn cửa đang thiết kế để chuyển.</p>}
           </div>
-          <p className="text-[11px] text-slate-500">
+          <p className="text-xs text-slate-500">
             Sau khi tạo, dùng &quot;Thêm phương án&quot; lần nữa để nhân bản sang phương án khác và đổi hệ nhôm.
           </p>
         </div>

@@ -10,12 +10,12 @@ interface QuotationBomTablesProps {
 }
 
 const TH_CLASS =
-  'py-2.5 px-3 text-[11px] font-bold text-slate-500 whitespace-nowrap';
+  'py-2.5 px-3 text-xs font-semibold text-slate-500 whitespace-nowrap';
 const TD_CLASS = 'py-2 px-3 text-slate-700 whitespace-nowrap';
 const TD_NUM_CLASS = 'py-2 px-3 text-right tabular-nums text-slate-700 whitespace-nowrap';
 const TD_PRICE_CLASS =
-  'py-2 px-3 text-right tabular-nums text-primary font-bold whitespace-nowrap';
-const TFOOT_ROW_CLASS = 'bg-primary/5 border-t border-primary/20 font-bold text-primary';
+  'py-2 px-3 text-right tabular-nums text-primary font-semibold whitespace-nowrap';
+const TFOOT_ROW_CLASS = 'bg-primary/5 border-t border-primary/20 font-semibold text-primary';
 
 function formatAuxQuantity(item: QuotationAuxiliaryStatItem): string | number {
   if (item.unit === 'meter') return item.quantity.toFixed(2);
@@ -26,10 +26,10 @@ export function QuotationBomTables({ breakdown }: QuotationBomTablesProps) {
   return (
     <div className="space-y-4">
       {/* Khối 2: THỐNG KÊ PROFILE */}
-      <div className="rounded-block border border-slate-200/80 bg-white shadow-xs overflow-hidden">
+      <div className="rounded-block border border-slate-200/80 bg-white overflow-hidden">
         <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-200/80 bg-slate-50/40">
           <Ruler size={16} className="text-primary shrink-0" />
-          <h3 className="text-xs font-bold tracking-wide text-slate-800">
+          <h3 className="text-xs font-semibold tracking-wide text-slate-800">
             THỐNG KÊ PROFILE
           </h3>
         </div>
@@ -76,7 +76,7 @@ export function QuotationBomTables({ breakdown }: QuotationBomTablesProps) {
                     <td className={TD_CLASS}>{item.profileName}</td>
                     <td className={TD_NUM_CLASS}>{item.lengthM.toFixed(3)}</td>
                     <td className={TD_NUM_CLASS}>{item.weightPerM.toFixed(2)}</td>
-                    <td className={`${TD_NUM_CLASS} font-bold text-slate-800`}>{item.quantity}</td>
+                    <td className={`${TD_NUM_CLASS} font-semibold text-slate-800`}>{item.quantity}</td>
                     <td className={TD_NUM_CLASS}>{item.weightKg.toFixed(2)}</td>
                     <td className={TD_NUM_CLASS}>{item.unitPrice.toLocaleString('vi-VN')}</td>
                     <td className={TD_PRICE_CLASS}>{item.totalPrice.toLocaleString('vi-VN')}</td>
@@ -103,10 +103,10 @@ export function QuotationBomTables({ breakdown }: QuotationBomTablesProps) {
       </div>
 
       {/* Khối 3: THỐNG KÊ KÍNH */}
-      <div className="rounded-block border border-slate-200/80 bg-white shadow-xs overflow-hidden">
+      <div className="rounded-block border border-slate-200/80 bg-white overflow-hidden">
         <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-200/80 bg-slate-50/40">
           <Grid2X2 size={16} className="text-primary shrink-0" />
-          <h3 className="text-xs font-bold tracking-wide text-slate-800">
+          <h3 className="text-xs font-semibold tracking-wide text-slate-800">
             THỐNG KÊ KÍNH
           </h3>
         </div>
@@ -139,7 +139,7 @@ export function QuotationBomTables({ breakdown }: QuotationBomTablesProps) {
                     <td className={`${TD_CLASS} text-center tabular-nums text-slate-600`}>
                       {item.widthMm}×{item.heightMm}
                     </td>
-                    <td className={`${TD_NUM_CLASS} font-bold text-slate-800`}>{item.quantity}</td>
+                    <td className={`${TD_NUM_CLASS} font-semibold text-slate-800`}>{item.quantity}</td>
                     <td className={TD_NUM_CLASS}>{item.areaM2.toFixed(2)}</td>
                     <td className={TD_NUM_CLASS}>{item.unitPrice.toLocaleString('vi-VN')}</td>
                     <td className={TD_PRICE_CLASS}>{item.totalPrice.toLocaleString('vi-VN')}</td>
@@ -166,10 +166,10 @@ export function QuotationBomTables({ breakdown }: QuotationBomTablesProps) {
       </div>
 
       {/* Khối 4: ROAN, VẬT TƯ PHỤ & PHỤ KIỆN */}
-      <div className="rounded-block border border-slate-200/80 bg-white shadow-xs overflow-hidden">
+      <div className="rounded-block border border-slate-200/80 bg-white overflow-hidden">
         <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-200/80 bg-slate-50/40">
           <Wrench size={16} className="text-primary shrink-0" />
-          <h3 className="text-xs font-bold tracking-wide text-slate-800">
+          <h3 className="text-xs font-semibold tracking-wide text-slate-800">
             ROAN, VẬT TƯ PHỤ &amp; PHỤ KIỆN
           </h3>
         </div>
@@ -205,7 +205,7 @@ export function QuotationBomTables({ breakdown }: QuotationBomTablesProps) {
                     <td className={`${TD_CLASS} text-center text-slate-500 font-medium`}>
                       {QUOTATION_BOM_UNIT_MAP[item.unit] || item.unit.toUpperCase()}
                     </td>
-                    <td className={`${TD_NUM_CLASS} font-bold text-slate-800`}>
+                    <td className={`${TD_NUM_CLASS} font-semibold text-slate-800`}>
                       {formatAuxQuantity(item)}
                     </td>
                     <td className={TD_NUM_CLASS}>{item.unitPrice.toLocaleString('vi-VN')}</td>
