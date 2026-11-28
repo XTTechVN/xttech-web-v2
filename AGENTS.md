@@ -18,7 +18,9 @@ Tài liệu này tự động áp dụng khi làm việc trong thư mục `xttec
     - **Shared Types:** `src/types/` (export qua `src/types/index.ts`).
 - **Dọn dẹp Code Thừa (Zero Dead Code):** Khi thay thế một component/modal/hook cũ bằng phiên bản mới, bắt buộc **xóa ngay file cũ** và kiểm tra toàn bộ tham chiếu (`0 refs`) trước khi bàn giao.
 
-### 1.2. Quy tắc Tổ chức Thư mục `modals/`
+### 1.2. Hộp thoại: `Drawer` cho phần mới, `modals/` cho màn hình cũ
+> **Khi repo có `src/components-remake/index.ts` và `src/hooks/use-can.ts` (mục 5):** hộp thoại **mới** dùng `Drawer` / `ConfirmDelete` từ `@/components-remake`, không tạo file `*-modal.tsx` mới. Các gạch đầu dòng bên dưới chỉ áp dụng khi bảo trì modal đã có.
+
 - Không để các file Modal nằm phẳng lộn xộn chung với Table, Card, Toolbar trong `_components/`.
 - **Bắt buộc gom vào thư mục con `modals/`:** Đặt tại `_components/modals/` (nếu dùng riêng 1 trang) hoặc `src/components/<domain>/modals/` (nếu dùng chung).
 - **Tái sử dụng Modal Xác nhận:** Mọi hành động xác nhận (Xóa mềm, Xóa vĩnh viễn, Khôi phục, Duyệt...) phải tái sử dụng `ConfirmActionModal` chung, không tạo nhiều file modal xác nhận trùng lặp.
@@ -80,7 +82,7 @@ Tài liệu này tự động áp dụng khi làm việc trong thư mục `xttec
 ---
 
 ## 4. Quy chuẩn UI/UX, Styling & Next.js Conventions
-- **Server vs Client Components:** Giữ `page.tsx` gọn sạch; chỉ đặt `'use client'` ở các component thực sự cần state/hooks/event listeners.
+- **Server vs Client Components:** Giữ `page.tsx` gọn sạch; chỉ đặt `'use client'` ở các component thực sự cần state/hooks/event listeners. Ngoại lệ: `page.tsx` dưới `(sidebar)` được là client component để kiểm quyền (mục 5).
 - **Cấu hình Tập trung:**
   - Không gọi trực tiếp `process.env.NEXT_PUBLIC_...` rải rác trong component (phải lấy qua `src/config/app.ts`).
   - Sử dụng hệ thống biến màu tại `src/styles/color.css` và helper `cn()` để gộp class Tailwind.
@@ -93,13 +95,27 @@ Tài liệu này tự động áp dụng khi làm việc trong thư mục `xttec
 
 ---
 
-## 5. Checklist Trước Khi Viết Code (khớp với `scope_guard.py` — tránh bị chặn rồi phải viết lại)
+## 5. Giao diện mới & Phân quyền (áp dụng khi repo có `src/components-remake/index.ts` và `src/hooks/use-can.ts`)
+
+🛑 **Bắt buộc đọc [`docs/conventions/ui-rbac.md`](./docs/conventions/ui-rbac.md) trước khi tạo hoặc sửa trang, component, menu.** Tóm tắt:
+
+1. Ưu tiên `@/components-remake`; thiếu mới dùng `@/components`. Mẫu chuẩn: `customers/_components/list`.
+2. Phần mới dùng `Drawer`, `ConfirmDelete`, `TabState`, `SearchField` + `FilterDrawer`. Màn hình cũ giữ nguyên, chỉ chuyển khi User yêu cầu.
+3. Trang kiểm quyền bằng `useCan` + `AccessDenied`; nút trên bản ghi đọc `_can`; query phụ có `enabled: can(...)`. Không so mã role.
+4. Menu mới khai `permissions` trong `config/sidebar.ts`.
+5. `src/generated/**` chỉ sinh bằng script, không sửa tay.
+
+---
+
+## 6. Checklist Trước Khi Viết Code (khớp với `scope_guard.py` — tránh bị chặn rồi phải viết lại)
 - [ ] File modal mới (`*-modal.tsx`) đặt trong thư mục `modals/` (R005-MODAL-FOLDER).
 - [ ] File `*.constants.ts` là TS thuần (không `.tsx`, không JSX/SVG), không nằm phẳng dưới `_components/` (R005-PURE-TS-CONSTANTS, R005-FLAT-CONSTANTS).
 - [ ] Không `: any` / `as any`, không `?? row.snake_case`, không so sánh chuỗi tiếng Việt có dấu (R005-NO-ANY, SNAKE-FALLBACK, VIETNAMESE-ENUM).
 - [ ] Không import chéo `_components/_hooks/_utils` giữa các route (R005-CROSS-ROUTE).
 - [ ] Mảng dữ liệu tĩnh (`const STATS = [{...}]`) tách sang `.constants.ts` và component `.tsx` nên < 300 dòng — hiện chỉ **cảnh báo** (`WARN_ONLY`, ghi vào `hook_audit.jsonl`) nhưng vẫn là chuẩn của dự án.
-- Escape hatch khi User yêu cầu rõ ràng: `// hook-allow: R005`.
+- [ ] (Khi áp dụng mục 5) Không tạo `*-modal.tsx` mới (R008-NEW-MODAL), không so mã role (R008-ROLE-CHECK), không sửa tay `src/generated/` (R008-GENERATED).
+- [ ] (Khi áp dụng mục 5) File mới import `Modal` / `ConfirmActionModal` hoặc `page.tsx` mới không có `useCan` / `AccessDenied` sẽ bị hỏi lại User (R008-MODAL-IMPORT, R008-PAGE-GATE).
+- Escape hatch khi User yêu cầu rõ ràng: `// hook-allow: R005` / `// hook-allow: R008`.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

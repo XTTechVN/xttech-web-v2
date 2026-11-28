@@ -2,6 +2,10 @@
 
 All notable changes to the frontend project will be documented in this file.
 
+## [Unreleased] - 2026-11-28
+### Changed (Tài liệu quy ước giao diện & phân quyền)
+- Thêm `docs/conventions/ui-rbac.md` và mục 5 trong `AGENTS.md`: chuẩn `components-remake`, cổng quyền `useCan` / `_can`, quy tắc cho màn hình cũ; thêm `CLAUDE.md`. Không đổi code ứng dụng.
+
 ## [Unreleased] - 2026-11-21
 ### Added & Changed (Multi-layer Extra Glass — Door Studio → BOM → Báo giá & Trang Ký Công Khai)
 - **Configs & Types Contract 7 Điểm ([`project.ts`](file:///c:/Workshop/fe_xttech/src/config/project.ts), [`quotation-contract.ts`](file:///c:/Workshop/fe_xttech/src/config/quotation-contract.ts), [`door.ts`](file:///c:/Workshop/fe_xttech/src/types/door.ts), [`quotation.ts`](file:///c:/Workshop/fe_xttech/src/types/quotation.ts), [`handover.ts`](file:///c:/Workshop/fe_xttech/src/types/handover.ts), [`studio-types.ts`](file:///c:/Workshop/fe_xttech/src/components/door-studio/studio-types.ts)):**
